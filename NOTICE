@@ -1,0 +1,23 @@
+# NOTICE
+
+**knowing** is derived from **deepdive**, MIT licensed:
+
+- upstream: https://github.com/Socialpranker/deepdive
+- pinned commit: `e2337975f6b3845b4067d65462f7953cd3d13e46` (2026-11-17)
+- upstream copyright: Copyright (c) 2026 ivanterescheenko-ai
+
+The upstream tree is vendored under `upstream/` and kept **unmodified** so it can be
+re-based on new upstream commits. Our changes live in:
+
+| path | what it is |
+|---|---|
+| `overlay/` | checks and rules we added (quote anchors, depth derivation, read scope, adjudication) |
+| `upstream/references/**` | translated prose (translation is a coupled change — see `docs/TRANSLATION.md`) |
+| `upstream/scripts/*.py` | pattern updates that must move together with the prose (Russian literals → English) |
+
+Every file we changed carries a one-line header noting the change and the upstream path it came
+from. Nothing from upstream was relicensed; the MIT terms above cover both.
+
+Correctness claims in this repository's docs are about *our* checks. Upstream's own claims were
+audited in `docs/DECISIONS.md` and several were found to be prose rather than code; where that
+matters, the audit result is recorded rather than repeated.

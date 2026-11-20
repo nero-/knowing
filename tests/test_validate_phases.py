@@ -1,0 +1,983 @@
+"""Tests for scripts/validate_phases.py — phase-gate completeness validator."""
+
+import sys
+from pathlib import Path
+
+import pytest
+
+REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO / "scripts"))
+
+import validate_phases as vp  # noqa: E402
+
+
+def write_source(sd: Path, stem: str, *, thin: bool, access: str = "open") -> Path:
+    """A source file with (fat) or without (thin) the 2 verbatim quotes a leg needs."""
+    quotes = "> quote one\n\n> quote two\n" if not thin else "no quotes here\n"
+    p = sd / f"{stem}.md"
+    p.write_text(
+        f"---\nurl: http://x\naccess: {access}\n---\n\n{quotes}", encoding="utf-8"
+    )
+    return p
+
+
+# A read set that meets every sphere quota of check_source_breadth (35 = deep floor).
+BREADTH_TYPES = (
+    ["Academic"] * 3 + ["Primary"] * 5 + ["Industry-media"] * 3 + ["Expert-blog"] * 6
+    + ["Forum"] * 4 + ["Other"] * 13
+)
+
+
+def write_breadth(d: Path, *, types=BREADTH_TYPES, contradicting=3, candidates=100,
+                  academic_channel=True, round2=5) -> None:
+    sd = d / "sources"
+    sd.mkdir(exist_ok=True)
+    for i, t in enumerate(types, start=10):
+        h = "contradicts" if i - 10 < contradicting else "supports"
+        (sd / f"{i:02d}_b.md").write_text(
+            f"---\nurl: http://x/{i}\ntype: {t}\ncaveat: -\naccess: OPEN\n"
+            f"hypothesis_evidence:\n  H1: {h}\n---\n\n> q1\n\n> q2\n\n## Разбор\n- card\n",
+            encoding="utf-8",
+        )
+    rows = ["url,title,snippet,channel,sphere,stance,vendor,round,target,selected"]
+    for i in range(candidates):
+        ch = "openalex" if academic_channel and i == 0 else "web-general"
+        rnd, tgt = ("2", "monthly changed rows") if i < round2 else ("1", "")
+        rows.append(f"http://c/{i},t,s,{ch},media,neutral,N,{rnd},{tgt},N")
+    (d / "candidates.csv").write_text("\n".join(rows) + "\n", encoding="utf-8")
+
+
+def make_run(root: Path, *, mode: str, phases: set[str]) -> Path:
+    """Build a synthetic run dir containing artifacts for the given phase ids."""
+    d = root / "run"
+    d.mkdir()
+    if "report" in phases:
+        (d / "2026-07-16_landscape.md").write_text(
+            f"---\nmode: {mode}\n---\nbody\n\n| Гипотеза | Вердикт | Опора |\n|---|---|---|\n"
+            "| H1 | подтверждена | s01 |\n", encoding="utf-8"
+        )
+        (d / "findings").mkdir()
+        (d / "findings" / "redteam_2026-07-16.md").write_text("MED-1 x\n", encoding="utf-8")
+    if "3" in phases:
+        (d / "plan.md").write_text(f"---\nmode: {mode}\n---\nplan\n", encoding="utf-8")
+    if "4" in phases:
+        sd = d / "sources"
+        sd.mkdir()
+        write_source(sd, "01_x", thin=False)
+    if "breadth" in phases:
+        write_breadth(d)
+    if "state" in phases:
+        (d / "state.md").write_text(
+            "---\nround: 2\n---\n"
+            "## Known\n- Q1 closed: c1\n## Gaps\n- Q2 no primary\n## Next\n- registry pass\n",
+            encoding="utf-8",
+        )
+    if "5" in phases:
+        (d / "claims.csv").write_text(
+            ",".join(vp.CLAIMS_CORE) + "\n"
+            "c1,a claim,-,s01,-,own;study-x,academic|q|en;web-general|q2|en,triangulated,high,N,-,-,-\n",
+            encoding="utf-8",
+        )
+    if "5.5" in phases:
+        ed = d / "evidence"
+        ed.mkdir()
+        (ed / "C1.md").write_text("quote\n", encoding="utf-8")
+        vd = d / ".verify"
+        vd.mkdir(exist_ok=True)
+        (vd / "authority.json").write_text(
+            '{"pairs": [], "quarantined": []}', encoding="utf-8"
+        )
+    if "6.5" in phases:
+        vd = d / ".verify"
+        vd.mkdir(exist_ok=True)
+        (vd / "citations.json").write_text("{}", encoding="utf-8")
+        (vd / "faithfulness.json").write_text(
+            '{"results": [{"claim_id": "c1", "source_id": "01", '
+            '"verdict": "SUPPORTED", "model": "haiku"}]}',
+            encoding="utf-8",
+        )
+        (vd / "qualifiers.json").write_text(
+            '{"results": [{"claim_id": "c1", "location": "F1", '
+            '"verdict": "PRESERVED", "model": "haiku"}]}',
+            encoding="utf-8",
+        )
+        (vd / "constructs.json").write_text(
+            '{"construct_integrity": 1.0, "results": [{"name": "IterResearch", '
+            '"status": "sourced", "sources": ["s01"], "locations": ["E3"]}]}',
+            encoding="utf-8",
+        )
+    if "7" in phases:
+        (d / "refresh_targets.md").write_text("targets\n", encoding="utf-8")
+    if "memo" in phases:
+        (d / "memo.md").write_text("# Memo\nрекомендация\n", encoding="utf-8")
+    if "outline" in phases:
+        (d / "outline.md").write_text(
+            "# Outline\n\n| section | block | claims |\n|---|---|---|\n"
+            "| TL;DR | F1 | c1 |\n",
+            encoding="utf-8",
+        )
+    if "numbers" in phases:
+        (d / "numbers.csv").write_text(
+            "num_id,value,unit,kind,formula,inputs,group,claim_id,sources,as_of\n"
+            "N1,4.5,$B,verbatim,-,-,-,c1,s01,2026-Q1\n",
+            encoding="utf-8",
+        )
+    if "readout" in phases:
+        (d / "readout.md").write_text("## Ответ\n\nТекст [s01].\n", encoding="utf-8")
+    if "8" in phases:
+        (d / "application.md").write_text(
+            "---\nstatus: deferred\n---\n", encoding="utf-8"
+        )
+    if "5.7" in phases:
+        vd = d / ".verify"
+        vd.mkdir(exist_ok=True)
+        (vd / "wiki_pairs.json").write_text('{"pairs": []}', encoding="utf-8")
+    if "wiki" in phases:
+        vd = d / ".verify"
+        vd.mkdir(exist_ok=True)
+        (vd / "wiki_ingest.json").write_text(
+            f'{{"run": "{d.name}", "ingested": "2026-07-16"}}', encoding="utf-8"
+        )
+    return d
+
+
+# `wiki` is the finish-up ingest receipt, not a phase artifact: the run is compiled into
+# the cross-run wiki at every depth, so it belongs to the shallow set.
+SHALLOW_SET = {"3", "4", "5", "report", "memo", "8", "wiki"}
+# From medium up the run also keeps the machine-checkable bookkeeping: the round
+# workspace (state.md), the section->claim map (outline.md) and the number registry.
+FULL_SET = SHALLOW_SET | {
+    "5.5",
+    "5.7",
+    "6.5",
+    "7",
+    "state",
+    "outline",
+    "numbers",
+    "readout",
+    "breadth",
+}
+
+
+def run_validate(d: Path, mode: str):
+    phases = vp.phases_manifest.load_phases(REPO / "phases.yaml")
+    r = vp.Report()
+    vp.validate(d, mode, phases, r)
+    return r
+
+
+def test_shallow_run_with_shallow_artifacts_passes(tmp_path):
+    d = make_run(tmp_path, mode="shallow", phases=SHALLOW_SET)
+    r = run_validate(d, "shallow")
+    assert r.errors == []
+
+
+def test_shallow_does_not_require_medium_artifacts(tmp_path):
+    # evidence/.verify/refresh_targets are medium-gated — a shallow run without them is fine.
+    d = make_run(tmp_path, mode="shallow", phases=SHALLOW_SET)
+    r = run_validate(d, "shallow")
+    assert not any("evidence" in e or "verify" in e or "refresh" in e for e in r.errors)
+
+
+def test_full_run_passes_for_deep(tmp_path):
+    d = make_run(tmp_path, mode="deep", phases=FULL_SET)
+    r = run_validate(d, "deep")
+    assert r.errors == []
+
+
+def test_deep_run_missing_evidence_fails(tmp_path):
+    d = make_run(tmp_path, mode="deep", phases=FULL_SET - {"5.5"})
+    r = run_validate(d, "deep")
+    assert any("phase 5.5" in e for e in r.errors)
+
+
+def test_deep_run_missing_verify_reports_all_three_json(tmp_path):
+    d = make_run(tmp_path, mode="deep", phases=FULL_SET - {"6.5"})
+    r = run_validate(d, "deep")
+    joined = " ".join(r.errors)
+    assert "citations.json" in joined and "faithfulness.json" in joined
+    assert "qualifiers.json" in joined
+
+
+def test_deep_run_missing_only_qualifiers_still_blocks(tmp_path):
+    # Layer 3 is not optional at deep: liveness+faithfulness passing is not enough
+    # if nothing checked that the report still says what the ledger said.
+    d = make_run(tmp_path, mode="deep", phases=FULL_SET)
+    (d / ".verify" / "qualifiers.json").unlink()
+    r = run_validate(d, "deep")
+    joined = " ".join(r.errors)
+    assert "qualifiers.json" in joined
+    assert "citations.json" not in joined and "faithfulness.json" not in joined
+
+
+def test_medium_requires_same_files_as_deep(tmp_path):
+    # no phase has depth_gate: deep, so medium and deep demand the same file set.
+    d = make_run(tmp_path, mode="medium", phases=SHALLOW_SET)
+    r = run_validate(d, "medium")
+    ids = {e.split(":")[0] for e in r.errors}
+    assert "phase 5.5" in ids and "phase 6.5" in ids and "phase 7" in ids
+
+
+def test_missing_plan_fails(tmp_path):
+    d = make_run(tmp_path, mode="shallow", phases=SHALLOW_SET - {"3"})
+    r = run_validate(d, "shallow")
+    assert any("phase 3" in e and "plan.md" in e for e in r.errors)
+
+
+def test_sources_csv_satisfies_phase_4(tmp_path):
+    d = make_run(tmp_path, mode="shallow", phases={"3", "5", "report"})
+    (d / "sources.csv").write_text("url,title\nhttp://x,X\n", encoding="utf-8")
+    r = run_validate(d, "shallow")
+    assert not any("phase 4" in e for e in r.errors)
+
+
+def test_empty_sources_dir_does_not_satisfy_phase_4(tmp_path):
+    d = make_run(tmp_path, mode="shallow", phases={"3", "5", "report"})
+    (d / "sources").mkdir()  # empty dir must not count
+    r = run_validate(d, "shallow")
+    assert any("phase 4" in e for e in r.errors)
+
+
+def test_missing_report_fails(tmp_path):
+    d = make_run(tmp_path, mode="shallow", phases=SHALLOW_SET - {"report"})
+    r = run_validate(d, "shallow")
+    assert any("phase 6" in e and "report" in e.lower() for e in r.errors)
+
+
+def test_missing_memo_fails_even_shallow(tmp_path):
+    # memo.md is the phase 6 companion artifact, mandatory at every depth.
+    d = make_run(tmp_path, mode="shallow", phases=SHALLOW_SET - {"memo"})
+    r = run_validate(d, "shallow")
+    assert any("phase 6" in e and "memo.md" in e for e in r.errors)
+
+
+def test_missing_application_fails_even_shallow(tmp_path):
+    # phase 8 (decision walkthrough) must leave application.md at every depth.
+    d = make_run(tmp_path, mode="shallow", phases=SHALLOW_SET - {"8"})
+    r = run_validate(d, "shallow")
+    assert any("phase 8" in e and "application.md" in e for e in r.errors)
+
+
+def test_report_present_but_memo_missing_reports_only_memo(tmp_path):
+    # the report check must not short-circuit the memo check (and vice versa).
+    d = make_run(tmp_path, mode="shallow", phases=SHALLOW_SET - {"memo"})
+    r = run_validate(d, "shallow")
+    phase6 = [e for e in r.errors if e.startswith("phase 6")]
+    assert phase6 and all("memo.md" in e for e in phase6)
+
+
+def test_detect_mode_from_report(tmp_path):
+    d = make_run(tmp_path, mode="deep", phases=FULL_SET)
+    assert vp.detect_mode(d) == "deep"
+
+
+def test_detect_mode_falls_back_to_plan(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases={"3"})  # plan.md only, no report
+    assert vp.detect_mode(d) == "medium"
+
+
+def test_detect_mode_none_when_absent(tmp_path):
+    d = tmp_path / "run"
+    d.mkdir()
+    assert vp.detect_mode(d) is None
+
+
+def test_self_check_clean_for_current_phases():
+    # every phase in phases.yaml is either mapped or explicitly artifact-less.
+    phases = vp.phases_manifest.load_phases(REPO / "phases.yaml")
+    r = vp.Report()
+    vp.self_check(phases, r)
+    assert r.warnings == []
+
+
+def test_self_check_warns_on_unmapped_phase():
+    phases = [
+        {
+            "id": "9.9",
+            "name_en": "Ghost",
+            "depth_gate": "medium",
+            "name_ru": "x",
+            "model": "haiku",
+            "effort": "low",
+        },
+    ]
+    r = vp.Report()
+    vp.self_check(phases, r)
+    assert any("9.9" in w for w in r.warnings)
+
+
+def test_deep_run_missing_authority_json_fails(tmp_path):
+    # The authority axis of 5.5 is fail-closed: an absent verdict file means the
+    # axis never ran, not that every source qualified.
+    d = make_run(tmp_path, mode="deep", phases=FULL_SET)
+    (d / ".verify" / "authority.json").unlink()
+    r = run_validate(d, "deep")
+    assert any("authority.json" in e for e in r.errors)
+
+
+def test_duplicate_source_id_is_an_error(tmp_path):
+    # Two files claiming one id == a sub-agent wrote outside its assigned range.
+    d = make_run(tmp_path, mode="deep", phases=FULL_SET)
+    (d / "sources" / "01_y.md").write_text(
+        "---\nurl: http://y\n---\n", encoding="utf-8"
+    )
+    r = run_validate(d, "deep")
+    assert any("source id 1 claimed by 2 files" in e for e in r.errors)
+
+
+def test_distinct_source_ids_are_not_flagged(tmp_path):
+    # Control group: without this the duplicate check could be passing for the
+    # wrong reason (e.g. flagging every run).
+    d = make_run(tmp_path, mode="deep", phases=FULL_SET)
+    (d / "sources" / "02_y.md").write_text(
+        "---\nurl: http://y\n---\n", encoding="utf-8"
+    )
+    r = run_validate(d, "deep")
+    assert not any("claimed by" in e for e in r.errors)
+
+
+def test_ledger_missing_new_columns_warns(tmp_path):
+    d = make_run(tmp_path, mode="deep", phases=FULL_SET)
+    (d / "claims.csv").write_text(
+        "claim_id,status\nc1,triangulated\n", encoding="utf-8"
+    )
+    r = run_validate(d, "deep")
+    joined = " ".join(r.errors)
+    # A ledger without these columns means the triangulation/dissent rules silently
+    # never fire — the "green check, no behavior" failure. From medium up that blocks.
+    assert "dissent" in joined and "paths" in joined
+    assert not any("claims.csv" in w for w in r.warnings)
+
+
+def test_ledger_contract_blocks_even_shallow(tmp_path):
+    d = make_run(tmp_path, mode="shallow", phases=SHALLOW_SET)
+    (d / "claims.csv").write_text(
+        "claim_id,status\nc1,triangulated\n", encoding="utf-8"
+    )
+    r = run_validate(d, "shallow")
+    assert any("claims.csv" in e and "paths" in e for e in r.errors)
+
+
+CANON = ",".join(vp.CLAIMS_CORE)
+
+
+@pytest.mark.parametrize(
+    "header,needle",
+    [
+        (CANON.replace("roots,paths", "paths,roots"), "out of order"),
+        (CANON + ",notes", "unknown column(s) notes"),
+        (CANON.replace("claim_id", "id"), "missing column(s) claim_id"),
+    ],
+)
+def test_claims_header_off_contract_is_red(tmp_path, header, needle):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    (d / "claims.csv").write_text(header + "\n", encoding="utf-8")
+    r = run_validate(d, "medium")
+    assert any("claims.csv" in e and needle in e for e in r.errors)
+
+
+def test_claims_optional_tail_is_canonical(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    (d / "claims.csv").write_text(
+        CANON + ",claim_class,evidence_kind,plain,detail\n", encoding="utf-8"
+    )
+    r = run_validate(d, "medium")
+    assert not any("claims.csv:" in e for e in r.errors)
+
+
+def test_numbers_header_variant_is_red(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    (d / "numbers.csv").write_text(
+        "id,value,unit,source,claim\nN1,4.5,$B,s01,c1\n", encoding="utf-8"
+    )
+    r = run_validate(d, "medium")
+    assert any("numbers.csv" in e and "missing column" in e for e in r.errors)
+
+
+def test_canonical_verdict_files_pass(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    r = run_validate(d, "medium")
+    assert not any("faithfulness.json" in e or "qualifiers.json" in e for e in r.errors)
+
+
+@pytest.mark.parametrize(
+    "body,needle",
+    [
+        ('{"claims": [{"id": "c1", "ok": true}]}', "no non-empty `results`"),
+        ('{"results": [{"claim_id": "c1", "verdict": "SUPPORTED"}]}', "lacks model"),
+        (
+            '{"results": [{"claim_id": "c1", "verdict": "supported", "model": "haiku"}]}',
+            "verdict 'supported'",
+        ),
+    ],
+)
+def test_verdict_file_off_contract_is_red(tmp_path, body, needle):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    (d / ".verify" / "faithfulness.json").write_text(body, encoding="utf-8")
+    r = run_validate(d, "medium")
+    assert any("faithfulness.json" in e and needle in e for e in r.errors)
+
+
+# --- mode resolution: never refuse to validate ---------------------------------
+
+
+def test_resolve_mode_prefers_explicit(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    r = vp.Report()
+    assert vp.resolve_mode(d, "shallow", r) == "shallow"
+    assert r.warnings == []
+
+
+def test_resolve_mode_reads_frontmatter(tmp_path):
+    d = make_run(tmp_path, mode="deep", phases=FULL_SET)
+    r = vp.Report()
+    assert vp.resolve_mode(d, None, r) == "deep"
+    assert r.warnings == []
+
+
+def test_resolve_mode_infers_medium_from_artifacts_and_warns(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    for p in (d / "plan.md", *d.glob("2026-*.md")):
+        p.write_text("no frontmatter\n", encoding="utf-8")
+    r = vp.Report()
+    assert vp.resolve_mode(d, None, r) == "medium"
+    assert any("inferred" in w and "medium" in w for w in r.warnings)
+
+
+def test_resolve_mode_infers_shallow_when_no_medium_artifacts(tmp_path):
+    d = make_run(tmp_path, mode="shallow", phases=SHALLOW_SET)
+    for p in (d / "plan.md", *d.glob("2026-*.md")):
+        p.write_text("no frontmatter\n", encoding="utf-8")
+    r = vp.Report()
+    assert vp.resolve_mode(d, None, r) == "shallow"
+    assert any("inferred" in w for w in r.warnings)
+
+
+def test_resolve_mode_infers_medium_from_source_count(tmp_path):
+    d = make_run(tmp_path, mode="shallow", phases=SHALLOW_SET)
+    for p in (d / "plan.md", *d.glob("2026-*.md")):
+        p.write_text("no frontmatter\n", encoding="utf-8")
+    for i in range(2, 13):
+        (d / "sources" / f"{i:02d}_x.md").write_text("---\nurl: http://x\n---\n")
+    r = vp.Report()
+    assert vp.resolve_mode(d, None, r) == "medium"
+
+
+def test_real_research_dir_flagged_incomplete_for_deep():
+    # research/deepdive-skill-improvements is a real deep run that predates the
+    # evidence/verify/refresh phases — the gate must catch it as incomplete.
+    real = REPO / "research" / "deepdive-skill-improvements"
+    if not real.is_dir():
+        pytest.skip("sample research dir not present")
+    r = run_validate(real, "deep")
+    assert r.errors  # missing evidence/.verify/refresh_targets
+
+
+# --- state.md: the round workspace --------------------------------------------
+
+
+def test_medium_run_without_state_window_fails(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET - {"state"})
+    r = run_validate(d, "medium")
+    assert any("state.md" in e for e in r.errors)
+
+
+def test_shallow_run_needs_no_state_window(tmp_path):
+    """Control: the workspace rebuild is medium+ bookkeeping, not a universal rule."""
+    d = make_run(tmp_path, mode="shallow", phases=SHALLOW_SET)
+    r = run_validate(d, "shallow")
+    assert r.errors == []
+
+
+def test_state_window_without_gaps_section_fails(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    (d / "state.md").write_text(
+        "---\nround: 2\n---\n## Known\n- Q1 closed\n## Next\n- registry\n",
+        encoding="utf-8",
+    )
+    r = run_validate(d, "medium")
+    assert any("## Gaps" in e for e in r.errors)
+
+
+def test_state_window_over_hard_limit_fails(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    (d / "state.md").write_text(
+        "---\nround: 2\n---\n## Known\n## Gaps\n## Next\n" + "x" * (13 * 1024),
+        encoding="utf-8",
+    )
+    r = run_validate(d, "medium")
+    assert any("appended to, not rebuilt" in e for e in r.errors)
+
+
+def test_state_window_within_budget_is_silent(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    r = run_validate(d, "medium")
+    assert not any("state.md" in m for m in r.errors + r.warnings)
+
+
+# --- outline.md: the section -> claim map --------------------------------------
+
+
+def test_medium_run_without_outline_fails(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET - {"outline"})
+    r = run_validate(d, "medium")
+    assert any("outline.md" in e for e in r.errors)
+
+
+def test_outline_without_table_rows_fails(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    (d / "outline.md").write_text(
+        "# Outline\n\nразделы будут позже\n", encoding="utf-8"
+    )
+    r = run_validate(d, "medium")
+    assert any("no `| section | block | claims |` table" in e for e in r.errors)
+
+
+def test_outline_section_without_claims_fails(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    (d / "outline.md").write_text(
+        "| section | block | claims |\n|---|---|---|\n| TL;DR | F1 | c1 |\n"
+        "| Контекст | X1 | - |\n",
+        encoding="utf-8",
+    )
+    r = run_validate(d, "medium")
+    assert any("maps to no claim_id" in e for e in r.errors)
+
+
+def test_outline_citing_unknown_claim_fails(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    (d / "outline.md").write_text(
+        "| section | block | claims |\n|---|---|---|\n| TL;DR | F1 | c1; c9 |\n",
+        encoding="utf-8",
+    )
+    r = run_validate(d, "medium")
+    assert any("c9" in e and "absent from claims.csv" in e for e in r.errors)
+
+
+def test_triangulated_claim_left_out_of_report_blocks_deep(tmp_path):
+    """The synthesis gap: found and triangulated, never written down."""
+    d = make_run(tmp_path, mode="deep", phases=FULL_SET)
+    (d / "claims.csv").write_text(
+        ",".join(vp.CLAIMS_CORE) + "\n"
+        "c1,a claim,-,s01,-,own;study-x,a|q|en;b|q2|en,triangulated,high,N,-,-,-\n"
+        "c2,orphan claim,-,s01,-,own;study-y,a|q3|en;b|q4|en,triangulated,high,N,-,-,-\n",
+        encoding="utf-8",
+    )
+    r = run_validate(d, "deep")
+    assert any("never placed in the report" in e and "c2" in e for e in r.errors)
+
+
+def test_same_gap_is_a_warning_on_medium(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    (d / "claims.csv").write_text(
+        ",".join(vp.CLAIMS_CORE) + "\n"
+        "c1,a claim,-,s01,-,own;study-x,a|q|en;b|q2|en,triangulated,high,N,-,-,-\n"
+        "c2,orphan claim,-,s01,-,own;study-y,a|q3|en;b|q4|en,triangulated,high,N,-,-,-\n",
+        encoding="utf-8",
+    )
+    r = run_validate(d, "medium")
+    assert any("never placed in the report" in w for w in r.warnings)
+    assert not any("never placed in the report" in e for e in r.errors)
+
+
+def test_weak_claim_left_out_is_not_flagged(tmp_path):
+    """Control: only carrying claims (triangulated/contested) must be placed."""
+    d = make_run(tmp_path, mode="deep", phases=FULL_SET)
+    (d / "claims.csv").write_text(
+        ",".join(vp.CLAIMS_CORE) + "\n"
+        "c1,a claim,-,s01,-,own;study-x,a|q|en;b|q2|en,triangulated,high,N,-,-,-\n"
+        "c2,thin claim,-,s01,-,own,a|q3|en,data-insufficient,low,N,-,-,-\n",
+        encoding="utf-8",
+    )
+    r = run_validate(d, "deep")
+    assert not any("never placed" in e for e in r.errors)
+
+
+# --- constructs.json: Layer 4 -------------------------------------------------
+
+
+def test_medium_run_without_constructs_json_fails(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    (d / ".verify" / "constructs.json").unlink()
+    r = run_validate(d, "medium")
+    assert any("constructs.json" in e for e in r.errors)
+
+
+def test_unsourced_construct_in_memo_blocks(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    (d / ".verify" / "constructs.json").write_text(
+        '{"results": [{"name": "закон Кэмпбелла для агентов", "status": "unsourced", '
+        '"sources": [], "locations": ["memo.md"]}]}',
+        encoding="utf-8",
+    )
+    r = run_validate(d, "medium")
+    assert any("закон Кэмпбелла" in e and "unsourced" in e for e in r.errors)
+
+
+def test_unsourced_construct_outside_memo_only_warns(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    (d / ".verify" / "constructs.json").write_text(
+        '{"results": [{"name": "cold-start decay", "status": "unsourced", '
+        '"sources": [], "locations": ["E7"]}]}',
+        encoding="utf-8",
+    )
+    r = run_validate(d, "medium")
+    assert any("cold-start decay" in w for w in r.warnings)
+    assert not any("cold-start decay" in e for e in r.errors)
+
+
+def test_author_construct_is_accepted(tmp_path):
+    """Control: our own label, marked as ours, is legal — not every name needs a source."""
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    (d / ".verify" / "constructs.json").write_text(
+        '{"results": [{"name": "провенанс-разрыв", "status": "author-construct", '
+        '"sources": [], "locations": ["memo.md"]}]}',
+        encoding="utf-8",
+    )
+    r = run_validate(d, "medium")
+    assert r.errors == []
+
+
+def test_unknown_construct_status_warns(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    (d / ".verify" / "constructs.json").write_text(
+        '{"results": [{"name": "X", "status": "probably-fine", "locations": ["F1"]}]}',
+        encoding="utf-8",
+    )
+    r = run_validate(d, "medium")
+    assert any("not one of" in w for w in r.warnings)
+
+
+def test_malformed_constructs_json_is_an_error(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    (d / ".verify" / "constructs.json").write_text("{not json", encoding="utf-8")
+    r = run_validate(d, "medium")
+    assert any("not valid JSON" in e for e in r.errors)
+
+
+def test_constructs_json_without_results_is_an_error(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    (d / ".verify" / "constructs.json").write_text(
+        '{"integrity": 1.0}', encoding="utf-8"
+    )
+    r = run_validate(d, "medium")
+    assert any("no `results` list" in e for e in r.errors)
+
+
+# --- numbers.csv --------------------------------------------------------------
+
+
+def test_medium_run_without_numbers_csv_fails(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET - {"numbers"})
+    r = run_validate(d, "medium")
+    assert any("numbers.csv" in e for e in r.errors)
+
+
+def test_medium_run_without_readout_fails(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET - {"readout"})
+    r = run_validate(d, "medium")
+    assert any("readout.md" in e for e in r.errors)
+
+
+def test_shallow_run_needs_no_numbers_csv(tmp_path):
+    d = make_run(tmp_path, mode="shallow", phases=SHALLOW_SET)
+    r = run_validate(d, "shallow")
+    assert not any("numbers.csv" in e for e in r.errors)
+
+
+def test_missing_wiki_ingest_receipt_blocks_finish(tmp_path):
+    """Finish-up must have compiled the run into the wiki — at every depth."""
+    d = make_run(tmp_path, mode="shallow", phases=SHALLOW_SET - {"wiki"})
+    r = run_validate(d, "shallow")
+    assert any("wiki_ingest.json" in e for e in r.errors)
+
+
+def test_wiki_receipt_from_another_run_is_rejected(tmp_path):
+    """A copied receipt is worse than a missing one: it asserts work nobody did."""
+    d = make_run(tmp_path, mode="shallow", phases=SHALLOW_SET)
+    (d / ".verify" / "wiki_ingest.json").write_text(
+        '{"run": "some-other-slug", "ingested": "2026-07-16"}', encoding="utf-8"
+    )
+    r = run_validate(d, "shallow")
+    assert any("чужого ресёрча" in e for e in r.errors)
+
+
+def test_medium_run_without_wiki_pairs_is_blocked(tmp_path):
+    """Phase 5.7 is fail-closed: no file means the wiki was never confronted."""
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET - {"5.7"})
+    r = run_validate(d, "medium")
+    assert any("wiki_pairs.json" in e for e in r.errors)
+
+
+def test_shallow_run_does_not_require_wiki_pairs(tmp_path):
+    """5.7 is gated at medium — a shallow run still ingests, but does not adjudicate."""
+    d = make_run(tmp_path, mode="shallow", phases=SHALLOW_SET)
+    r = run_validate(d, "shallow")
+    assert not any("wiki_pairs.json" in e for e in r.errors)
+
+
+# --- source quality: a thin source is not a triangulation leg ------------------
+
+
+def _sources_dir(d: Path) -> Path:
+    sd = d / "sources"
+    for p in sd.glob("*.md"):
+        p.unlink()
+    return sd
+
+
+def _ledger(d: Path, sources_cell: str, status: str = "triangulated") -> None:
+    (d / "claims.csv").write_text(
+        ",".join(vp.CLAIMS_CORE) + "\n"
+        f"c1,a claim,-,{sources_cell},-,own;study-x,a|q|en;b|q2|en,{status},high,N,-,-,-\n",
+        encoding="utf-8",
+    )
+
+
+def test_triangulated_on_thin_sources_only_blocks_medium(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    sd = _sources_dir(d)
+    write_source(sd, "01_a", thin=True)
+    write_source(sd, "04_b", thin=True)
+    _ledger(d, "s01;s04")
+    r = run_validate(d, "medium")
+    assert any(
+        "c1 is triangulated on thin sources only" in e and "s01" in e and "s04" in e
+        for e in r.errors
+    )
+
+
+def test_same_case_only_warns_on_shallow(tmp_path):
+    d = make_run(tmp_path, mode="shallow", phases=SHALLOW_SET)
+    sd = _sources_dir(d)
+    write_source(sd, "01_a", thin=True)
+    write_source(sd, "04_b", thin=True)
+    _ledger(d, "s01;s04")
+    r = run_validate(d, "shallow")
+    assert any("triangulated on thin sources only" in w for w in r.warnings)
+    assert not any("thin sources only" in e for e in r.errors)
+
+
+def test_one_thin_among_three_only_warns(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    sd = _sources_dir(d)
+    write_source(sd, "01_a", thin=True)
+    write_source(sd, "02_b", thin=False)
+    write_source(sd, "03_c", thin=False)
+    _ledger(d, "s01|s02|s03")
+    r = run_validate(d, "medium")
+    assert any(
+        "triangulated partly on thin sources" in w and "s01" in w for w in r.warnings
+    )
+    assert not any("thin sources" in e for e in r.errors)
+
+
+def test_no_thin_sources_is_silent(tmp_path):
+    """Negative control: same claim, same ids, every source carries its quotes."""
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    sd = _sources_dir(d)
+    for stem in ("01_a", "02_b", "03_c"):
+        write_source(sd, stem, thin=False)
+    _ledger(d, "s01;s02;s03")
+    r = run_validate(d, "medium")
+    assert not any("thin" in m for m in r.errors + r.warnings)
+
+
+def test_access_partial_makes_a_quoted_source_thin(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    sd = _sources_dir(d)
+    write_source(sd, "01_a", thin=False, access="PARTIAL")
+    write_source(sd, "02_b", thin=False, access="paywalled (abstract only)")
+    _ledger(d, "s01;s02")
+    r = run_validate(d, "medium")
+    assert any("triangulated on thin sources only" in e for e in r.errors)
+
+
+def test_bare_numeric_source_ids_are_understood(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    sd = _sources_dir(d)
+    write_source(sd, "01_a", thin=True)
+    write_source(sd, "04_b", thin=True)
+    _ledger(d, "[01] [04]")
+    r = run_validate(d, "medium")
+    assert any("triangulated on thin sources only" in e for e in r.errors)
+
+
+def test_non_triangulated_claim_on_thin_sources_is_not_flagged(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    sd = _sources_dir(d)
+    write_source(sd, "01_a", thin=True)
+    write_source(sd, "02_b", thin=False)
+    write_source(sd, "03_c", thin=False)
+    write_source(sd, "04_d", thin=False)
+    _ledger(d, "s01", status="single-type")
+    r = run_validate(d, "medium")
+    assert not any("triangulated" in m for m in r.errors + r.warnings)
+
+
+def test_thin_share_over_quarter_warns(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    sd = _sources_dir(d)
+    write_source(sd, "01_a", thin=True)
+    write_source(sd, "02_b", thin=True)
+    write_source(sd, "03_c", thin=False)
+    write_source(sd, "04_d", thin=False)
+    _ledger(d, "s03;s04")
+    r = run_validate(d, "medium")
+    assert any("2 of 4 sources are thin (50%)" in w for w in r.warnings)
+
+
+def test_thin_share_under_threshold_is_silent(tmp_path):
+    """Control for the summary: 1 of 5 (20%) is below the 25% threshold."""
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    sd = _sources_dir(d)
+    write_source(sd, "01_a", thin=True)
+    for stem in ("02_b", "03_c", "04_d", "05_e"):
+        write_source(sd, stem, thin=False)
+    _ledger(d, "s02;s03")
+    r = run_validate(d, "medium")
+    assert not any("sources are thin" in w for w in r.warnings)
+
+
+def test_breadth_quota_missing_academic_blocks_medium(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET - {"breadth"})
+    write_breadth(d, types=[t if t != "Academic" else "Other" for t in BREADTH_TYPES])
+    r = run_validate(d, "medium")
+    assert any("academic sources" in e for e in r.errors)
+
+
+def test_breadth_waiver_turns_error_into_warning(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET - {"breadth"})
+    write_breadth(d, types=[t if t != "Academic" else "Other" for t in BREADTH_TYPES])
+    (d / "plan.md").write_text(
+        "---\nmode: medium\n---\nquota_waiver: academic — нет литературы по теме\n",
+        encoding="utf-8",
+    )
+    r = run_validate(d, "medium")
+    assert not any("academic sources" in e for e in r.errors)
+    assert any("academic sources" in w for w in r.warnings)
+
+
+def test_breadth_requires_candidates_pool_and_targeted_round(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET - {"breadth"})
+    write_breadth(d, candidates=20, academic_channel=False, round2=0)
+    errs = " | ".join(run_validate(d, "medium").errors)
+    assert "candidates.csv has 20 rows" in errs
+    assert "academic API" in errs
+    assert "round-2" in errs
+
+
+def test_breadth_missing_candidates_file_fails_medium_not_shallow(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET - {"breadth"})
+    write_breadth(d)
+    (d / "candidates.csv").unlink()
+    assert any("candidates.csv" in e for e in run_validate(d, "medium").errors)
+    assert not any("candidates" in e for e in run_validate(d, "shallow").errors)
+
+
+def test_source_without_card_warns(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    r = run_validate(d, "medium")
+    assert any("## Разбор" in w and "01_x.md" in w for w in r.warnings)
+    assert not any("## Разбор" in e for e in r.errors)
+
+
+def test_report_without_verdict_table_fails_medium(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    (d / "2026-07-16_landscape.md").write_text("---\nmode: medium\n---\nbody\n", encoding="utf-8")
+    assert any("Вердикт" in e for e in run_validate(d, "medium").errors)
+
+
+def test_count_waiver_is_rejected(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET - {"breadth"})
+    write_breadth(d, types=BREADTH_TYPES[:20])
+    (d / "plan.md").write_text("---\nmode: medium\n---\nquota_waiver: count — тема узкая\n", encoding="utf-8")
+    errs = " | ".join(run_validate(d, "medium").errors)
+    assert "not waivable" in errs and "sources read" in errs
+
+
+def test_budget_is_not_a_waiver_reason(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET - {"breadth"})
+    write_breadth(d, types=[t if t != "Academic" else "Other" for t in BREADTH_TYPES])
+    (d / "plan.md").write_text(
+        "---\nmode: medium\n---\nquota_waiver: academic — бюджет $6 не покрывает\n", encoding="utf-8")
+    errs = " | ".join(run_validate(d, "medium").errors)
+    assert "budget is not a reason" in errs and "academic sources" in errs
+
+
+@pytest.mark.parametrize("answer,flagged", [
+    ("По умолчанию это Fivetran.", True),
+    ("Берите управляемый сервис.", True),
+    ("Если Kafka уже есть, берите Debezium.", False),
+    ("Ниже условия выбора, а не «берите X».", False),
+    ("Не выбирайте Fivetran по умолчанию.", False),
+    ("Берите Fivetran: цена при вашем объёме $400 [s03].", False),
+])
+def test_unmeasured_default_in_answer(tmp_path, answer, flagged):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    (d / "readout.md").write_text(f"## Ответ\n\n{answer}\n\n## Делать\n\n- берите что угодно\n", encoding="utf-8")
+    hit = any("default recommendation" in e for e in run_validate(d, "medium").errors)
+    assert hit is flagged
+
+
+DRAFT = ("---\nmode: medium\n---\n## Ответ (TL;DR)\n\nставки Fivetran нет\n\n## Цена\n\nставки нет\n\n"
+         "| Гипотеза | Вердикт | Опора |\n|---|---|---|\n| H1 | подтверждена | s01 |\n")
+
+
+def write_remediation(d: Path, report: str, *, snapshot=True, log="HIGH-1 Skeptic: ставка есть\n") -> None:
+    (d / "findings").mkdir(exist_ok=True)
+    (d / "findings" / "redteam_2026-07-16.md").write_text(log, encoding="utf-8")
+    if snapshot:
+        (d / "findings" / "draft_pre_remediation.md").write_text(DRAFT, encoding="utf-8")
+    (d / "2026-07-16_landscape.md").write_text(report, encoding="utf-8")
+
+
+def remediation_msgs(d: Path) -> tuple[list[str], list[str]]:
+    r = run_validate(d, "medium")
+
+    def pick(xs: list[str]) -> list[str]:
+        return [x for x in xs if "HIGH-" in x or "remediat" in x or "red team" in x]
+
+    return pick(r.errors), pick(r.warnings)
+
+
+def test_remediation_fixed_in_body_passes(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    fixed = DRAFT.replace("ставки Fivetran нет", "порядок ~500 USD/1M MAR [s28]").replace(
+        "ставки нет", "пример вендора 424.54 USD [s28]")
+    write_remediation(d, fixed + "\n## Adversarial review\n\n- HIGH-1 → §Ответ (TL;DR), §Цена: ставка из примера\n")
+    assert remediation_msgs(d) == ([], [])
+
+
+def test_remediation_appendix_fails(tmp_path):
+    """N4 shape: body untouched, fix appended with 'поправки имеют приоритет над текстом выше'."""
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    write_remediation(d, DRAFT + "\n## Ремедиация после red team\n\nПоправки имеют приоритет над текстом выше.\n"
+                              "- HIGH-1 → §Цена: ставка 500 USD\n")
+    errs, _ = remediation_msgs(d)
+    assert any("приоритет над текстом" in e for e in errs)
+    assert any("HIGH-1" in e and "unchanged" in e for e in errs)
+
+
+def test_remediation_needs_snapshot_and_listing(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    write_remediation(d, DRAFT, snapshot=False)
+    assert any("draft_pre_remediation" in e for e in remediation_msgs(d)[0])
+    (d / "findings" / "draft_pre_remediation.md").write_text(DRAFT, encoding="utf-8")
+    assert any("not listed" in e for e in remediation_msgs(d)[0])
+
+
+def test_remediation_open_questions_and_tldr_warning(tmp_path):
+    d = make_run(tmp_path, mode="medium", phases=FULL_SET)
+    write_remediation(d, DRAFT.replace("ставки нет", "пример 424.54 USD [s28]")
+                      + "\n## Adversarial review\n\n- HIGH-1 → §Цена: пример вендора\n- H-2 → Open Questions\n",
+                      log="HIGH-1 x\n- H-2 y\n")
+    errs, warns = remediation_msgs(d)
+    assert errs == []
+    assert any("ответ (tl;dr)" in w for w in warns)
+
+
+def test_remediation_gate_skips_shallow(tmp_path):
+    d = make_run(tmp_path, mode="shallow", phases=FULL_SET)
+    write_remediation(d, DRAFT, snapshot=False)
+    assert not any("draft_pre_remediation" in e for e in run_validate(d, "shallow").errors)
