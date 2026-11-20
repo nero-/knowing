@@ -1,29 +1,30 @@
+<!-- translated from upstream/references/api_sources/INDEX.md @ e233797 — see docs/TRANSLATION.md -->
 # API sources catalog — INDEX
 
-Каталог API endpoints для прямого programmatic доступа к данным. Дополняет `stat_sources/` (HTML/web) и `channels.md` (search strategies).
+A catalog of API endpoints for direct programmatic access to data. Complements `stat_sources/` (HTML/web) and `channels.md` (search strategies).
 
-## Зачем API когда есть WebFetch?
+## Why an API when WebFetch exists?
 
-WebFetch достаёт HTML-страницу, агент её парсит. API возвращает структурированный JSON — это:
+WebFetch fetches an HTML page, the agent parses it. An API returns structured JSON — that is:
 
-- **Структурированный output** — JSON вместо парсинга HTML
-- **Bulk queries** — «дай 100 результатов» одним запросом, не 100 страниц
-- **Filtering на стороне сервера** — `?industry=fintech&country=US&min_funding=10M`
-- **Real-time data** — котировки, on-chain метрики, live feeds
-- **Меньше токенов** — JSON компактнее HTML-страницы
+- **Structured output** — JSON instead of parsing HTML
+- **Bulk queries** — «give me 100 results» in one request, not 100 pages
+- **Server-side filtering** — `?industry=fintech&country=US&min_funding=10M`
+- **Real-time data** — quotes, on-chain metrics, live feeds
+- **Fewer tokens** — JSON is more compact than an HTML page
 
-## Когда **не** использовать API
+## When **not** to use an API
 
-- WebFetch HTML уже работает и данных хватает
-- Нужен ключ + у тебя его нет → используй HTML вариант источника
-- Free tier исчерпан → fallback на HTML или альтернативный источник
-- Простой однократный lookup → проще WebSearch
+- WebFetch HTML already works and the data is sufficient
+- A key is needed + you do not have one → use the HTML version of the source
+- The free tier is exhausted → fall back to HTML or an alternative source
+- A simple one-off lookup → WebSearch is simpler
 
-## Структура каталога
+## Catalog structure
 
 ```
 api_sources/
-├── INDEX.md                    ← навигация (этот файл)
+├── INDEX.md                    ← navigation (this file)
 ├── README.md                   ← auth, free tiers, fallback protocol
 ├── search/                     ← AI/web search APIs
 │   ├── brave_search.md         Brave Search API
@@ -43,8 +44,8 @@ api_sources/
 │   ├── oecd.md                 OECD SDMX
 │   └── alpha_vantage.md        Stocks/forex/crypto prices
 ├── companies/                  ← company data
-│   ├── crunchbase.md           Crunchbase Data API (⚠️ платный, цена не публикуется)
-│   ├── opencorporates.md       OpenCorporates (⚠️ платный от £2250/год)
+│   ├── crunchbase.md           Crunchbase Data API (⚠️ paid, price not published)
+│   ├── opencorporates.md       OpenCorporates (⚠️ paid from £2250/year)
 │   └── companies_house.md      UK Companies House
 ├── crypto/                     ← on-chain & markets
 │   ├── coingecko.md            CoinGecko Public API
@@ -57,7 +58,7 @@ api_sources/
 │   ├── pypi.md                 PyPI JSON API
 │   └── npm.md                  npm Registry API
 ├── social/                     ← community signals
-│   ├── reddit.md               Reddit JSON (⚠️ OAuth обязателен с 2026, не free — см. файл)
+│   ├── reddit.md               Reddit JSON (⚠️ OAuth mandatory since 2026, not free — see the file)
 │   ├── hn_algolia.md           HN Algolia (no auth)
 │   └── lemmy.md                Lemmy ActivityPub
 ├── news/                       ← current events
@@ -72,7 +73,7 @@ api_sources/
 │   ├── uspto_odp.md            USPTO Open Data Portal (key + ID.me)
 │   ├── epo_ops.md              EPO OPS (OAuth2, 4 GB/week free)
 │   ├── epo_lod.md              EPO Linked Open Data (SPARQL, no auth)
-│   └── wipo.md                 WIPO — платный, программного free API нет
+│   └── wipo.md                 WIPO — paid, there is no free programmatic API
 ├── grants/                     ← research funding
 │   ├── nsf_awards.md           NSF Awards (no auth)
 │   ├── nih_reporter.md         NIH RePORTER v2 (no auth, POST-only)
@@ -90,12 +91,12 @@ api_sources/
 
 ### Free, no key required (priority sources for agents)
 
-Этим API не нужны ключи — агент может использовать сразу:
+These APIs need no keys — the agent can use them right away:
 
 | API | What | When |
 |---|---|---|
 | **Semantic Scholar** | 200M papers, citations | academic search |
-| **OpenAlex** | 250M scholarly works (ключ опционален, но рекомендован — 10× бюджет; см. `academic/openalex.md`) | citation graph |
+| **OpenAlex** | 250M scholarly works (the key is optional but recommended — 10× budget; see `academic/openalex.md`) | citation graph |
 | **CrossRef** | 130M DOIs | DOI metadata |
 | **arXiv** | preprints | physics/CS/math papers |
 | **DefiLlama** | DeFi TVL/protocols | crypto research |
@@ -107,24 +108,24 @@ api_sources/
 | **PubMed E-utilities** | biomedical literature | medical search |
 | **GDELT** | global events | news/sentiment |
 | **PyPI / npm** | package metadata | tech stack research |
-| **NSF Awards** | US research grants с 1969 | кто финансирует тему, суммы |
-| **NIH RePORTER** | биомед-гранты NIH с FY1985 | финансирование медицинских тем |
-| **Grants.gov** | открытые конкурсы US federal | будущие возможности, не выданное |
-| **EPO Linked Open Data** | патентные публикации, SPARQL | патентная активность без ключа |
+| **NSF Awards** | US research grants since 1969 | who funds the topic, the amounts |
+| **NIH RePORTER** | NIH biomedical grants since FY1985 | funding for medical topics |
+| **Grants.gov** | open US federal competitions | future opportunities, not yet awarded |
+| **EPO Linked Open Data** | patent publications, SPARQL | patent activity without a key |
 
 ### Free with key (one-time setup, then automatic)
 
 | API | Free tier | Setup |
 |---|---|---|
 | **FRED** | unlimited | https://fred.stlouisfed.org/docs/api/api_key.html |
-| **USPTO ODP** | 5M calls/week metadata, 1.2M documents | https://developer.uspto.gov (нужен ID.me-верифицированный аккаунт) |
-| **EPO OPS** | 4 GB/week, ~1 Мбит/сек | https://developers.epo.org (OAuth2 client_credentials) |
+| **USPTO ODP** | 5M calls/week metadata, 1.2M documents | https://developer.uspto.gov (an ID.me-verified account is required) |
+| **EPO OPS** | 4 GB/week, ~1 Mbit/sec | https://developers.epo.org (OAuth2 client_credentials) |
 | **GitHub** | 5000 req/h authenticated | https://github.com/settings/tokens |
 | **Stack Exchange** | 10000 req/day | https://stackapps.com/apps/oauth/register |
 | **NewsAPI** | 100 req/day | https://newsapi.org/register |
 | **Alpha Vantage** | 25 req/day | https://www.alphavantage.co/support/#api-key |
 | **Etherscan** | 5 req/sec | https://etherscan.io/myapikey |
-| **Reddit JSON (OAuth)** | не подтверждено на 2026-08-17 — анонимный `.json` закрыт (403, live-проверено ~05.2026); выдача новых OAuth script-приложений сузилась, реальный лимит для personal use не подтверждён | https://www.reddit.com/prefs/apps → `REDDIT_CLIENT_ID`/`REDDIT_CLIENT_SECRET`, см. `social/reddit.md` |
+| **Reddit JSON (OAuth)** | not confirmed as of 2026-08-17 — anonymous `.json` is closed (403, live-verified ~05.2026); the issuance of new OAuth script apps has narrowed, the real limit for personal use is not confirmed | https://www.reddit.com/prefs/apps → `REDDIT_CLIENT_ID`/`REDDIT_CLIENT_SECRET`, see `social/reddit.md` |
 
 ### Paid (powerful but cost money)
 
@@ -134,11 +135,11 @@ api_sources/
 | **Tavily** | $0/1k free, then paid | Built for AI agents, returns answers |
 | **Exa.ai** | $5/1k searches | Semantic search, neural |
 | **SerpAPI** | $50/mo | Google/Bing/DuckDuckGo unified |
-| **Crunchbase** | цена не публикуется, custom/contact-sales (старая цифра "$99/mo" не подтвердилась на 2026-08-17, см. `companies/crunchbase.md`) | Company data, funding rounds |
-| **OpenCorporates** | от £2250/год (Essentials); free-доступ по заявке для journalists/NGO/anti-corruption groups | Company registry data, 130+ countries |
-| **WIPO** | 600–2000 CHF/год SOAP, 400–19500 CHF/год bulk | программного бесплатного доступа нет вообще; веб-UI отдаёт CAPTCHA |
+| **Crunchbase** | price not published, custom/contact-sales (the old figure "$99/mo" was not confirmed as of 2026-08-17, see `companies/crunchbase.md`) | Company data, funding rounds |
+| **OpenCorporates** | from £2250/year (Essentials); free access on application for journalists/NGO/anti-corruption groups | Company registry data, 130+ countries |
+| **WIPO** | 600–2000 CHF/year SOAP, 400–19500 CHF/year bulk | there is no free programmatic access at all; the web UI serves a CAPTCHA |
 
-**Мёртвое, не тратить время:** `search.patentsview.org` — сервис закрылся 20.03.2026, домен не резолвится; данные ушли в USPTO ODP bulk. Подробности — `patents/uspto_odp.md`, раздел Fallback.
+**Dead, do not waste time:** `search.patentsview.org` — the service shut down on 20.03.2026, the domain does not resolve; the data moved to USPTO ODP bulk. Details — `patents/uspto_odp.md`, the Fallback section.
 
 ## How to navigate this catalog
 
@@ -150,6 +151,6 @@ api_sources/
 
 ## See also
 
-- `channels.md` → channel **`api-direct`** — стратегия использования APIs в workflow
-- `stat_sources/` → HTML/web версия тех же источников (для fallback когда API не работает)
-- `subagents_v2.md` → как давать суб-агентам инструкции по API queries
+- `channels.md` → channel **`api-direct`** — the strategy for using APIs in the workflow
+- `stat_sources/` → the HTML/web version of the same sources (for fallback when the API does not work)
+- `subagents_v2.md` → how to give sub-agents instructions on API queries

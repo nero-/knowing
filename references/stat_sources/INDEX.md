@@ -1,21 +1,22 @@
+<!-- translated from upstream/references/stat_sources/INDEX.md @ e233797 — see docs/TRANSLATION.md -->
 # Stat sources catalog — INDEX
 
-База знаний по статистическим и информационным источникам для deepdive. Прогрессивная подгрузка — загружай только нужные файлы.
+A knowledge base of statistical and informational sources for deepdive. Progressive loading — load only the files you need.
 
-## Как пользоваться
+## How to use
 
-1. Прочитай этот INDEX (всегда первым).
-2. Определи нужные категории — `core/*` или `industries/*`.
-3. Загружай только нужные файлы — не весь каталог.
-4. В `plan.md` Information sourcing strategy указывай конкретные источники.
+1. Read this INDEX (always first).
+2. Identify the categories you need — `core/*` or `industries/*`.
+3. Load only the files you need — not the whole catalog.
+4. In `plan.md` Information sourcing strategy, name the concrete sources.
 
-## Структура
+## Structure
 
 ```
 stat_sources/
-├── INDEX.md                  ← ты здесь
-├── README.md                 ← как добавлять/обновлять источники
-├── core/                     ← cross-industry источники
+├── INDEX.md                  ← you are here
+├── README.md                 ← how to add/update sources
+├── core/                     ← cross-industry sources
 │   ├── gov_macro.md          government statistics, macro, sentiment, trade, tax
 │   ├── companies_public.md   SEC filings, public company data
 │   ├── companies_private.md  Crunchbase, startups, local registries
@@ -52,56 +53,56 @@ stat_sources/
     └── infrastructure.md     public infra, OECD
 ```
 
-## Когда какой файл читать
+## Which file to read when
 
-### Если ресёрч про macro / strana / GDP / inflation
+### If the research is about macro / country / GDP / inflation
 → `core/gov_macro.md`
 
-### Если ресёрч про конкретную public company
+### If the research is about a specific public company
 → `core/companies_public.md` (SEC filings, financials)
 
-### Если ресёрч про startup / privately held
+### If the research is about a startup / privately held company
 → `core/companies_private.md` (Crunchbase, registries)
 
-### Если ресёрч про industry-wide trends, market size
-→ `core/consulting_industry.md` + соответствующий `industries/<industry>.md`
+### If the research is about industry-wide trends, market size
+→ `core/consulting_industry.md` + the corresponding `industries/<industry>.md`
 
-### Если ресёрч про apps / SaaS / digital products
+### If the research is about apps / SaaS / digital products
 → `core/consumer_digital.md`
 
-### Если ресёрч про конкретную индустрию
-→ `industries/<industry>.md` (точечно)
+### If the research is about a specific industry
+→ `industries/<industry>.md` (targeted)
 
-### Если ресёрч про крипто/web3
+### If the research is about crypto/web3
 → `core/crypto.md`
 
-### Если ресёрч про здоровье/медицину
-→ `core/health.md` + (если pharma) `industries/pharma.md`
+### If the research is about health/medicine
+→ `core/health.md` + (if pharma) `industries/pharma.md`
 
-### Если ресёрч про образование
+### If the research is about education
 → `core/education.md`
 
-### Если ресёрч про климат/окружающую среду
-→ `core/climate_env.md` + (если sustainability) `industries/esg_sustainability.md`
+### If the research is about climate/the environment
+→ `core/climate_env.md` + (if sustainability) `industries/esg_sustainability.md`
 
-### Если ресёрч про науку / citations / replication
+### If the research is about science / citations / replication
 → `core/science.md`
 
-### Если ресёрч про транспорт / путешествия
-→ `core/transport_travel.md` + (если logistics) `industries/logistics.md`
+### If the research is about transport / travel
+→ `core/transport_travel.md` + (if logistics) `industries/logistics.md`
 
-### Если ресёрч про спорт / фитнес
+### If the research is about sport / fitness
 → `core/sports_fitness.md`
 
-### Если ресёрч про медиа (фильмы, музыка, gaming)
+### If the research is about media (film, music, gaming)
 → `core/media_entertainment.md`
 
-### Если ищем raw datasets для analysis
+### If we are looking for raw datasets for analysis
 → `core/data_aggregators.md`
 
-## Template записи источника
+## Source entry template
 
-Каждая запись следует этой структуре:
+Every entry follows this structure:
 
 ```markdown
 ### <Source Name>
@@ -150,11 +151,11 @@ stat_sources/
   - PARTIAL: ~70 (25%)
   - PAYWALL with summary: ~20 (7%)
 
-## Когда добавлять новый источник в каталог
+## When to add a new source to the catalog
 
-Не каждое использование требует добавления. Добавляй только если:
-- Источник будет реально полезен в ≥2 будущих ресёрчах
-- Покрывает gap в текущем каталоге
-- Имеет известный URL и data quality assessment
+Not every use requires an addition. Add only if:
+- The source will be genuinely useful in ≥2 future research runs
+- It covers a gap in the current catalog
+- It has a known URL and a data quality assessment
 
-Если используешь one-off источник для текущего ресёрча — записывай в `sources/NN.md` ресёрча, не в каталог.
+If you use a one-off source for the current research — record it in the research's `sources/NN.md`, not in the catalog.

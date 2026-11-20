@@ -1,110 +1,111 @@
-# Subagents v2 — параллельный поиск через Agent tool
+<!-- translated from upstream/references/subagents_v2.md @ e233797 — see docs/TRANSLATION.md -->
+# Subagents v2 — parallel search via the Agent tool
 
-## Содержание
+## Contents
 
-- Архитектура
-- Какой subagent_type
-- Какую модель выбрать (model routing)
-- Параллелизм
-- Промпт суб-агенту — шаблон
-- После возврата суб-агентов — что делает главный поток
-- Антипаттерны
-- Когда НЕ запускать суб-агентов
+- Architecture
+- Which subagent_type
+- Which model to choose (model routing)
+- Parallelism
+- The prompt to a sub-agent — template
+- After the sub-agents return — what the main thread does
+- Anti-patterns
+- When NOT to launch sub-agents
 
-Применяется в режимах **medium** (2–3 суб-агента) и **deep** (4–5).
+Applies in **medium** (2–3 sub-agents) and **deep** (4–5) modes.
 
-`<SKILL_DIR>` = абсолютный путь к скиллу, обычно `$HOME/.claude/skills/deepdive` (главная раскрывает `$HOME` и подставляет при вызове). Пути к файлам скилла в брифах агентов пишутся как `<SKILL_DIR>/…`.
+`<SKILL_DIR>` = the absolute path to the skill, usually `$HOME/.claude/skills/deepdive` (the main thread expands `$HOME` and substitutes it at call time). Paths to skill files in agent briefs are written as `<SKILL_DIR>/…`.
 
-## Архитектура
+## Architecture
 
 ```
-Главный поток (assistant):
-  - формирует план, разбивает тему на подтемы
-  - назначает каждому агенту диапазон номеров источников (s01-s09, s10-s19, ...)
-  - запускает суб-агентов в ОДНОМ сообщении (параллель)
-  - получает ТОЛЬКО индекс-строки для sources.csv (URL/title/type/date/scores/
-    subquestion_ids/файл) — не полные тексты
-  - мёржит sources.csv, дедуплицирует по URL между диапазонами
-  - заполняет claims.csv из индекс-строк + заявленных claim'ов
-  - триангулирует по claims.csv, синтезирует
+Main thread (assistant):
+  - builds the plan, splits the topic into subtopics
+  - assigns each agent a range of source numbers (s01-s09, s10-s19, ...)
+  - launches the sub-agents in ONE message (parallel)
+  - receives ONLY index rows for sources.csv (URL/title/type/date/scores/
+    subquestion_ids/file) — not full texts
+  - merges sources.csv, dedups by URL across ranges
+  - fills claims.csv from the index rows + declared claims
+  - triangulates over claims.csv, synthesizes
 
-Суб-агент (subagent_type=deepdive-fetcher, свой диапазон NN):
-  - читает свой промпт (включая закреплённый диапазон номеров)
-  - делает WebSearch + WebFetch
-  - оценивает каждый источник по шкале сам (не отдельный scoring pass — H7)
-  - ПИШЕТ полные файлы sources/NN_slug.md в своём диапазоне (Write — параллельно,
-    без конфликтов, т.к. диапазоны не пересекаются)
-  - возвращает в главный поток ТОЛЬКО индекс-строки (компактно — полные тексты
-    источников через главный контекст не проходят)
+Sub-agent (subagent_type=deepdive-fetcher, its own range NN):
+  - reads its prompt (including the pinned range of numbers)
+  - does WebSearch + WebFetch
+  - scores each source itself (no separate scoring pass — H7)
+  - WRITES full sources/NN_slug.md files in its range (Write — in parallel,
+    without conflicts, since the ranges do not overlap)
+  - returns to the main thread ONLY index rows (compactly — full source
+    texts do not pass through the main context)
 ```
 
-Так главный поток не раздувается сырыми текстами источников (только компактные индекс-строки), а параллельная запись `sources/NN.md` не конфликтует, потому что у каждого агента свой непересекающийся диапазон номеров.
+This way the main thread is not bloated by raw source texts (only compact index rows), and the parallel writing of `sources/NN.md` does not conflict, because every agent has its own non-overlapping range of numbers.
 
-## Какой subagent_type
+## Which subagent_type
 
-- **`deepdive-fetcher`** — дефолт для fetch+save (Phase 4.1; Haiku, tools WebSearch/WebFetch/Read/Write/Bash/Glob/Grep, maxTurns 40). Нужен `Write`, чтобы агент сам сохранял `sources/NN.md` в своём диапазоне номеров, а не передавал полные тексты обратно в главный поток. Каждому агенту — явный диапазон: агент №1 → `s01-s09`, №2 → `s10-s19`, и т.д. (см. промпт-шаблон ниже, поле `SOURCE ID RANGE`).
-- **`explore-haiku`** (read-only, Haiku) — только для чистой discovery-разведки БЕЗ сохранения файлов (например, Phase 3.5 capability discovery или предварительная разведка «сколько вообще есть материала» до того как решили дробить на подтемы). `Explore`/`explore-haiku` не пишет файлы; как только агенту нужно писать `sources/NN.md` — это `deepdive-fetcher`.
-- **`deepdive-scout`** (Haiku) и **`deepdive-redteam`** (Opus, high, read-only) — специализированные агенты deepdive; red team запускать только как `subagent_type: deepdive-redteam`.
-- **`Plan`** — НЕ для поиска. В deepdive не использовать.
+- **`deepdive-fetcher`** — the default for fetch+save (Phase 4.1; Haiku, tools WebSearch/WebFetch/Read/Write/Bash/Glob/Grep, maxTurns 40). `Write` is needed so that the agent saves `sources/NN.md` itself within its range of numbers, instead of passing full texts back into the main thread. Every agent gets an explicit range: agent #1 → `s01-s09`, #2 → `s10-s19`, etc. (see the prompt template below, field `SOURCE ID RANGE`).
+- **`explore-haiku`** (read-only, Haiku) — only for pure discovery reconnaissance WITHOUT saving files (for example, Phase 3.5 capability discovery or a preliminary reconnaissance «how much material is there at all» before deciding to split into subtopics). `Explore`/`explore-haiku` does not write files; as soon as an agent needs to write `sources/NN.md` — that is `deepdive-fetcher`.
+- **`deepdive-scout`** (Haiku) and **`deepdive-redteam`** (Opus, high, read-only) — specialised deepdive agents; launch the red team only as `subagent_type: deepdive-redteam`.
+- **`Plan`** — NOT for search. Do not use it in deepdive.
 
-## Какую модель выбрать (model routing)
+## Which model to choose (model routing)
 
-Перед запуском суб-агентов читай `model_routing.md`: там матрица фаза × подзадача → исполнитель, а эта выдержка без неё неполна.
+Before launching sub-agents, read `model_routing.md`: it holds the phase × subtask → executor matrix, and this excerpt is incomplete without it.
 
-Краткая выдержка для Phase 4.1 (launch sub-agents):
+A short excerpt for Phase 4.1 (launch sub-agents):
 
-| Тип подзадачи sub-agent'а | Исполнитель | Модель / Effort |
+| Subtask type of the sub-agent | Executor | Model / Effort |
 |---|---|---|
 | Web search + metadata (web-general/news/forum) | `deepdive-fetcher` | haiku / medium (frontmatter) |
-| Read long source + extract quotes | `deepdive-fetcher` | haiku / medium (окно 1M) |
+| Read long source + extract quotes | `deepdive-fetcher` | haiku / medium (1M window) |
 | Academic / preprint-servers | `deepdive-fetcher` | haiku / medium |
 | API-direct (curl + jq) | `deepdive-fetcher` | haiku / medium |
-| Code analysis (clone + grep) | `deepdive-fetcher` собирает факты и пути, выводы — `main` | haiku / medium |
+| Code analysis (clone + grep) | `deepdive-fetcher` gathers facts and paths, conclusions — `main` | haiku / medium |
 | Heavy reasoning subtask | `main` | — |
 
-**Default если не уверен** → `deepdive-fetcher`.
+**Default if unsure** → `deepdive-fetcher`.
 
-Модель и effort `deepdive-fetcher` записаны в его frontmatter; вызов их не передаёт, чтобы настройка жила в одном месте. Эскалация после отказа или провала Haiku — `general-purpose` с явными `model: "sonnet"`, `effort: "high"`, см. `model_routing.md` «Как передать модель».
+The model and effort of `deepdive-fetcher` are recorded in its frontmatter; the call does not pass them, so that the setting lives in one place. Escalation after a refusal or a Haiku failure — `general-purpose` with explicit `model: "sonnet"`, `effort: "high"`, see `model_routing.md` «How to pass the model into the `Agent` tool».
 
 ```
 Agent({
-  subagent_type: "deepdive-fetcher",   // fetch+save нужен Write, см. выше
+  subagent_type: "deepdive-fetcher",   // fetch+save needs Write, see above
   description: "...",
   prompt: "..."
 })
 ```
 
-## Параллелизм
+## Parallelism
 
-В одном сообщении ассистента — ВСЕ Agent calls одновременно.
+In one assistant message — ALL Agent calls simultaneously.
 
-Если суб-агентов 4+ — запускай с `run_in_background: true`:
-- Реальный параллелизм, не очередь.
-- Уведомления при завершении каждого — не нужно polling.
-- Можно начинать сборку результатов по мере поступления.
-- Оговорка: фоновые субагенты получают урезанный набор инструментов — перед запуском fetch в фоне проверить, что нужные Write/WebFetch доступны; если не проверено — запускать на переднем плане.
+If there are 4+ sub-agents — launch with `run_in_background: true`:
+- Real parallelism, not a queue.
+- Notifications when each one finishes — no polling needed.
+- You can start assembling the results as they arrive.
+- Caveat: background sub-agents get a trimmed tool set — before launching a fetch in the background, check that the needed Write/WebFetch are available; if it has not been checked — launch in the foreground.
 
-Если 2 суб-агента — можно без background (быстрее на круг).
+If there are 2 sub-agents — you can do without background (faster per round).
 
-## Промпт суб-агенту — шаблон
+## The prompt to a sub-agent — template
 
-**Источник содержимого промпта.** Промпт суб-агента **НЕ пишется с нуля** — он собирается из готового `plan.md`:
+**Source of the prompt's content.** The sub-agent's prompt is **NOT written from scratch** — it is assembled from the ready `plan.md`:
 
-- `SUBTOPIC` ← плановая подтема (из `plan.md` секция 11 — таблица «Подтемы ↔ Блоки mapping»)
-- `BLOCKS THIS SUBTOPIC FEEDS` ← из той же таблицы (под какие блоки собираем)
-- `HYPOTHESES TO TEST` ← из `plan.md` секция 9 (только релевантные для подтемы)
-- `CHANNELS TO USE` ← из `plan.md` секция 12 после Phase 4.0 Source Dispatch: уже разложено на **primary / secondary / fallback** через `source_dispatch.md` matrix. Суб-агент НЕ выбирает каналы сам — следует уже зафиксированной dispatch-стратегии.
-- `STAT-SOURCES TO USE` ← из той же секции 12 → stat-источники (конкретные файлы из `stat_sources/`)
-- `API ENDPOINTS TO USE` ← из той же секции 12 → конкретные API из `api_sources/` (с пометкой какие auth-env-vars нужны)
-- `DISCOVERY EXECUTED` ← из секции 12: что уже было найдено через awesome-lists registry / GitHub topics / HuggingFace на шаге 4.0 — суб-агент может на это опираться, не повторять discovery впустую
-- `CRITICAL GAPS` ← из секции 12 → critical gaps to address для этой подтемы
-- `SOURCE ID RANGE` ← закреплённый за этим агентом диапазон номеров источников, назначает главный поток ПЕРЕД launch: агент №1 → `s01-s09`, №2 → `s10-s19`, №3 → `s20-s29`, и т.д. (шаг по 9-10 номеров с запасом). Диапазоны не пересекаются — это устраняет конфликты при параллельной записи `sources/NN.md`.
+- `SUBTOPIC` ← the planned subtopic (from `plan.md` section 11 — the «Subtopic ↔ Blocks mapping» table)
+- `BLOCKS THIS SUBTOPIC FEEDS` ← from the same table (which blocks we are gathering for)
+- `HYPOTHESES TO TEST` ← from `plan.md` section 9 (only those relevant to the subtopic)
+- `CHANNELS TO USE` ← from `plan.md` section 12 after Phase 4.0 Source Dispatch: already laid out into **primary / secondary / fallback** via the `source_dispatch.md` matrix. The sub-agent does NOT choose channels itself — it follows the already fixed dispatch strategy.
+- `STAT-SOURCES TO USE` ← from the same section 12 → stat sources (concrete files from `stat_sources/`)
+- `API ENDPOINTS TO USE` ← from the same section 12 → concrete APIs from `api_sources/` (noting which auth-env-vars are needed)
+- `DISCOVERY EXECUTED` ← from section 12: what was already found via the awesome-lists registry / GitHub topics / HuggingFace at step 4.0 — the sub-agent can build on that, not repeat the discovery in vain
+- `CRITICAL GAPS` ← from section 12 → critical gaps to address for this subtopic
+- `SOURCE ID RANGE` ← the range of source numbers pinned to this agent, assigned by the main thread BEFORE launch: agent #1 → `s01-s09`, #2 → `s10-s19`, #3 → `s20-s29`, etc. (a step of 9-10 numbers with headroom). The ranges do not overlap — this removes conflicts during the parallel writing of `sources/NN.md`.
 
-Так главный поток не дублирует работу плана и обеспечивает прозрачность: пользователь в plan.md видит точно тот же brief что и агент.
+This way the main thread does not duplicate the plan's work and provides transparency: in plan.md the user sees exactly the same brief as the agent.
 
-Каждый промпт **самодостаточный** — суб-агент не видит контекста основного диалога.
+Every prompt is **self-contained** — the sub-agent does not see the context of the main dialogue.
 
-**Язык промпта.** Если подтема — англоязычные источники (международные институции, tech, академические) — пиши на английском. Если рус-сегмент — на русском. Качество ответов суб-агента лучше при совпадении языка промпта и языка источников.
+**Prompt language.** If the subtopic is English-language sources (international institutions, tech, academic) — write in English. If it is the RU segment — in Russian. The quality of the sub-agent's answers is better when the prompt language and the language of the sources match.
 
 ### EN template
 
@@ -432,49 +433,49 @@ claim_candidates / систем), три главных gaps, оппозиция
   записанных файлах, повторный возврат раздувает контекст главного потока.
 ```
 
-## После возврата суб-агентов — что делает главный поток
+## After the sub-agents return — what the main thread does
 
-1. **Парсинг JSON.** Читай `agent_reports/<id>.json` python-скриптом (`json.load`), в контекст — только счётчики, не сам файл. Нет файла или мусор — попроси агента перезаписать файл, не интерпретируй сам. Ожидай `source_index` (компактные строки) + `claim_candidates` — НЕ полные тексты источников (их агент уже записал сам, см. выше).
+1. **Parsing the JSON.** Read `agent_reports/<id>.json` with a python script (`json.load`), into the context — only the counters, not the file itself. No file or garbage — ask the agent to rewrite the file, do not interpret it yourself. Expect `source_index` (compact rows) + `claim_candidates` — NOT full source texts (the agent already wrote them itself, see above).
 
-2. **Дедупликация по URL — и замер `overlap_rate` (не выбрасывай дубль молча).** Если два суб-агента нашли один и тот же URL — это ОДИН источник: оставить файл с лучшим scoring, вторую запись пометить дублем в `sources.csv`. Но сам факт совпадения — **самая ценная диагностика раунда, и она пропадает, если дубль просто удалить**.
+2. **Dedup by URL — and measuring `overlap_rate` (do not throw the duplicate away silently).** If two sub-agents found the same URL — it is ONE source: keep the file with the better scoring, mark the second record as a duplicate in `sources.csv`. But the very fact of a match is **the most valuable diagnostic of the round, and it disappears if the duplicate is simply deleted**.
 
-   Агенты низкодисперсны: их различают только контекст, скаффолд и модель. Совпали все три — совпадут и действия (Anthropic Frontier Red Team, 13.08.2026: 18 из 30 агентов создали ветку с одинаковым именем, ни одному этого не задавали). Твои fetch-агенты получают один шаблон промпта, одну модель и один поисковый индекс — различаются только подтемой. Поэтому:
+   Agents are low-dispersion: only the context, the scaffold and the model distinguish them. If all three coincided — the actions will coincide too (Anthropic Frontier Red Team, 13.08.2026: 18 of 30 agents created a branch with the same name, not one of them was asked to). Your fetch agents receive one prompt template, one model and one search index — only the subtopic differs. Therefore:
 
    ```
-   overlap_rate = (URL, найденные >1 агентом) / (уникальные URL раунда)
+   overlap_rate = (URLs found by >1 agent) / (unique URLs of the round)
    ```
 
-   Запиши его в `plan.md` секцию 15 (notes) за каждый раунд и трактуй так:
-   - **overlap_rate > 0.3** — агенты искали одинаково, разнообразие источников фиктивное. **Обязательна query-мутация** в следующем раунде (RU↔EN, смена канала, другая терминология) плюс разведение агентов по осям поиска, а не только по подтемам.
-   - **overlap_rate < 0.05 при высоком novelty** — здоровое разведение, продолжай как есть.
-   - **overlap_rate = 0 на всех раундах** — проверь, что агенты вообще ищут в пересекающихся областях; ноль пересечений при широкой теме чаще означает, что каждый агент нашёл случайную выборку, а не что они хорошо разведены.
+   Write it into `plan.md` section 15 (notes) for every round and treat it as follows:
+   - **overlap_rate > 0.3** — the agents searched alike, source diversity is fictitious. A query mutation is **mandatory** in the next round (RU↔EN, channel change, other terminology) plus separating the agents along search axes, and not only by subtopics.
+   - **overlap_rate < 0.05 with high novelty** — healthy separation, continue as is.
+   - **overlap_rate = 0 on all rounds** — check that the agents are searching in overlapping areas at all; zero overlap on a broad topic more often means that each agent found a random sample, not that they are well separated.
 
-   Совпадение URL между агентами — сигнал конформизма, а не «удачная валидация находки».
+   A URL match between agents is a signal of conformism, not a «lucky validation of the finding».
 
-3. **Мёрж `sources.csv`** из всех `source_index` — файлы уже на диске (агенты сами их записали в своих диапазонах), главный поток здесь только сводит индекс, не переписывает `sources/NN.md`.
+3. **Merge of `sources.csv`** from all `source_index` — the files are already on disk (the agents wrote them themselves within their ranges), here the main thread only consolidates the index, it does not rewrite `sources/NN.md`.
 
-4. **Заполнение `claims.csv`** из всех `claim_candidates` (Phase 5 — см. `source_scoring.md` раздел claims-ledger). Смёржить дублирующиеся claim'ы от разных агентов (если тезис один и тот же — объединить sources/source_types в одну строку).
+4. **Filling `claims.csv`** from all `claim_candidates` (Phase 5 — see `source_scoring.md`, the claims-ledger section). Merge duplicate claims from different agents (if the thesis is one and the same — combine sources/source_types into one row).
 
-5. **Проверка периметра записи (машинная, не на доверии).** Диапазон номеров держится только текстом промпта — у агента есть `Write` и изолированный контекст. После возврата суб-агентов сверь фактическое содержимое `sources/` с выданными диапазонами:
+5. **Write-perimeter check (machine, not on trust).** The range of numbers is held only by the prompt text — the agent has `Write` and an isolated context. After the sub-agents return, reconcile the actual contents of `sources/` with the ranges handed out:
 
    ```bash
    ls research/<slug>/sources/ | grep -oE '^[0-9]+' | sort -n | uniq
    ```
 
-   Файл с номером вне всех выданных диапазонов ⇒ агент вышел за периметр ⇒ его результат невалиден: файл не принимается в `sources.csv`, строка помечается в `plan.md` §15, при повторе — агент перезапускается с сужённой задачей. Это проверяется и на finish-up (`validate_phases.py`). Границу должен держать механизм, а не вежливость модели.
+   A file with a number outside all the ranges handed out ⇒ the agent went outside the perimeter ⇒ its result is invalid: the file is not accepted into `sources.csv`, the row is flagged in `plan.md` §15, on a repeat — the agent is restarted with a narrowed task. This is checked at finish-up too (`validate_phases.py`). The boundary must be held by a mechanism, not by the model's politeness.
 
-6. **Проверка покрытия:**
-   - Сколько типов источников? (нужно ≥4)
-   - Найдена ли оппозиция? (нужна минимум одна)
-   - Все ли гипотезы получили evidence? (нужно ≥3 источника на гипотезу)
-   - Сколько строк `claims.csv` НЕ triangulated? → это вход в gap-волну (см. `phases/p5_claims.md` «Gap-волна»).
+6. **Coverage check:**
+   - How many source types? (≥4 needed)
+   - Was opposition found? (at least one needed)
+   - Did all hypotheses receive evidence? (≥3 sources per hypothesis needed)
+   - How many `claims.csv` rows are NOT triangulated? → this is the entry into the gap wave (see `phases/p5_claims.md` «Gap wave»).
 
-7. **Пересборка окна раунда — `state.md`** (medium/deep; правило в `phases/p4_search.md`,
-   «Round workspace»). Всё выше главный поток проделал в контексте, где уже лежат
-   итоги всех агентов этого раунда — а решение о следующем раунде принимается в том же
-   окне, ещё и поверх предыдущих. Поэтому перед следующим раундом окно
-   **пересобирается**: `state.md` ПЕРЕЗАПИСЫВАЕТСЯ (не дописывается) из итогов, а
-   планирование идёт по нему.
+7. **Rebuilding the round window — `state.md`** (medium/deep; the rule is in `phases/p4_search.md`,
+   «Round workspace»). The main thread has done everything above in a context where the
+   results of all this round's agents already lie — and the decision about the next round is taken in that same
+   window, and on top of the previous ones at that. Therefore before the next round the window
+   is **rebuilt**: `state.md` is REWRITTEN (not appended to) from the results, and
+   planning proceeds from it.
 
    ```markdown
    ---
@@ -482,52 +483,52 @@ claim_candidates / систем), три главных gaps, оппозиция
    mode: medium
    ---
    ## Known
-   - Q1 закрыт: ставка 4.2% [s03][s07] (CL2, triangulated)
-   - Q2 частично: есть 2024, нет primary (CL5, single-root)
-   - Q3 закрыт отрицательно: реестр не ведётся с 2019 [s11]
+   - Q1 closed: rate 4.2% [s03][s07] (CL2, triangulated)
+   - Q2 partial: the 2024 figure exists, no primary (CL5, single-root)
+   - Q3 closed negatively: the registry has not been maintained since 2019 [s11]
    ## Gaps
-   - Q2: primary-реестр не найден, канал `registry` не отработан
-   - Q4: пусто на EN, RU-терминология не пробована
+   - Q2: primary registry not found, the `registry` channel not worked
+   - Q4: empty in EN, the RU terminology not tried
    ## Next
-   - раунд 3: 2 агента — registry по Q2 (s20-s24), RU-мутация по Q4 (s25-s29)
+   - round 3: 2 agents — registry for Q2 (s20-s24), RU mutation for Q4 (s25-s29)
    ```
 
-   Правила:
-   - **Известное — статусами, не содержанием.** Строка `Known` ссылается на
-     `claim_id`/`[sNN]`; содержание живёт в `sources/` и `evidence/`. Как только в
-     `state.md` появляются абзацы из источников, он превращается во второй транскрипт
-     — ровно то, от чего пересобирается окно. Бюджет ≤6 КБ, машинно проверяется на
-     finish-up (`validate_phases.py`: >12 КБ — ошибка).
-   - **Отрицательный результат — тоже `Known`.** «Реестр не ведётся» закрывает
-     подвопрос; выпав из окна, он вернётся как «надо поискать реестр».
-   - **`Gaps` — единственный канал в следующий раунд.** Агент раунда N+1 получает
-     свою дыру, НЕ чужие `Known`: запрет на обмен находками (см. Антипаттерны ниже)
-     пересборкой окна не отменяется. Экономия контекста оркестратора не должна
-     открывать канал конформизма.
-   - **`Next` пишется с диапазонами id** — тогда периметр записи (шаг 5) проверяем и
-     на следующем раунде.
-   - История раундов не теряется: она в `deviations.md` (триггеры, novelty,
-     circuit breaker) и `plan.md` §15 (overlap_rate, наблюдения). `state.md` — окно, а
-     не журнал.
+   Rules:
+   - **The known — by statuses, not by content.** A `Known` line references
+     `claim_id`/`[sNN]`; the content lives in `sources/` and `evidence/`. As soon as paragraphs from sources
+     appear in `state.md`, it turns into a second transcript
+     — exactly what the window is rebuilt away from. Budget ≤6 KB, machine-checked at
+     finish-up (`validate_phases.py`: >12 KB — an error).
+   - **A negative result is also `Known`.** «The registry is not maintained» closes the
+     subquestion; having dropped out of the window, it will come back as «we should look for a registry».
+   - **`Gaps` is the only channel into the next round.** The agent of round N+1 receives
+     its own hole, NOT someone else's `Known`: the ban on exchanging findings (see Anti-patterns below)
+     is not lifted by rebuilding the window. Saving the orchestrator's context must not
+     open a channel of conformism.
+   - **`Next` is written with id ranges** — then the write perimeter (step 5) is checked in
+     the next round too.
+   - The history of the rounds is not lost: it is in `deviations.md` (triggers, novelty,
+     circuit breaker) and `plan.md` §15 (overlap_rate, observations). `state.md` is a window, and
+     not a journal.
 
-## Антипаттерны
+## Anti-patterns
 
-- ❌ Запустить 1 суб-агента в medium — не даёт параллелизма, добавляет overhead. Делай в основном потоке.
-- ❌ Дать слишком общий промпт «ищи про X» — вернётся жидкая выжимка. Подтема должна быть УЗКОЙ.
-- ❌ Запустить суб-агентов последовательно (Agent call → ждать → следующий). Только параллельно в одном сообщении.
-- ❌ Принимать выжимку суб-агента как финал без проверки. Дедуплицируй URLs и проверь scoring.
-- ❌ Использовать `Explore`/`explore-haiku` когда агенту нужно писать `sources/NN.md` — они read-only, не сохранят файл. Для fetch+save всегда `deepdive-fetcher`.
-- ❌ Не назначить агенту диапазон номеров ПЕРЕД launch — без этого параллельная запись рискует коллизией id.
-- ❌ Просить суб-агента вернуть полные тексты/цитаты источников в JSON-ответе — раздувает контекст главного потока. Полный текст живёт в файле, в главный поток идёт только index-строка.
-- ❌ Оставить в промпте агента формат «строгий JSON в ответе» без лимита размера ответа: 4 агента без лимита вернули 19–24 тыс. символов каждый (~41k токенов главного потока). JSON — в файл, в чат ≤15 строк.
-- ❌ Пропустить требование «найди оппозицию» — суб-агенты по умолчанию ищут confirmation, не contradiction.
-- ❌ **Разводить агентов ТОЛЬКО по подтемам.** Одинаковый шаблон + одна модель + один язык = одна поисковая траектория, и триангуляция получает коррелированные голоса. Разводи ещё и по оси поиска: агент A — англоязычная академия и препринты, B — RU-сегмент, локальные регуляторы и отраслевые ассоциации, C — практики (форумы, issue-трекеры, обсуждения), D — первичные реестры и отчётность. Тогда пересечение находок — сигнал настоящей независимости, а не артефакт одинакового промпта.
-- ❌ **Передавать во второй раунд находки соседей.** Соблазн понятен, но наблюдаемость чужих действий сама по себе канал координации: в эксперименте Anthropic агенты продолжили сговор после удаления всех каналов связи, синхронизируясь через публичную доску. Дать агентам видеть находки друг друга — построить такую доску своими руками и добить остатки независимости. Делись только ДЫРАМИ: «подвопросы Q3, Q7 не закрыты; по Q5 не найдено ни одной оппозиции».
-- ❌ Молча выбрасывать дубликаты URL между агентами (см. `overlap_rate` ниже) — это стирает единственный прямой замер конформизма.
+- ❌ Launching 1 sub-agent in medium — gives no parallelism, adds overhead. Do it in the main thread.
+- ❌ Giving too generic a prompt «search about X» — a watery digest comes back. The subtopic must be NARROW.
+- ❌ Launching sub-agents sequentially (Agent call → wait → the next one). Only in parallel in one message.
+- ❌ Accepting a sub-agent's digest as final without checking. Dedup the URLs and check the scoring.
+- ❌ Using `Explore`/`explore-haiku` when the agent needs to write `sources/NN.md` — they are read-only, they will not save the file. For fetch+save always `deepdive-fetcher`.
+- ❌ Not assigning an agent a range of numbers BEFORE launch — without it the parallel writing risks an id collision.
+- ❌ Asking a sub-agent to return full source texts/quotes in the JSON reply — bloats the main thread's context. The full text lives in the file, only the index row goes into the main thread.
+- ❌ Leaving in the agent's prompt the «strict JSON in the reply» format without a limit on the reply size: 4 agents without a limit returned 19–24k chars each (~41k tokens of the main thread). JSON — into a file, into the chat ≤15 lines.
+- ❌ Skipping the requirement «find the opposition» — by default sub-agents look for confirmation, not contradiction.
+- ❌ **Separating the agents ONLY by subtopics.** The same template + one model + one language = one search trajectory, and triangulation receives correlated voices. Separate also along the search axis: agent A — English-language academia and preprints, B — the RU segment, local regulators and industry associations, C — practitioners (forums, issue trackers, discussions), D — primary registries and reporting. Then an overlap of findings is a signal of genuine independence, not an artifact of an identical prompt.
+- ❌ **Passing the neighbours' findings into the second round.** The temptation is understandable, but the observability of others' actions is itself a coordination channel: in Anthropic's experiment the agents continued to collude after all communication channels were removed, synchronising through a public board. Letting agents see each other's findings is building such a board with your own hands and finishing off the remains of independence. Share only HOLES: «subquestions Q3, Q7 are not closed; on Q5 not a single opposition was found».
+- ❌ Silently discarding URL duplicates between agents (see `overlap_rate` below) — this erases the only direct measurement of conformism. <!-- translator: ambiguous — upstream says "below", but overlap_rate is defined above, in step 2 -->
 
-## Когда НЕ запускать суб-агентов
+## When NOT to launch sub-agents
 
-- **shallow** режим — 5-7 источников быстрее собрать в основном диалоге.
-- **Узкая тема** — если не дробится на 2+ подтемы, нет смысла.
-- **Тема в проектном контексте, требующая чтения многих файлов проекта** — суб-агент не видит локальные файлы так же легко; основной диалог справится быстрее.
-- **Update-режим с маленькой дельтой** — если нужно докопать 3-5 источников, основной поток справится.
+- **shallow** mode — 5-7 sources are faster to gather in the main dialogue.
+- **A narrow topic** — if it does not split into 2+ subtopics, there is no point.
+- **A topic in the project context that requires reading many project files** — a sub-agent does not see local files as easily; the main dialogue will cope faster.
+- **Update mode with a small delta** — if 3-5 sources need to be dug up, the main thread will cope.

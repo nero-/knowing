@@ -1,60 +1,61 @@
+<!-- translated from upstream/references/awesome_lists_registry.md @ e233797 — see docs/TRANSLATION.md -->
 # Awesome Lists Registry — upstream discovery
 
-## Содержание
+## Contents
 
-- Зачем это нужно
+- Why this is needed
 - Tier 1 — Universal APIs/Datasets
 - Tier 2 — Specialized
 - Tier 3 — Niche / Domain-specific
 - Tier 4 — Niche aggregators
-- Discovery workflow для агента
+- Discovery workflow for the agent
 - Limitations awesome-lists
 - Future contributions
-- Notes на специфический case — Claude ecosystem
+- Notes on a specific case — the Claude ecosystem
 
-Каталог upstream awesome-lists на GitHub, к которым агент обращается когда в моём каталоге нет purpose-fit источника для конкретной подтемы.
+A catalog of upstream awesome-lists on GitHub that the agent turns to when my catalog has no purpose-fit source for a specific subtopic.
 
-## Зачем это нужно
+## Why this is needed
 
-Мой каталог (`api_sources/` + `stat_sources/`) — это curated subset. Awesome-lists содержат **тысячи** APIs и datasets — невозможно curate всё. Этот registry — навигационный layer:
+My catalog (`api_sources/` + `stat_sources/`) is a curated subset. Awesome-lists contain **thousands** of APIs and datasets — it is impossible to curate everything. This registry is a navigation layer:
 
 ```
-Не нашёл в моём каталоге → проверь registry → найди upstream awesome-list →
-  WebFetch их README/категории → identify 1-3 candidates → use ad-hoc
+Not found in my catalog → check the registry → find the upstream awesome-list →
+  WebFetch their README/categories → identify 1-3 candidates → use ad-hoc
 ```
 
-Это превращает скилл из **closed catalog** в **discovery hub**.
+This turns the skill from a **closed catalog** into a **discovery hub**.
 
 ## Tier 1 — Universal APIs/Datasets
 
-Использовать в первую очередь когда не уверен где искать.
+Use first when you are not sure where to look.
 
 ### public-apis/public-apis
 **URL:** https://github.com/public-apis/public-apis
 **What:** 1500+ free public APIs in 48 categories
-**Stars:** 418k+ (самый известный API list)
+**Stars:** 418k+ (the best-known API list)
 **Categories:** Animals, Anime, Art & Design, Authentication, Books, Business, Calendar, Cloud Storage & File Sharing, Continuous Integration, Currency Exchange, Data Validation, Development, Dictionaries, Documents & Productivity, Email, Entertainment, Environment, Events, Finance, Food & Drink, Games & Comics, Geocoding, Government, Health, Jobs, Machine Learning, Music, News, Open Data, Open Source Projects, Patent, Personality, Phone, Photography, Programming, Science & Math, Security, Shopping, Social, Sports & Fitness, Test Data, Text Analysis, Tracking, Transportation, URL Shorteners, Vehicle, Video, Weather
-**When to fetch:** любая ниша где не знаешь existing APIs
-**How:** WebFetch README.md или specific category section
+**When to fetch:** any niche where you do not know the existing APIs
+**How:** WebFetch README.md or the specific category section
 
 ### awesomedata/awesome-public-datasets
 **URL:** https://github.com/awesomedata/awesome-public-datasets
 **What:** Curated open datasets across 38 topics
 **Stars:** 65k+
 **Categories:** Agriculture, Architecture, Biology, Chemistry, Climate+Weather, ComplexNetworks, ComputerNetworks, CyberSecurity, DataChallenges, EarthScience, Economics, Education, Energy, Entertainment, Finance, GIS, Government, Healthcare, ImageProcessing, MachineLearning, Museums, NaturalLanguage, Neuroscience, Physics, ProstateCancer, Psychology+Cognition, PublicDomains, SearchEngines, SocialNetworks, SocialSciences, Software, Sports, TimeSeries, Transportation, eSports
-**When to fetch:** нужны raw datasets для own analysis, а не API queries
-**How:** WebFetch README.md или specific topic
+**When to fetch:** you need raw datasets for your own analysis, not API queries
+**How:** WebFetch README.md or the specific topic
 
 ### jnv/lists — list of lists
 **URL:** https://github.com/jnv/lists
-**What:** Meta-list — список curated lists на GitHub
+**What:** A meta-list — a list of curated lists on GitHub
 **Stars:** 25k+
-**When to fetch:** когда не знаешь даже какой awesome-list искать
-**How:** WebFetch README.md и поиск ключевых слов
+**When to fetch:** when you do not even know which awesome-list to look for
+**How:** WebFetch README.md and a keyword search
 
 ## Tier 2 — Specialized
 
-Узкоспециализированные lists для конкретных доменов.
+Narrowly specialised lists for specific domains.
 
 ### Government / Open Data
 
@@ -103,14 +104,14 @@
 
 ### Claude ecosystem
 
-- **travisvn/awesome-claude-skills** — Claude Skills (для распространения нашего скилла!)
+- **travisvn/awesome-claude-skills** — Claude Skills (for distributing our skill!)
 - **JSONbored/awesome-claude** — Claude registry
 - **ComposioHQ/awesome-claude-plugins** — Claude Code plugins
 - **rohitg00/awesome-claude-code-toolkit** — toolkit overview
 
 ## Tier 3 — Niche / Domain-specific
 
-Узкие но качественные.
+Narrow but high-quality.
 
 ### Geospatial / Maps
 
@@ -139,56 +140,56 @@
 
 ## Tier 4 — Niche aggregators
 
-Lists которые сами aggregate другие lists.
+Lists that themselves aggregate other lists.
 
 ### sindresorhus/awesome
 **URL:** https://github.com/sindresorhus/awesome
-**What:** Корень всех awesome-lists. Master index.
+**What:** The root of all awesome-lists. Master index.
 **Stars:** 350k+
-**When to fetch:** когда нужно найти любую категорию awesome-list, не уверен какая существует
-**How:** WebFetch README.md, поиск ключевых слов
+**When to fetch:** when you need to find any category of awesome-list and are not sure which one exists
+**How:** WebFetch README.md, a keyword search
 
 ### awesomelistsio/awesome-apis
 **URL:** https://github.com/awesomelistsio/awesome-apis
 **What:** Curated list of high-quality APIs, SDKs, dev tools
-**When:** для broad search across multiple domains
+**When:** for a broad search across multiple domains
 
 ### whizkydee/Awesome-APIs
 **URL:** https://github.com/whizkydee/Awesome-APIs
-**What:** Curated APIs round the web
-**When:** alternative взгляд на public-apis (less broad)
+**What:** Curated APIs from around the web
+**When:** an alternative view of public-apis (less broad)
 
-## Discovery workflow для агента
+## Discovery workflow for the agent
 
 ```
-если в моём каталоге (api_sources/ + stat_sources/) нет нужной категории:
+if my catalog (api_sources/ + stat_sources/) has no category you need:
 
-  1. Определи domain (finance / health / science / crypto / etc.)
-  2. Найди в этом registry соответствующий Tier 1-3 awesome-list
-  3. WebFetch его README.md
-  4. Поиск keywords из подтемы
-  5. Извлеки 2-3 candidate APIs/sources
-  6. Для каждого: проверить URL живой (HEAD request)
-  7. Для тех что живые: добавить в plan.md как ad-hoc:
+  1. Determine the domain (finance / health / science / crypto / etc.)
+  2. Find the corresponding Tier 1-3 awesome-list in this registry
+  3. WebFetch its README.md
+  4. Search for keywords from the subtopic
+  5. Extract 2-3 candidate APIs/sources
+  6. For each one: check the URL is alive (HEAD request)
+  7. For the live ones: add to plan.md as ad-hoc:
      - URL
-     - tier (open / partial / paywall если ясно)
-     - source upstream awesome-list (для credit)
+     - tier (open / partial / paywall if clear)
+     - the upstream awesome-list source (for credit)
      - note: ad-hoc, not in main catalog yet
 
-  Если кандидат окажется ценным после использования →
-     Suggest contributor добавить через PR в правильную категорию api_sources/ или stat_sources/
+  If a candidate proves valuable after use →
+     Suggest the contributor add it via PR to the right category of api_sources/ or stat_sources/
 ```
 
 ## Limitations awesome-lists
 
-- **Stale data:** многие entries deprecated, не работают. Always validate URL перед использованием.
-- **No standardization:** каждый list со своим форматом — нужно парсить individually.
-- **Quality varies:** в `public-apis` есть и top-tier и хобби APIs.
-- **Discovery cost:** WebFetch + parsing + validation = время. Use только когда мой каталог не покрыл.
+- **Stale data:** many entries are deprecated and do not work. Always validate the URL before use.
+- **No standardization:** each list has its own format — you have to parse it individually.
+- **Quality varies:** in `public-apis` there are both top-tier and hobby APIs.
+- **Discovery cost:** WebFetch + parsing + validation = time. Use only when my catalog did not cover it.
 
 ## Future contributions
 
-Когда контрибьютор находит ценный источник в upstream awesome-list, в его PR должно быть:
+When a contributor finds a valuable source in an upstream awesome-list, their PR must contain:
 
 ```markdown
 ## Source discovered in upstream
@@ -198,14 +199,14 @@ Lists которые сами aggregate другие lists.
 - Reason: stable, free tier, fits gap in my coverage
 ```
 
-Это даёт **credit** original awesome-list maintainer + поощряет ecosystem growth.
+This gives **credit** to the original awesome-list maintainer + encourages ecosystem growth.
 
-## Notes на специфический case — Claude ecosystem
+## Notes on a specific case — the Claude ecosystem
 
-Lists в категории "Claude ecosystem" критичны для **распространения этого скилла**:
+The lists in the "Claude ecosystem" category are critical for **distributing this skill**:
 
-- Submit deepdive в [travisvn/awesome-claude-skills](https://github.com/travisvn/awesome-claude-skills) после первого release
-- Submit в [JSONbored/awesome-claude](https://github.com/JSONbored/awesome-claude)
-- Submit в [rohitg00/awesome-claude-code-toolkit](https://github.com/rohitg00/awesome-claude-code-toolkit)
+- Submit deepdive to [travisvn/awesome-claude-skills](https://github.com/travisvn/awesome-claude-skills) after the first release
+- Submit to [JSONbored/awesome-claude](https://github.com/JSONbored/awesome-claude)
+- Submit to [rohitg00/awesome-claude-code-toolkit](https://github.com/rohitg00/awesome-claude-code-toolkit)
 
-См. PUBLISH.md → Step 6: "Submit to awesome lists" для процедуры.
+See PUBLISH.md → Step 6: "Submit to awesome lists" for the procedure.

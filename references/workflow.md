@@ -12,7 +12,7 @@ A supplement to SKILL.md. The details of each phase live in a separate file unde
 | 3.7. Plan-review gate | `plan_gate.md` | main thread |
 | 4. Search: dispatch, rounds, candidates and quotas, `state.md`, circuit breaker | `phases/p4_search.md` | main thread |
 | 5. Claims-ledger, triangulation, gap wave | `phases/p5_claims.md` | main thread + sub-agent |
-| 6. Synthesis + multi-angle red team | `phases/p6_synthesis.md` | `deepdive-synthesizer`; main thread — only the section «Оркестрация» |
+| 6. Synthesis + multi-angle red team | `phases/p6_synthesis.md` | `deepdive-synthesizer`; main thread — only the `### Orchestration` section |
 | 6.9. Report export | `phases/p6_9_export.md` | main thread |
 | 7. Refresh targets | `phases/p7_refresh.md` | main thread |
 | 8. Decision walkthrough + checklist after Phase 8 | `phases/p8_walkthrough.md` | main thread |

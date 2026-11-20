@@ -38,7 +38,7 @@ def test_dead_search_keys_are_not_advertised_as_configurable():
         if key in text:
             idx = text.index(key)
             window = text[max(0, idx - 400) : idx + 400]
-            assert "не используется" in window, (
+            assert "not used" in window or "не используется" in window, (  # knowing: bilingual docs
                 f"{key} упомянут без пометки о том, что скилл его не вызывает"
             )
 
@@ -82,7 +82,7 @@ def _fenced_blocks(text: str, lang: str) -> list[str]:
 def test_step1_pseudocode_does_not_gate_on_dead_search_keys():
     # Step 1's ```bash pseudocode instructs the skill to treat "env $KEY exists"
     # as a live authenticated/not-authenticated toggle. A dead search key sitting
-    # there contradicts the "не используется" note in the table below it, in the
+    # there contradicts the "not used" note in the table below it, in the
     # same file — the file argues with itself and nothing catches it.
     text = CAPS_MD.read_text(encoding="utf-8")
     blocks = _fenced_blocks(text, "bash")

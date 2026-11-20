@@ -61,3 +61,12 @@ floor, patched in seven places, and given the four checks the base documented bu
   appendix-laundering patterns now accept English. Bilingual beats a migration.
 - `build_readout.py` accepts English section names while still emitting Russian; its output is an
   artefact, not a gate, so this is the soft landing.
+
+### Translation — the load profile is complete
+Every file a run loads at any depth is now English: the floor (16 files) plus the medium/deep profile
+(p6_synthesis, p6_9_export, p7_refresh, subagents_v2, adversarial_pass, source_scoring, both INDEX
+files, capability_discovery, awesome_lists_registry, synthesis_outline) — ~26k words translated in
+this release. Backlog remaining is 40 files / ~37k words, all outside the load profiles (report
+blocks, leaf data cards, export/refresh docs, code messages).
+Two cross-file heading references were repaired (`«Оркестрация»`, «Эвристика подбора блоков»), and
+`tests/test_docs_swarm.py` accepts the English "not used" note as well as the Russian one.

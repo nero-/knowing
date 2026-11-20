@@ -20,7 +20,7 @@ After reframing, before the plan — we determine what type of report we are ass
 
 4. For custom — assemble the block list:
    - Base scaffolding: `tldr`, `scope` (if the boundaries matter), `counter-arguments`, `open-questions`, `next-research`, `map-of-sources`, `metadata`.
-   - Heuristic by the signals in the question (see `genres.md`, the table «Эвристика подбора блоков»).
+   - Heuristic by the signals in the question (see `genres.md`, the `## Genre selection heuristics` table).
    - If the question is hybrid (e.g. «how it works + what to choose») — combine blocks from both genres.
 
 5. Announce to the user in ONE line:

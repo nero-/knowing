@@ -38,12 +38,26 @@ Rules for the translator:
 6. The Russian originals stay in `upstream/` untouched, so any translation can be checked against
    its source by a reader who has both.
 
-## What is translated in v0.1
+## What is translated (v0.2)
 
-The **floor**: the files in `context_budget.py::ALWAYS_LOAD` (what a run loads unconditionally), plus
-`plan_template.md`. Everything else stays Russian in v0.1 and is listed in `docs/TRANSLATION.md`'s
-backlog; the load profiles in `context_budget.py` are the authority on what a run actually pulls, so
-the backlog is ordered by that list, not by file count.
+Done, in load order:
+
+1. the **floor** — `context_budget.py::ALWAYS_LOAD`: SKILL.md, workflow, phases 1–5/8, rules,
+   question_reframing, plan_gate, genres, blocks/INDEX, channels, source_dispatch, model_routing,
+   plus `plan_template.md`;
+2. the **medium/deep profile** — p6_synthesis, p6_9_export, p7_refresh, subagents_v2,
+   adversarial_pass, source_scoring, the two INDEX files, capability_discovery,
+   awesome_lists_registry, synthesis_outline.
+
+That is every file a run of any depth loads. Still Russian (40 files, ~37k words), in backlog order:
+
+| group | why it can wait |
+|---|---|
+| `references/blocks/*.md` (11 files, ~18.8k words) | read only by the synthesizer, one block at a time, and the block ids are language-neutral |
+| `references/report_export.md`, `refresh_protocol.md`, `evidence_filter.md`, `fetch_ladder` neighbours | phase-scoped, not in any load profile |
+| `references/stat_sources/**` leaf cards, `api_sources/**` leaf cards | data cards read by a script or by one lookup |
+| `docs/`, `eval/`, `evals/` | not installed into the skill directory |
+| `scripts/**` and `build_report.py` messages | code, not prose; the gates now accept both languages, so a run is not blocked |
 
 ## Known coupling regressions in v0.1
 
