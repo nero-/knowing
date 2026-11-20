@@ -456,12 +456,12 @@ def _require_env(name: str) -> None:
 
 
 def build_provider(name: str, *, model: str | None = None, base_url: str | None = None) -> LLMProvider:
-    if name == "tiers":  # knowing: tier -> endpoint mapping, see overlay/tier_routing.py
+    if name in ("models", "tiers"):  # knowing: name -> endpoint pool, see overlay/model_map.py
         import sys as _sys
         from pathlib import Path as _Path
         _sys.path.insert(0, str(_Path(__file__).resolve().parent.parent / "overlay"))
-        import tier_routing as _tr
-        return _tr.TierMapProvider(_tr.load_tiers())
+        import config as _cfg, model_map as _mm
+        return _mm.ModelMap(_cfg.load())
     if name == "dryrun":
         return DryRunProvider()
     if name == "claude":

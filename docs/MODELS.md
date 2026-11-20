@@ -1,12 +1,27 @@
-# Model tiers → endpoint pools
+# Models, endpoints, and who decides
 
-Upstream's runner never names a model. It asks for a **tier** (`strong` / `mid` / `cheap`) and the
-provider answers with an endpoint. `overlay/tier_routing.py` is that layer.
+There is no tier vocabulary in knowing. A **model name** is whatever you call it, and it points at one
+or more interchangeable endpoints. `phases.yaml` already declares a model per phase — that is the real
+routing table, written by a human, in the file that defines the work. This just answers "where does
+that name live", with failover behind it.
 
-A tier is a **pool, not a machine**. One cluster going down rotates to the next candidate instead of
-turning the run red, and the rotation is recorded so a degraded run is auditable.
+Three things decide which endpoint serves a step, in order:
+
+1. **The agent**, when it names a model for a call (`model: "opus"`). Honoured as given.
+2. **The phase**, if the config pins one (`[phases."6"] model = "opus"`), matching `phases.yaml`.
+3. **`default`**, when nobody said anything.
+
+An unknown name is an error that lists the names you do have. A typo must never quietly reroute a
+synthesis step to whatever was configured first.
+
+A name may hold several endpoints. One going down rotates to the next instead of failing the run, and
+the rotation is recorded so a degraded run is auditable.
 
 ## Config: declare an endpoint once, reference it as `provider/model`
+
+> **TOML note:** top-level keys must come **before** the first `[table]`. If you write
+> `default = "small"` after a `[models.x]` header, TOML files it inside that table — knowing notices,
+> uses it, and prints a one-line note telling you to move it. Two of them is an error.
 
 `~/.config/knowing/tiers.toml` (or `$KNOWING_CONFIG`, or JSON if you prefer):
 

@@ -1,44 +1,48 @@
 #!/usr/bin/env python3
-"""Endpoint configuration for knowing: named providers, then tiers that reference them.
+"""Endpoint configuration: named providers, then model names that point at them.
 
-Repeating `base_url` for every model is how a config rots. So endpoints are declared **once**, with a
-name, and tiers reference them as `provider/model`:
+Two tables. Providers say *where* an endpoint is; models give that endpoint a name you actually say
+out loud, with a pool for failover behind it.
 
-    [providers.sparks]              # a local vLLM box
+    [providers.sparks]
     base_url = "http://100.120.4.113:8015/v1"
-    models = ["DeepSeek-V4.1-Flash"]
 
     [providers.tp2]
     base_url = "http://100.97.112.71:8000/v1"
-    models = ["Qwen3.8-Flash-Next"]
-
-    [providers.ollama]              # anything OpenAI-compatible
-    base_url = "http://localhost:11434/v1"
-
-    [providers.anthropic]           # a different dialect, same file
-    kind = "anthropic"
-    api_key_env = "ANTHROPIC_API_KEY"
 
     [providers.openrouter]
     base_url = "https://openrouter.ai/api/v1"
-    api_key_cmd = "pass show openrouter/key"
+    api_key_env = "OPENROUTER_API_KEY"
 
-    [tiers.strong]
+    [providers.anthropic]
+    kind = "anthropic"
+    base_url = "https://api.anthropic.com"
+    api_key_cmd = "pass show anthropic/key"
+
+    [models.opus]
     endpoints = ["sparks/DeepSeek-V4.1-Flash", "anthropic/claude-opus-5"]
     rotate = "sticky"
-    fallback = ["mid"]
+    fallback = ["sonnet"]
 
-    [tiers.cheap]
+    [models.sonnet]
+    endpoints = ["tp2/Qwen3.8-Flash-Next"]
+
+    [models.haiku]
     endpoints = ["tp2/Qwen3.8-Flash-Next", "ollama/qwen3:8b"]
 
-TOML or JSON, whichever you prefer; a config with only a `tiers` section (the earlier shape) still
-loads. Credentials are never stored inline if you use `api_key_env` or `api_key_cmd`: the value is
-resolved when the endpoint is first used, not when the file is read, so rotating a key does not
-require editing config.
+    default = "sonnet"
 
-    python3 overlay/config.py check            # what is configured, and is the key present
+    [phases."6"]
+    model = "opus"
+
+There is no tier vocabulary here: the names are yours, and `phases.yaml` (which already declares a
+model per phase) can be mapped onto them with a `[phases]` entry. Credentials are never required
+inline — `api_key`, `api_key_env`, or `api_key_cmd` (the same `!command` convention pi's models.json
+uses), resolved when an endpoint is first used.
+
+    python3 overlay/config.py check            # models, endpoints, and whether each key resolves
     python3 overlay/config.py check --probe    # + GET <base_url>/models on each endpoint
-    python3 overlay/config.py from-pi ~/.pi/agent/models.json > tiers.toml
+    python3 overlay/config.py from-pi ~/.pi/agent/models.json > ~/.config/knowing/models.toml
 """
 
 from __future__ import annotations
@@ -51,10 +55,13 @@ from pathlib import Path
 
 KINDS = ("openai", "anthropic")
 DEFAULT_CONFIG_PATHS = (
+    "~/.config/knowing/models.toml",
+    "~/.config/knowing/models.json",
     "~/.config/knowing/tiers.toml",
     "~/.config/knowing/tiers.json",
-    "~/.knowing/tiers.toml",
+    "~/.knowing/models.toml",
 )
+RESERVED = ("providers", "models", "tiers", "default", "phases")
 
 
 class ConfigError(RuntimeError):
@@ -98,7 +105,7 @@ def find_config(env: dict[str, str] | None = None) -> Path | None:
 
 def resolve_key(provider: dict, env: dict[str, str] | None = None,
                 _cache: dict[str, str] | None = None) -> str:
-    """literal → env var → command. Resolved lazily; commands are cached per provider."""
+    """literal → env var → command. Resolved lazily; commands are cached per command string."""
     env = dict(os.environ if env is None else env)
     _cache = {} if _cache is None else _cache
     name = provider.get("name", "?")
@@ -124,12 +131,12 @@ def resolve_key(provider: dict, env: dict[str, str] | None = None,
                 f"{'no output' if not out.stdout.strip() else 'output'}: {out.stderr.strip()[:120]}")
         _cache[cmd] = out.stdout.strip()
         return _cache[cmd]
-    # local servers (vLLM, Ollama, llama.cpp) accept any key; cloud ones will fail loudly on first use
+    # local servers (vLLM, Ollama, llama.cpp) accept any key; cloud ones fail loudly on first use
     return env.get("OPENAI_API_KEY") or "vllm"
 
 
-def normalise(raw: dict, env: dict[str, str] | None = None) -> dict[str, dict]:
-    """Validate a parsed config into {tier: {endpoints, rotate, fallback}}. providers resolved."""
+def normalise(raw: dict, env: dict[str, str] | None = None) -> dict:
+    """Validate a parsed config into {models, default, phases}, providers resolved."""
     env = dict(os.environ if env is None else env)
     providers = raw.get("providers") or {}
     if not isinstance(providers, dict):
@@ -146,72 +153,119 @@ def normalise(raw: dict, env: dict[str, str] | None = None) -> dict[str, dict]:
             raise ConfigError(f"provider {name!r}: base_url is required")
         prepared[name] = {**spec, "name": name, "kind": kind, "base_url": base}
 
-    tiers_raw = raw.get("tiers") or {t: v for t, v in raw.items() if t != "providers"}
-    if not isinstance(tiers_raw, dict) or not tiers_raw:
-        raise ConfigError("no tiers configured — add a [tiers.<name>] table")
-    out: dict[str, dict] = {}
-    for tier, spec in tiers_raw.items():
+    # `models` is canonical; `tiers` was the earlier spelling and still loads.
+    if "models" in raw:
+        section = raw["models"]
+    elif "tiers" in raw:
+        section = raw["tiers"]
+    else:
+        section = {k: v for k, v in raw.items() if k not in RESERVED}
+    if not isinstance(section, dict) or not section:
+        raise ConfigError("no models configured — add a [models.<name>] table")
+
+    models: dict[str, dict] = {}
+    for name, spec in section.items():
         if not isinstance(spec, dict):
-            raise ConfigError(f"tier {tier!r} must be a table")
-        endpoints = spec.get("endpoints") or []
+            raise ConfigError(f"model {name!r} must be a table")
+        endpoints = spec.get("endpoints") or spec.get("endpoint") or []
         if isinstance(endpoints, str):
             endpoints = [endpoints]
         if not isinstance(endpoints, list) or not endpoints:
-            raise ConfigError(f"tier {tier!r}: endpoints must be a non-empty list")
-        cands = [_candidate(e, tier, prepared, env) for e in endpoints]
+            raise ConfigError(f"model {name!r}: endpoints must be a non-empty list")
         rotate = str(spec.get("rotate") or "rr")
         if rotate not in ("rr", "sticky"):
-            raise ConfigError(f"tier {tier!r}: rotate must be 'rr' or 'sticky'")
-        fallback = list(spec.get("fallback") or [])
-        for t in fallback:
-            if t == tier:
-                raise ConfigError(f"tier {tier!r} lists itself as a fallback")
-        out[tier] = {"endpoints": cands, "rotate": rotate, "fallback": fallback}
-    return out
+            raise ConfigError(f"model {name!r}: rotate must be 'rr' or 'sticky'")
+        models[name] = {"endpoints": [_candidate(e, name, prepared, env) for e in endpoints],
+                        "rotate": rotate,
+                        "fallback": list(spec.get("fallback") or [])}
+
+    for name, spec in models.items():
+        for alt in spec["fallback"]:
+            if alt == name:
+                raise ConfigError(f"model {name!r} lists itself as a fallback")
+            if alt not in models:
+                raise ConfigError(
+                    f"model {name!r}: fallback {alt!r} is not configured (have: {', '.join(models)})")
+
+    warnings: list[str] = []
+    default = str(raw.get("default") or "")
+    if not default:
+        # TOML assigns a key to the table above it, so `default = "x"` written after
+        # `[models.foo]` ends up inside that table. Honour it, and say so.
+        strays = [(n, s.get("default")) for n, s in section.items()
+                  if isinstance(s, dict) and s.get("default")]
+        if len(strays) == 1:
+            default = str(strays[0][1])
+            warnings.append(
+                f"`default` was read from inside [models.{strays[0][0]}] — in TOML it belongs "
+                f"above the first table; move it to the top of the file")
+        elif len(strays) > 1:
+            raise ConfigError(
+                f"`default` appears inside several model tables ({', '.join(n for n, _ in strays)}) "
+                f"— put it once at the top of the file")
+    if not default:
+        default = next(iter(models))
+    if default not in models:
+        raise ConfigError(f"`default = {default!r}` is not a configured model ({', '.join(models)})")
+
+    phases: dict[str, str] = {}
+    raw_phases = raw.get("phases") or {}
+    if not isinstance(raw_phases, dict):
+        raise ConfigError("`phases` must be a table of phase id -> {model = \"<name>\"}")
+    for pid, spec in raw_phases.items():
+        model = spec.get("model") if isinstance(spec, dict) else str(spec)
+        if not model:
+            raise ConfigError(f'phases.{pid}: expected `model = "<name>"` or a bare name')
+        if model not in models:
+            raise ConfigError(
+                f"phases.{pid} pins {model!r}, which is not configured ({', '.join(models)})")
+        phases[str(pid)] = str(model)
+
+    return {"models": models, "default": default, "phases": phases, "warnings": warnings}
 
 
-def _candidate(entry, tier: str, providers: dict[str, dict], env: dict[str, str]) -> dict[str, str]:
+def _candidate(entry, name: str, providers: dict[str, dict], env: dict[str, str]) -> dict[str, str]:
     if isinstance(entry, str):
         if "/" not in entry:
             raise ConfigError(
-                f"tier {tier!r}: {entry!r} must be 'provider/model' "
+                f"model {name!r}: {entry!r} must be 'provider/model' "
                 f"(providers available: {sorted(providers) or 'none'})")
         pname, model = entry.split("/", 1)
         if pname not in providers:
             raise ConfigError(
-                f"tier {tier!r}: unknown provider {pname!r} in {entry!r} "
+                f"model {name!r}: unknown provider {pname!r} in {entry!r} "
                 f"(declared: {sorted(providers) or 'none'})")
         p = providers[pname]
         return {"provider": pname, "kind": p["kind"], "base_url": p["base_url"], "model": model,
                 "api_key": resolve_key(p, env)}
     if isinstance(entry, dict):
         if "base_url" in entry and "model" in entry:  # inline one-off, still supported
-            base = str(entry["base_url"]).rstrip("/")
-            return {"provider": entry.get("provider", "inline"), "kind": str(entry.get("kind") or "openai"),
-                    "base_url": base, "model": str(entry["model"]),
+            return {"provider": entry.get("provider", "inline"),
+                    "kind": str(entry.get("kind") or "openai"),
+                    "base_url": str(entry["base_url"]).rstrip("/"), "model": str(entry["model"]),
                     "api_key": resolve_key({"name": "inline", **entry}, env)}
         if entry.get("provider") and entry.get("model"):
-            return _candidate(f"{entry['provider']}/{entry['model']}", tier, providers, env)
+            return _candidate(f"{entry['provider']}/{entry['model']}", name, providers, env)
     raise ConfigError(
-        f"tier {tier!r}: an endpoint must be 'provider/model' or an object with base_url+model")
+        f"model {name!r}: an endpoint must be 'provider/model' or an object with base_url+model")
 
 
-def load(env: dict[str, str] | None = None) -> dict[str, dict]:
+def load(env: dict[str, str] | None = None) -> dict:
     env = dict(os.environ if env is None else env)
     path = find_config(env)
     if path is None:
         raise ConfigError(
-            "no config found — create ~/.config/knowing/tiers.toml "
-            "(see docs/TIERS.md) or set KNOWING_CONFIG")
+            "no config found — create ~/.config/knowing/models.toml (see docs/MODELS.md) "
+            "or set KNOWING_CONFIG")
     return normalise(_read(path), env)
 
 
 # ------------------------------------------------------------------ helpers
 def from_pi_models(path: str | Path) -> str:
-    """Turn pi's models.json into a knowing TOML config (providers + a starting tier plan)."""
+    """Turn pi's models.json into a starting knowing config."""
     data = json.loads(Path(path).expanduser().read_text(encoding="utf-8"))
     provs = data.get("providers") or {}
-    lines = ["# generated from pi models.json — edit the [tiers.*] plan before using\n"]
+    lines = ["# generated from pi models.json — edit the [models.*] section before using\n"]
     for name, spec in provs.items():
         lines.append(f"[providers.{name}]")
         lines.append(f'base_url = "{spec.get("baseUrl", "")}"')
@@ -226,13 +280,13 @@ def from_pi_models(path: str | Path) -> str:
         if models:
             lines.append("models = [" + ", ".join(json.dumps(m) for m in models) + "]")
         lines.append("")
-    first = next(iter(provs), None)
+    first, first_models = next(iter(provs.items()), (None, {}))
     if first:
-        models = [m.get("id") for m in (provs[first].get("models") or []) if m.get("id")]
-        ref = f"{first}/{models[0]}" if models else f"{first}/MODEL"
-        lines += ["[tiers.strong]", f'endpoints = ["{ref}"]', 'rotate = "sticky"', 'fallback = ["mid"]', "",
-                  "[tiers.mid]", f'endpoints = ["{ref}"]', "",
-                  "[tiers.cheap]", f'endpoints = ["{ref}"]', ""]
+        ids = [m.get("id") for m in (first_models.get("models") or []) if m.get("id")]
+        ref = f"{first}/{ids[0]}" if ids else f"{first}/MODEL"
+        lines += ['[models.default]', f'endpoints = ["{ref}"]', "", "default = \"default\"", "",
+                  "# optional: pin a phase from phases.yaml",
+                  '# [phases."6"]', '# model = "default"', ""]
     return "\n".join(lines)
 
 
@@ -267,9 +321,9 @@ def main(argv: list[str] | None = None) -> int:
 
     ap = argparse.ArgumentParser(description="knowing endpoint configuration")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    c = sub.add_parser("check", help="show configured tiers and whether keys resolve")
+    c = sub.add_parser("check", help="show configured models and whether keys resolve")
     c.add_argument("--probe", action="store_true", help="GET <base_url>/models on every endpoint")
-    c.add_argument("--config", type=Path, help="config path (default: $KNOWING_CONFIG or ~/.config/knowing/tiers.toml)")
+    c.add_argument("--config", type=Path, help="config path (default: $KNOWING_CONFIG or ~/.config/knowing/models.toml)")
     f = sub.add_parser("from-pi", help="emit a starting config from pi's models.json")
     f.add_argument("path", type=Path)
     args = ap.parse_args(argv)
@@ -282,15 +336,19 @@ def main(argv: list[str] | None = None) -> int:
         env = dict(os.environ)
         path = args.config or find_config(env)
         if path is None:
-            raise ConfigError("no config found — see docs/TIERS.md")
-        tiers = normalise(_read(path), env)
+            raise ConfigError("no config found — see docs/MODELS.md")
+        cfg = normalise(_read(path), env)
     except ConfigError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
-    print(f"config: {path}")
-    for tier, spec in tiers.items():
+    print(f"config: {path}   default={cfg['default']}")
+    for w in cfg.get("warnings") or []:
+        print(f"note: {w}")
+    for name, spec in cfg["models"].items():
         fb = f" → {','.join(spec['fallback'])}" if spec["fallback"] else ""
-        print(f"\n{tier}  (rotate={spec['rotate']}{fb})")
+        pinned = [p for p, m in cfg["phases"].items() if m == name]
+        pin = f"  pinned by phase {','.join(pinned)}" if pinned else ""
+        print(f"\n{name}  (rotate={spec['rotate']}{fb}){pin}")
         rows = spec["endpoints"]
         if args.probe:
             rows = probe(rows)

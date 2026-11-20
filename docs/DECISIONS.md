@@ -107,36 +107,24 @@ without those patterns turns gates into no-ops that report nothing — indisting
 Hence `docs/TRANSLATION.md`'s glossary is a contract, and every translated gate needs a test that
 proves it still fires. v0.1 translates the floor; the backlog is ordered by the load profile.
 
-## D9 — Model tiers are hardware, not model names
+## D9 — No tiers: the name is the interface, and the agent may pick it
 
-Upstream's `runner/providers.py` already asks for `strong/mid/cheap` and never names a model — that
-abstraction was the reason this base was worth patching rather than replacing. What it lacked was a
-mapping to *more than one endpoint*: `OpenAICompatProvider` pins one `base_url` per process.
+Upstream's runner asks for a `<tier>` (`strong`/`mid`/`cheap`). That vocabulary was an internal detail
+and the first version of this fork exposed it as configuration — a tier list you had to fill in. That
+is one layer too many. The methodology already says which model each phase wants (`phases.yaml`, per
+phase, with effort), and an agent can name a model per call. So the config surface is now **model
+names**, and resolution is: agent's explicit name → phase pin → `default` → error listing the names.
 
-`overlay/tier_routing.py` adds `TierMapProvider`: one client per endpoint, a config layer
-(`KNOWING_TIERS` JSON / `KNOWING_TIERS_FILE` / per-tier env vars), and a `strong → mid → cheap`
-fallback that *records* which tier actually answered (`routed`). A run whose config silently degraded
-still finishes, but the degradation is auditable.
+Why not let the agent decide *everything*: it cannot see a 429 or a dead box, and the one published
+data point on LLM-chosen effort is a drift — pi-research's own source notes that with a policy of
+"always specify depth", the model still chose the expensive tier ~95% of the time. So the agent keeps
+the right to name a model and the config keeps the right to say where that name lives; neither is
+allowed to guess on the other's behalf. An unknown name is an error, never a fallback.
 
-**Revised after review.** The first cut bound each tier to a single endpoint, which makes a dead
-cluster an outage and a second box unusable. It is now a **pool**: candidates are tried in rotation,
-a transient failure (connection error, timeout, 408/409/425/429/5xx) cools that endpoint down for
-30 s doubling to 300 s, and the call moves on. A non-transient failure (400, auth) is *not* retried
-elsewhere — trying a second endpoint would only hide a bug behind a second failure.
+A name may hold several endpoints; failure handling is unchanged from the previous revision and is
+documented in `docs/MODELS.md`: transient failures cooldown (30 s doubling to 300 s) and fail over,
+non-transient failures propagate, rotation is per name (`rr` for fan-out, `sticky` where the prompt
+cache matters), and every decision is recorded in `ModelMap.routed`.
 
-Rotation is per tier because the right behaviour differs: `rr` for the fan-out, where calls are
-independent and no prefix cache survives; `sticky` for planning and synthesis, where switching models
-mid-run loses the cache and can change quality between two steps that must agree. Round-robin spreads
-*load*; it does not balance *quality*. Two endpoints in one tier are a claim that they are
-interchangeable, and a weaker model in the pool means half the runs get it silently — so a different
-model gets a different tier and an explicit `fallback` entry, where the downgrade is recorded.
-
-Endpoints are declared once as named providers and referenced `provider/model`, with credentials from
-a literal, an env var, or a command (`api_key_cmd` — the same `!command` convention pi uses), resolved
-lazily. Dialects: `openai` (vLLM, Ollama, llama.cpp, LM Studio, TGI, OpenRouter, Together, Groq,
-OpenAI) and `anthropic`. Anything else is a gateway away, and gateways speak OpenAI.
-
-Deliberately out of scope: active health probes (spend and noise; passive failure detection answers
-the only question that matters), weighted or latency-based balancing (needs measurements you do not
-have on call one), rate limiting and cross-run queueing (a gateway's job), and `search()` (upstream's
-is Anthropic-specific). A skill that guesses about load is a skill that hides a 429.
+The upstream parameter is still called `model_tier` — renaming it would touch every call site in
+`runner/` and `scripts/`. In knowing its value is a model name.

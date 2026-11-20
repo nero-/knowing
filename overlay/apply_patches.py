@@ -168,12 +168,12 @@ PATCHES = [
     (
         "runner/providers.py",
         '    if name == "dryrun":\n        return DryRunProvider()',
-        '    if name == "tiers":  # knowing: tier -> endpoint mapping, see overlay/tier_routing.py\n'
+        '    if name in ("models", "tiers"):  # knowing: name -> endpoint pool, see overlay/model_map.py\n'
         '        import sys as _sys\n'
         '        from pathlib import Path as _Path\n'
         '        _sys.path.insert(0, str(_Path(__file__).resolve().parent.parent / "overlay"))\n'
-        '        import tier_routing as _tr\n'
-        '        return _tr.TierMapProvider(_tr.load_tiers())\n'
+        '        import config as _cfg, model_map as _mm\n'
+        '        return _mm.ModelMap(_cfg.load())\n'
         '    if name == "dryrun":\n        return DryRunProvider()',
         None,
     ),

@@ -38,49 +38,62 @@ Run the local checks:
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install pytest pyyaml requests
-.venv/bin/python -m pytest overlay/tests -q      # 57 tests, ours
+.venv/bin/python -m pytest overlay/tests -q      # 59 tests, ours
 .venv/bin/python -m pytest tests -q             # upstream's suite
 ```
 
 **Test status (honest):** upstream's suite is 40 failed / 670 passed at the pinned commit, before any
-of our edits. After them it is 40 failed / 670 passed — the same failures, none new, and 57 of our own
+of our edits. After them it is 40 failed / 670 passed — the same failures, none new, and 59 of our own
 tests pass. The 40 are upstream's: `tests/test_providers.py` needs the `anthropic` SDK, and
 `tests/test_report_export.py` asserts Russian error strings from `build_report.py`, which v0.1 does not
 translate. Two upstream tests were updated by us because the behaviour they asserted is the behaviour we
 deliberately changed (`resolve_mode` no longer infers a depth; `finish` now ends with the knowing step).
 
-## Different models on different boxes
+## Any model, any endpoint — and the agent can choose
 
-`--provider tiers` maps upstream's tier vocabulary onto endpoint **pools**, so the expensive phases
-(planning, synthesis, adjudication) run on a large-context box while the fan-out runs somewhere
-cheaper — and a dead cluster rotates to the next candidate instead of failing the run.
-
-Endpoints are declared once and referenced as `provider/model`, mixing local servers, OpenAI-compatible
-clouds and Anthropic in one file:
+No tiers, no policy list. A **model name** is whatever you want to call it, pointing at one or more
+interchangeable endpoints. `phases.yaml` already names a model per phase; that is the routing table.
+This answers "where does that name live", with failover behind it.
 
 ```toml
+# ~/.config/knowing/models.toml
 [providers.sparks]
 base_url = "http://100.120.4.113:8015/v1"
 
-[providers.openrouter]
+[providers.openrouter]                 # cloud, OpenAI-compatible
 base_url = "https://openrouter.ai/api/v1"
 api_key_cmd = "pass show openrouter/key"
 
-[tiers.strong]
-endpoints = ["sparks/DeepSeek-V4.1-Flash", "openrouter/anthropic/claude-opus-5"]
-rotate = "sticky"
-fallback = ["mid"]
+[providers.anthropic]                  # cloud, different dialect
+kind = "anthropic"
+base_url = "https://api.anthropic.com"
+api_key_env = "ANTHROPIC_API_KEY"
+
+[models.opus]
+endpoints = ["sparks/DeepSeek-V4.1-Flash", "anthropic/claude-opus-5"]
+rotate = "sticky"                      # one model per process: prompt cache survives
+
+[models.haiku]
+endpoints = ["sparks/DeepSeek-V4.1-Flash", "openrouter/deepseek/deepseek-v4"]
+
+default = "haiku"                      # when neither the agent nor the phase names one
+
+[phases."6"]                           # optional: pin a phases.yaml id
+model = "opus"
 ```
+
+Resolution order: **the agent's explicit name → the phase pin → `default` → an error listing the names
+you do have.** A typo cannot quietly reroute a synthesis step. Endpoints behind a name are pooled:
+a transient failure (connection error, timeout, 429/5xx) cools that endpoint down and fails over; a 400
+is *not* retried elsewhere. Every routing decision lands in `ModelMap.routed`.
 
 ```bash
-python3 overlay/config.py check --probe        # tiers, keys, and what each server really serves
-python3 overlay/config.py from-pi ~/.pi/agent/models.json > ~/.config/knowing/tiers.toml
+python3 overlay/config.py check --probe       # models, keys, and what each server really serves
+python3 overlay/config.py from-pi ~/.pi/agent/models.json > ~/.config/knowing/models.toml
 ```
 
-Health is passive (connection errors, timeouts, 429/5xx → cooldown and failover; a 400 is *not*
-retried elsewhere), rotation is per tier (`rr` for fan-out, `sticky` for synthesis, because switching
-models mid-run loses the prompt cache), and every routing decision is recorded in
-`TierMapProvider.routed`. Full guide: `docs/TIERS.md`.
+Both dialects covered: `openai` (vLLM, Ollama, llama.cpp, LM Studio, TGI, OpenRouter, Together, Groq,
+OpenAI) and `anthropic`. Guide and the reasoning: `docs/MODELS.md`.
 
 ## Status
 

@@ -94,3 +94,31 @@ Two cross-file heading references were repaired (`«Оркестрация»`, �
   provider list.
 - 18 config tests (dialects, credential sources, ref resolution, probe against a local HTTP server,
   CLI exit codes); 57 overlay tests total.
+
+## 0.3.0 — 2026-11-20
+
+### Removed — the tier vocabulary
+`strong` / `mid` / `cheap` is gone from the config surface. It was upstream's internal vocabulary and
+the first version of this fork exposed it as something you had to fill in. The config now defines
+**model names**, which is what `phases.yaml` already uses.
+
+### Added — three resolvers, in priority order
+1. **the agent**: pass `model: "opus"` and it is honoured;
+2. **the phase**: `[phases."6"] model = "opus"` pins a `phases.yaml` id;
+3. **`default`**: used when neither says anything.
+
+An unknown name is an error listing the configured names — never a silent fallback, because a typo
+must not quietly reroute a synthesis step.
+
+### Renamed
+- `overlay/tier_routing.py` → `overlay/model_map.py` (`ModelMap`); `--provider models` ( `tiers` still
+  accepted as a legacy alias).
+- `docs/TIERS.md` → `docs/MODELS.md`.
+- Config section `[models.*]` ( `[tiers.*]` still loads); top-level `default` and `[phases.*]` added.
+- `~/.config/knowing/models.toml` is the default path (`tiers.toml` still discovered).
+
+Pools, failover, cooldown and the audit trail are unchanged. 59 overlay tests.
+
+### Fixed
+- A `default = "..."` written after a `[models.*]` header (TOML files it inside that table) is now
+  recovered rather than silently ignored, with a note saying where it belongs; two of them is an error.
