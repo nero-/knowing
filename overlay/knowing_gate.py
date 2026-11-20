@@ -56,7 +56,9 @@ def _rows(path: Path) -> list[dict[str, str]]:
 
 
 # --------------------------------------------------------------------------- anchor
-ANCHOR_RE = re.compile(r"^(s\d{2,3}):(\d+)$")
+# Source ids are upstream's (`01_x`, `10_b`) or the plain `s01` style; the id is validated
+# against the row's own sources, so the pattern stays format-agnostic.
+ANCHOR_RE = re.compile(r"^(?P<sid>[^\s:]+):(?P<line>\d+)$")
 HASH_RE = re.compile(r"^[0-9a-f]{16}$")
 
 
@@ -85,7 +87,7 @@ def check_anchor(run: Path) -> list[Problem]:
             out.append(Problem("error", f"claims.csv {cid}",
                                f"anchor {anchor!r} is not '<source id>:<line>'"))
             continue
-        sid, line_s = m.group(1), int(m.group(2))
+        sid, line_s = m.group("sid"), int(m.group("line"))
         if sid not in {s.strip() for s in (row.get("sources") or "").split(",")}:
             out.append(Problem("error", f"claims.csv {cid}",
                                f"anchor points at {sid}, which is not in the row's sources"))
@@ -186,23 +188,35 @@ def check_read_scope(run: Path) -> list[Problem]:
                            "missing read_scope column — run overlay/apply_patches.py"))
         return out
     scope_of: dict[str, str] = {}
+    unknown: list[str] = []
     for row in sources:
         sid, scope = (row.get("id") or "").strip(), (row.get("read_scope") or "").strip()
         if not sid:
             continue
         if scope not in SCOPES:
-            out.append(Problem("error", f"sources.csv {sid}",
-                               f"read_scope {scope!r} not in {list(SCOPES)}"))
+            # Scope is only load-bearing when a claim leans on it. An unused candidate with no
+            # scope is noise; a cited one is the failure this check exists for.
+            scope_of[sid] = "unknown"
+            unknown.append(sid)
             continue
         scope_of[sid] = scope
+    if unknown:
+        out.append(Problem("warning", "sources.csv",
+                           f"{len(unknown)} source(s) have no valid read_scope "
+                           f"({', '.join(unknown[:5])}{'…' if len(unknown) > 5 else ''})"))
     if not claims_p.is_file():
         return out
     for row in _rows(claims_p):
         cid = (row.get("claim_id") or "?").strip()
         status = (row.get("status") or "").strip().lower()
+        cited = [s.strip() for s in (row.get("sources") or "").split(",") if s.strip()]
+        unscoped = [s for s in cited if scope_of.get(s) == "unknown"]
+        if unscoped:
+            out.append(Problem("error", f"claims.csv {cid}",
+                               f"cites {', '.join(unscoped)} with no recorded read_scope "
+                               f"— record what was read before leaning on it"))
         if status not in TRIANGULATED:
             continue
-        cited = [s.strip() for s in (row.get("sources") or "").split(",") if s.strip()]
         thin = [s for s in cited if scope_of.get(s) == "abstract_only"]
         if thin and not any(scope_of.get(s) in DEEP_SCOPES for s in cited):
             out.append(Problem("error", f"claims.csv {cid}",

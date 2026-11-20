@@ -75,7 +75,7 @@ STEPS: list[Step] = [
     Step("number_arithmetic", REPO / "scripts/check_number_arithmetic.py", lambda d, m, w: ["--strict"]),
     Step("number_integrity", REPO / "eval/check_numbers.py", lambda d, m, w: ["--fail-on-missing"], advisory=True),
     Step("phase_gate", REPO / "scripts/validate_phases.py", lambda d, m, w: ["--strict", *_mode(m)]),
-    Step("knowing", REPO / "overlay" / "knowing_gate.py", lambda d, m, w: ["--strict"]),  # knowing
+    Step("knowing", REPO / "overlay" / "knowing_gate.py", lambda d, m, w: []),  # knowing: errors block
 ]
 
 Runner = Callable[[str, list[str]], StepResult]

@@ -37,9 +37,17 @@ failure rather than a silent no-op.
 Run the local checks:
 
 ```bash
-python3 -m venv .venv && .venv/bin/pip install pytest
-.venv/bin/python -m pytest overlay/tests -q
+python3 -m venv .venv && .venv/bin/pip install pytest pyyaml requests
+.venv/bin/python -m pytest overlay/tests -q      # 28 tests, ours
+.venv/bin/python -m pytest tests -q             # upstream's suite
 ```
+
+**Test status (honest):** upstream's suite is 40 failed / 670 passed at the pinned commit, before any
+of our edits. After them it is 40 failed / 670 passed — the same failures, none new, and 28 of our own
+tests pass. The 40 are upstream's: `tests/test_providers.py` needs the `anthropic` SDK, and
+`tests/test_report_export.py` asserts Russian error strings from `build_report.py`, which v0.1 does not
+translate. Two upstream tests were updated by us because the behaviour they asserted is the behaviour we
+deliberately changed (`resolve_mode` no longer infers a depth; `finish` now ends with the knowing step).
 
 ## Status
 

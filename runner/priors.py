@@ -29,7 +29,7 @@ GROUP_HEAD_START: dict[str, tuple[float, float]] = {
     "H": (1.5, 1.0),  # Official / Legal
 }
 
-PART_RE = re.compile(r"^###\s+Часть\s+([A-Z])\b")
+PART_RE = re.compile(r"^###\s+(?:Часть|Part)\s+([A-Z])\b")  # knowing: translated headings
 # Только строка-заголовок канала ("#### 12. `industry-reports`"), а не любой
 # backtick-токен в прозе — иначе слова вроде "Пометить в `notes`" или
 # "фиксируй в `gaps`" внутри секции читаются как каналы (см. references/channels.md).

@@ -1,151 +1,153 @@
-# Model Routing — какую модель Claude брать на каждый шаг
+<!-- translated from upstream/references/model_routing.md @ e233797 — see docs/TRANSLATION.md -->
+<!-- translator: executor names are Claude Code agent types; on pi they map to Agent types — see docs/DECISIONS.md D6 -->
+# Model Routing — which Claude model to take for each step
 
-## Содержание
+## Contents
 
-- Принципы
-- Matrix: фаза × подзадача → исполнитель + effort
-- Routing для sub-agents (Phase 4.1)
+- Principles
+- Matrix: phase × subtask → executor + effort
+- Routing for sub-agents (Phase 4.1)
 - Cost economics
-- Effort: чем управляем, а чем нет
-- Как передать модель в `Agent`-tool
-- Как сообщать пользователю
-- Override-механика
+- Effort: what we control and what we do not
+- How to pass the model into the `Agent` tool
+- How to tell the user
+- Override mechanics
 - Anti-patterns
 
-**Когда используется:** в начале каждой фазы выбираешь исполнителя и effort под характер задачи. Простую работу (поиск, чтение, извлечение, классификация) — суб-агентам на Haiku 5.5 (дёшево, быстро). Сложное рассуждение и архитектурные решения — `main` (Opus) или `sub: deepdive-redteam`.
+**When it is used:** at the start of each phase you choose the executor and the effort for the character of the task. Simple work (search, reading, extraction, classification) — to sub-agents on Haiku 5.5 (cheap, fast). Complex reasoning and architectural decisions — `main` (Opus) or `sub: deepdive-redteam`.
 
-**Зачем:** без явного routing'а суб-агент наследует модель главной (сейчас Opus 5.5); забытый параметр `model` = дорогой вызов. Это **дорого для массовой простой работы** (поиск URL, скоринг, dedupe) и **слабовато для критичных моментов** (reframing, adversarial pass).
-
----
-
-## Принципы
-
-1. **Дороже не значит лучше.** Простая задача на Opus = пустая трата токенов. Сложная на Haiku = слабый результат.
-2. **Effort важнее модели.** На той же модели разные `effort` дают разный результат: Sonnet/high может быть лучше чем Opus/low для middle-сложности задачи.
-3. **Параллелизм — повод для дешёвой модели.** Если запускаем 5 sub-agents в Phase 4, они должны быть `sub: deepdive-fetcher` (Haiku), не на Opus. Иначе цена ресёрча умножается на 5.
-4. **Финальные deliverables — повод для дорогой модели.** Phase 1 reframing, Phase 6 red team и синтез — это где качество мультиплицируется на весь ресёрч. Не экономить.
-5. **Главный поток vs sub-agent.** Главный поток (`main`, где живёт пользователь) — Opus. Sub-agents можно сильно дешевле — у них узкая задача с фиксированным output.
-6. **Экономика: Opus многократно дороже Haiku 5.5** (множители — в Cost economics ниже и в NOTES.md). Не экономь на критических одиночных вызовах (reframing, adversarial) — экономь на fan-out (N параллельных sub-agents в Phase 4 и в gap-волне).
+**Why:** without explicit routing a sub-agent inherits the main model (currently Opus 5.5); a forgotten `model` parameter = an expensive call. That is **expensive for bulk simple work** (URL search, scoring, dedupe) and **a bit weak for critical moments** (reframing, adversarial pass).
 
 ---
 
-## Matrix: фаза × подзадача → исполнитель + effort
+## Principles
 
-> **Главная сессия — Opus 5.5 (effort `medium`; дата перехода — `NOTES_dated.md`).** Исполнитель `main` — это модель главной сессии (Opus 5.5); отдельной модели для него не выбирают. Если сессию явно подняли на Fable 5.1 — **не переключаться вниз**, Fable покрывает клетки `main`. Исполнители `sub: …` — суб-агенты через `Agent`, от модели сессии не зависят. У агентов из `~/.claude/agents/` (`deepdive-*`, `explore-haiku`) модель и effort записаны во frontmatter, и вызов их не передаёт: per-call значение перебивает frontmatter, и тогда настройку агента меняют в двух местах, а расходятся они молча. `model` и `effort` per-call получают только встроенные типы (`general-purpose`). Fable в суб-агентах не использовать никогда (цену см. в NOTES.md, а нарезка уже сделана главной).
+1. **More expensive does not mean better.** A simple task on Opus = a waste of tokens. A complex one on Haiku = a weak result.
+2. **Effort matters more than the model.** On the same model different `effort` values give a different result: Sonnet/high can be better than Opus/low for a middle-complexity task.
+3. **Parallelism is a reason for a cheap model.** If we launch 5 sub-agents in Phase 4, they must be `sub: deepdive-fetcher` (Haiku), not Opus. Otherwise the cost of the research is multiplied by 5.
+4. **Final deliverables are a reason for an expensive model.** Phase 1 reframing, Phase 6 red team and synthesis — that is where quality multiplies across the whole research. Do not skimp.
+5. **Main thread vs sub-agent.** The main thread (`main`, where the user lives) — Opus. Sub-agents can be much cheaper — they have a narrow task with a fixed output.
+6. **Economics: Opus is many times more expensive than Haiku 5.5** (the multipliers are in Cost economics below and in NOTES.md). Do not save on critical single calls (reframing, adversarial) — save on fan-out (N parallel sub-agents in Phase 4 and in the gap wave).
+
+---
+
+## Matrix: phase × subtask → executor + effort
+
+> **The main session is Opus 5.5 (effort `medium`; the switch date is in `NOTES_dated.md`).** The `main` executor is the model of the main session (Opus 5.5); no separate model is chosen for it. If the session was explicitly raised to Fable 5.1 — **do not switch down**, Fable covers the `main` cells. The `sub: …` executors are sub-agents via `Agent` and do not depend on the session model. For agents from `~/.claude/agents/` (`deepdive-*`, `explore-haiku`) the model and effort are recorded in the frontmatter, and the call does not pass them: a per-call value overrides the frontmatter, and then the agent's setting is changed in two places, and they diverge silently. Only the built-in types (`general-purpose`) get `model` and `effort` per-call. Never use Fable in sub-agents (for the price see NOTES.md, and the slicing has already been done by the main session).
 >
-> **Кибер- и био-темы.** Переносится только модель главной: её при необходимости уводят на `claude-opus-5` (явным ID); у Opus 5.5 и Fable фильтры `bio`/`cyber` одного уровня, оба могут вернуть `stop_reason: refusal`. На суб-агентов это не распространяется: у Haiku 5.5 свой cyber-классификатор и фоллбэка нет (NOTES.md, «Оркестрация», блок Security). Fetch по таким темам идёт через `sub: deepdive-fetcher` (Haiku из frontmatter), и Haiku может отказать (`stop_reason: refusal`). Повтор того же запроса снова откажет, поэтому при отказе подзадачу забирает `sub: general-purpose` с `model: "sonnet"`, `effort: "high"`: тот же бриф плюс строка «формат и правила — прочитай `~/.claude/agents/deepdive-fetcher.md`».
+> **Cyber and bio topics.** Only the main model is remapped: if needed it is moved to `claude-opus-5` (by explicit ID); Opus 5.5 and Fable have `bio`/`cyber` filters of the same level, and both can return `stop_reason: refusal`. This does not extend to sub-agents: Haiku 5.5 has its own cyber classifier and there is no fallback (NOTES.md, «Orchestration», the Security block). A fetch on such topics goes through `sub: deepdive-fetcher` (Haiku from the frontmatter), and Haiku may refuse (`stop_reason: refusal`). Repeating the same request will be refused again, so on a refusal the subtask is taken over by `sub: general-purpose` with `model: "sonnet"`, `effort: "high"`: the same brief plus the line «format and rules — read `~/.claude/agents/deepdive-fetcher.md`».
 
-Словарь исполнителей: `main` (модель главной, Opus); `sub: deepdive-scout` (Haiku); `sub: deepdive-fetcher` (Haiku); `sub: deepdive-redteam` (Opus, high); `sub: deepdive-synthesizer` (Opus, high, пишет отчёт); `sub: explore-haiku` (Haiku, read-only); `sub: general-purpose` (только пишущие задачи вне перечисленных).
+Executor dictionary: `main` (the main model, Opus); `sub: deepdive-scout` (Haiku); `sub: deepdive-fetcher` (Haiku); `sub: deepdive-redteam` (Opus, high); `sub: deepdive-synthesizer` (Opus, high, writes the report); `sub: explore-haiku` (Haiku, read-only); `sub: general-purpose` (only writing tasks outside those listed).
 
-| Фаза | Подзадача | Исполнитель | Effort | Обоснование |
+| Phase | Subtask | Executor | Effort | Rationale |
 |---|---|---|---|---|
-| **Pre-discover** | Чтение CLAUDE.md, проверка существующих ресёрчей | `main` | inherit | Главный поток, не нужно переключать |
-| **Phase 1** | Reframing — переформулировка вопроса, формулировка гипотез | `main` | inherit (medium) | Opus 5.5 на medium не хуже Opus 5 на high. xhigh — только если замер показал выигрыш |
-| **Phase 2** | Genre selection, выбор блоков | `main` | medium | Решение на основе таблицы пресетов из genres.md |
-| **Phase 3** | Plan composition (17 секций) | `main` | medium | Архитектурное решение, документирует все будущие выборы |
-| **Phase 3.5** | Capability discovery — env vars audit, mapping | `sub: explore-haiku` | medium | Haiku 5.5 на low пропускает поиск и проверки |
-| **Phase 4.0** | Source Dispatch — прогон подвопросов через matrix | `main` | medium | Lookup в `source_dispatch.md` + запись в plan.md |
-| **Phase 4.1** | Launch sub-agents (web search, simple lookups) | `sub: deepdive-fetcher` | medium | Узкая задача и JSON output. Дёшево × N агентов. Скорит сам, см. Phase 5 |
-| **Phase 4.1** | Launch sub-agents (чтение длинных источников, извлечение цитат) | `sub: deepdive-fetcher` | medium | Окно Haiku 5.5 — 1M (NOTES.md), длинные источники помещаются |
-| **Phase 4.1** | Launch sub-agents (api-direct: curl + jq + parse) | `sub: deepdive-fetcher` | medium | Bash работа + механический парсинг JSON |
-| **Phase 4.1** | Launch sub-agents (анализ кода в репозитории) | `sub: deepdive-fetcher` | medium | Факты и пути собирает fetcher; выводы о причинах делает `main` |
-| **Phase 4.2** | Fetch + dedup (главный поток) | `main` | medium | Управляет sub-agents, агрегирует результаты |
-| **Phase 4** | Goal-check между раундами — per-subquestion `goal_status` met/partial/unmet + gap | `main` | low | Называет дыру, чтобы evaluation работал по диагнозу, а не выводил его с нуля. Только labels, решений не принимает |
-| **Phase 4.3** | Save sources to files | `sub: deepdive-fetcher` | medium | Пишет сам fetch-агент в свой диапазон номеров, см. `subagents_v2.md` |
-| **Phase 4.5** | Gap-волна — точечные агенты на дыры в `claims.csv` (status ≠ triangulated), максимум 2 круга | `sub: deepdive-fetcher` | medium | Узкая задача «найди ещё один источник типа X на claim Y» — не нужна дорогая модель |
-| **Phase 5** | Scoring (credibility/recency/bias по rubric) | *(встроено в Phase 4.1, см. выше)* | — | Отдельный проход не запускается — скорит тот агент, который читал источник |
-| **Phase 4** | Пул кандидатов `candidates.csv` (title+snippet, академические API, snowball) — без чтения (medium/deep) | `sub: explore-haiku` | medium (frontmatter) | Отбор по сниппетам не требует рассуждения, но пул собирается поиском по API, а на low Haiku 5.5 пропускает поиски; дорогое — чтение, оно у fetcher'ов |
-| **Phase 5** | Triangulation check по `claims.csv` (механическая: ≥3 источника И ≥2 типа И ≥2 корней `root:` → triangulated) | `main`: `score_claims.py --write` | — | Правило механическое, его считает скрипт; агент не нужен |
-| **Phase 3.7** | Скаут-пасс внутри план-гейта — «какие подвопросы мы не задали» | `sub: deepdive-scout` | medium (frontmatter) | Короткая разведка без записи источников, отдельной фазы не заводит. Дёшево ×3-4 агента, см. `plan_gate.md` шаг 1.5 |
-| **Phase 5.5** | Evidence-фильтр: relevance × authority по несущим парам | `sub: explore-haiku` | medium | Две парные классификации по дословным цитатам; на low Haiku пропускает проверки |
-| **Phase 6** | Multi-angle red team — N враждебных ролей как суб-агенты (deep: R1–R5; medium: R1+R2+R4, +R5 при dissent) | `sub: deepdive-redteam` | high | **Сильная модель здесь обязательна.** Атака на гипотезы (Skeptic/Contrarian/Gap-hunter/Исполнитель/Адвокат меньшинства) требует настоящего рассуждения, не паттерн-матчинга. Ценность даёт РАЗНОСТЬ РОЛЕЙ и изоляция контекстов, не класс модели — не «поднять всех на opus», а развести роли |
-| **Phase 6.5** | Verify — liveness + faithfulness цитат | `sub: explore-haiku` | medium | Entailment claim⊨quote — суждение; на low Haiku пропускает проверки |
-| **Phase 6** | Synthesis — сборка отчёта из блоков | `sub: deepdive-synthesizer` | high | Длинный контекст всех источников + блоков + плана держит субагент, в главный поток он не попадает |
-| **Phase 6** | Final report write-up (язык, стиль, чистка) | `main` | medium | Качественное письмо |
-| **Phase 8** | Decision walkthrough — исполнение отчёта по вилкам Decision Spec с пользователем | `main` | high | Главный поток, не суб-агент. Качество вопросов мультиплицируется на применимость всего ресёрча — как в Phase 1, не экономить |
+| **Pre-discover** | Reading CLAUDE.md, checking existing research | `main` | inherit | Main thread, no need to switch |
+| **Phase 1** | Reframing — restating the question, formulating hypotheses | `main` | inherit (medium) | Opus 5.5 on medium is not worse than Opus 5 on high. xhigh — only if a measurement showed a gain |
+| **Phase 2** | Genre selection, choosing blocks | `main` | medium | A decision based on the preset table from genres.md |
+| **Phase 3** | Plan composition (17 sections) | `main` | medium | An architectural decision, documents all future choices |
+| **Phase 3.5** | Capability discovery — env vars audit, mapping | `sub: explore-haiku` | medium | Haiku 5.5 on low skips searches and checks |
+| **Phase 4.0** | Source Dispatch — running subquestions through the matrix | `main` | medium | A lookup in `source_dispatch.md` + a record in plan.md |
+| **Phase 4.1** | Launch sub-agents (web search, simple lookups) | `sub: deepdive-fetcher` | medium | A narrow task and JSON output. Cheap × N agents. Scores itself, see Phase 5 |
+| **Phase 4.1** | Launch sub-agents (reading long sources, extracting quotes) | `sub: deepdive-fetcher` | medium | Haiku 5.5's window is 1M (NOTES.md), long sources fit |
+| **Phase 4.1** | Launch sub-agents (api-direct: curl + jq + parse) | `sub: deepdive-fetcher` | medium | Bash work + mechanical JSON parsing |
+| **Phase 4.1** | Launch sub-agents (code analysis in a repository) | `sub: deepdive-fetcher` | medium | The fetcher gathers facts and paths; conclusions about causes are made by `main` |
+| **Phase 4.2** | Fetch + dedup (main thread) | `main` | medium | Manages the sub-agents, aggregates the results |
+| **Phase 4** | Goal-check between rounds — per-subquestion `goal_status` met/partial/unmet + gap | `main` | low | Names the hole so that evaluation works from the diagnosis instead of deriving it from scratch. Labels only, takes no decisions |
+| **Phase 4.3** | Save sources to files | `sub: deepdive-fetcher` | medium | The fetch agent writes itself into its own number range, see `subagents_v2.md` |
+| **Phase 4.5** | Gap wave — targeted agents for the holes in `claims.csv` (status ≠ triangulated), maximum 2 rounds | `sub: deepdive-fetcher` | medium | A narrow task «find one more source of type X for claim Y» — an expensive model is not needed |
+| **Phase 5** | Scoring (credibility/recency/bias by rubric) | *(built into Phase 4.1, see above)* | — | No separate pass is launched — the agent that read the source does the scoring |
+| **Phase 4** | Candidate pool `candidates.csv` (title+snippet, academic APIs, snowball) — without reading (medium/deep) | `sub: explore-haiku` | medium (frontmatter) | Selecting by snippets requires no reasoning, but the pool is assembled by searching the APIs, and on low Haiku 5.5 skips searches; the expensive part is reading, which belongs to the fetchers |
+| **Phase 5** | Triangulation check over `claims.csv` (mechanical: ≥3 sources AND ≥2 types AND ≥2 `root:` roots → triangulated) | `main`: `score_claims.py --write` | — | The rule is mechanical, a script computes it; no agent needed |
+| **Phase 3.7** | Scout pass inside the plan gate — «which subquestions did we not ask» | `sub: deepdive-scout` | medium (frontmatter) | A short reconnaissance without recording sources, it does not create a separate phase. Cheap ×3-4 agents, see `plan_gate.md` step 1.5 |
+| **Phase 5.5** | Evidence filter: relevance × authority over load-bearing pairs | `sub: explore-haiku` | medium | Two pairwise classifications over verbatim quotes; on low Haiku skips checks |
+| **Phase 6** | Multi-angle red team — N hostile roles as sub-agents (deep: R1–R5; medium: R1+R2+R4, +R5 on dissent) | `sub: deepdive-redteam` | high | **A strong model is mandatory here.** An attack on the hypotheses (Skeptic/Contrarian/Gap-hunter/Implementer/Minority advocate) requires real reasoning, not pattern matching. The value comes from the DIFFERENCE OF ROLES and the isolation of contexts, not from the model class — not «raise everyone to opus» but spread the roles apart |
+| **Phase 6.5** | Verify — liveness + faithfulness of quotes | `sub: explore-haiku` | medium | Entailment claim⊨quote is a judgment; on low Haiku skips checks |
+| **Phase 6** | Synthesis — assembling the report from blocks | `sub: deepdive-synthesizer` | high | The long context of all sources + blocks + plan is held by the sub-agent, it does not get into the main thread |
+| **Phase 6** | Final report write-up (language, style, cleanup) | `main` | medium | Quality writing |
+| **Phase 8** | Decision walkthrough — executing the report along the Decision Spec forks with the user | `main` | high | Main thread, not a sub-agent. The quality of the questions multiplies into the applicability of the whole research — as in Phase 1, do not skimp |
 
-Phase 6 red-team: deep → `sub: deepdive-redteam` (все пять ролей R1–R5); medium → `sub: deepdive-redteam` (R1+R2+R4, +R5 при dissent); shallow → R1 инлайн, выполняется на `main` (без суб-агента). Synthesis/chairman → `sub: deepdive-synthesizer` (medium/deep), `main` на shallow. Cost: +4–5 суб-агентов на deep-отчёт (≈ дёшево относительно поиска).
+Phase 6 red-team: deep → `sub: deepdive-redteam` (all five roles R1–R5); medium → `sub: deepdive-redteam` (R1+R2+R4, +R5 on dissent); shallow → R1 inline, executed on `main` (no sub-agent). Synthesis/chairman → `sub: deepdive-synthesizer` (medium/deep), `main` on shallow. Cost: +4–5 sub-agents per deep report (≈ cheap relative to the search).
 
 ---
 
-## Routing для sub-agents (Phase 4.1)
+## Routing for sub-agents (Phase 4.1)
 
-В Phase 4.1 запускается N (2-5) sub-agents параллельно. Каждый получает узкую подзадачу. Все fetch- и gap-агенты — `sub: deepdive-fetcher` (модель `haiku`, effort `medium`, оба из frontmatter агента; в вызове `Agent` их не передавать). Отклонение от дефолта — по типу подзадачи:
+In Phase 4.1 N (2-5) sub-agents are launched in parallel. Each gets a narrow subtask. All fetch and gap agents are `sub: deepdive-fetcher` (model `haiku`, effort `medium`, both from the agent's frontmatter; do not pass them in the `Agent` call). Deviation from the default — by subtask type:
 
-| Тип подзадачи sub-agent'а | Сигналы | Исполнитель | Model / Effort |
+| Sub-agent subtask type | Signals | Executor | Model / Effort |
 |---|---|---|---|
 | Web search + extract metadata (URL/title/date/snippet) | primary channel = `web-general`, `news-current`, `forum-discussion` | `sub: deepdive-fetcher` | haiku / medium |
-| Read long source + extract pinned quotes | подзадача требует чтения 5-10 длинных страниц | `sub: deepdive-fetcher` | haiku / medium (окно 1M) |
+| Read long source + extract pinned quotes | the subtask requires reading 5-10 long pages | `sub: deepdive-fetcher` | haiku / medium (window 1M) |
 | Academic paper search + abstracts | primary channel = `academic`, `preprint-servers` | `sub: deepdive-fetcher` | haiku / medium |
 | API-direct request + parse JSON | primary channel = `api-direct` (FRED, World Bank, etc.) | `sub: deepdive-fetcher` | haiku / medium |
-| Gap-волна (точечный поиск под claim) | status ≠ triangulated в `claims.csv` | `sub: deepdive-fetcher` | haiku / medium |
-| Code analysis (clone + grep + understand) | primary channel = `code-github` + impl-question | `sub: deepdive-fetcher` собирает факты и пути; выводы о причинах — `main` | haiku / medium |
-| Scraping site с pagination/state | primary channel = `competitive-signals` + scraping | `sub: deepdive-fetcher`; при провале — `sub: general-purpose` с `model: "sonnet"`, `effort: "high"` и инструкцией fetcher'а в брифе (Haiku слабее в агентных задачах, см. NOTES.md) | haiku / medium |
-| Heavy reasoning sub-task (rare) | подвопрос «оцени trade-offs между X и Y», не просто факт-сбор | `main` | — |
+| Gap wave (targeted search for a claim) | status ≠ triangulated in `claims.csv` | `sub: deepdive-fetcher` | haiku / medium |
+| Code analysis (clone + grep + understand) | primary channel = `code-github` + impl-question | `sub: deepdive-fetcher` gathers facts and paths; conclusions about causes — `main` | haiku / medium |
+| Scraping a site with pagination/state | primary channel = `competitive-signals` + scraping | `sub: deepdive-fetcher`; on failure — `sub: general-purpose` with `model: "sonnet"`, `effort: "high"` and the fetcher's instructions in the brief (Haiku is weaker at agentic tasks, see NOTES.md) | haiku / medium |
+| Heavy reasoning sub-task (rare) | a subquestion «assess the trade-offs between X and Y», not just fact gathering | `main` | — |
 
-**Default для sub-agent** если не уверен → `sub: deepdive-fetcher` (haiku / medium).
+**Default for a sub-agent** if unsure → `sub: deepdive-fetcher` (haiku / medium).
 
-> **Качество Haiku 5.5 на fetch не измерено.** Выбор Haiku опирается на цены и NOTES.md, а не на замер по этому скиллу. Проверка — на первом реальном прогоне: доля дословных цитат, прошедших `check_number_provenance` и verify-ось faithfulness. Если доля заметно ниже, чем у Sonnet на той же подтеме, менять `model` во frontmatter `deepdive-fetcher`, а не передавать `sonnet` в каждом вызове.
+> **Haiku 5.5's quality on fetch has not been measured.** The choice of Haiku rests on prices and NOTES.md, not on a measurement for this skill. The check is on the first real run: the share of verbatim quotes that passed `check_number_provenance` and the verify faithfulness axis. If the share is noticeably lower than Sonnet's on the same subtopic, change `model` in the `deepdive-fetcher` frontmatter rather than passing `sonnet` in every call.
 
-**Скоринг встроен.** Каждый fetch sub-agent сам скорит источник тем же вызовом (читает → проставляет credibility/recency/bias → пишет `sources/NN.md` в свой диапазон номеров; fetch-агенту нужен `Write`, поэтому `sub: deepdive-fetcher`, а не `explore-haiku` — см. `subagents_v2.md`). Отдельного scoring pass нет.
+**Scoring is built in.** Each fetch sub-agent scores the source itself in the same call (reads → sets credibility/recency/bias → writes `sources/NN.md` into its own number range; the fetch agent needs `Write`, hence `sub: deepdive-fetcher` and not `explore-haiku` — see `subagents_v2.md`). There is no separate scoring pass.
 
 ---
 
 ## Cost economics
 
-Цены на модели меняются быстрее, чем этот файл переписывается — проверяй актуальное через
-скилл `claude-api` (он автосинкается), не по памяти. Срез цен датирован в `NOTES_dated.md`:
+Model prices change faster than this file is rewritten — check the current ones via the
+`claude-api` skill (it auto-syncs), not from memory. The price snapshot is dated in `NOTES_dated.md`:
 
-| Модель | Model ID | Алиас в `Agent` | Input $/1M | Output $/1M | Контекст | Ratio vs Haiku |
+| Model | Model ID | Alias in `Agent` | Input $/1M | Output $/1M | Context | Ratio vs Haiku |
 |---|---|---|---|---|---|---|
-| Haiku 5.5 | `claude-haiku-5-5` | `haiku` | $0.10 (≤100k промпта; выше $0.50) | $0.50 (≤100k; выше $2.50) | 1M | 1× |
+| Haiku 5.5 | `claude-haiku-5-5` | `haiku` | $0.10 (≤100k prompt; above $0.50) | $0.50 (≤100k; above $2.50) | 1M | 1× |
 | Sonnet 5.5 | `claude-sonnet-5-5` | `sonnet` | $2.00 | $10.00 | 1M | 20× |
 | Opus 5.5 | `claude-opus-5-5` | `opus` | $4.00 | $20.00 | 1M | 40× |
-| Opus 5 | `claude-opus-5` | — (только явным ID) | $5.00 | $25.00 | 1M | 50× |
-| Fable 5.1 | `claude-fable-5-1` | `fable` | $10.00 | $50.00 | 1M | 100× номинально, **эффективно меньше** |
+| Opus 5 | `claude-opus-5` | — (explicit ID only) | $5.00 | $25.00 | 1M | 50× |
+| Fable 5.1 | `claude-fable-5-1` | `fable` | $10.00 | $50.00 | 1M | 100× nominally, **effectively less** |
 
-Ratio считан от Haiku 5.5 по ставке ≤100k промпта (цены — NOTES.md). Haiku 5.5: effort принимает (дефолт `medium`), 128K выхода, токенайзер даёт ~+30% токенов к 4.5; точные характеристики — NOTES.md.
+The ratio is computed from Haiku 5.5 at the ≤100k prompt rate (prices — NOTES.md). Haiku 5.5: accepts effort (default `medium`), 128K output, the tokenizer gives ~+30% tokens versus 4.5; exact characteristics — NOTES.md.
 
-**Главный сдвиг: Haiku 5.5 в десятки раз дешевле Opus.** Держать Opus на Phase 1/Phase 6 — всё равно копейки на фоне поиска; экономить нужно на fan-out (N sub-agents в Phase 4), не на этих фазах.
+**The main shift: Haiku 5.5 is tens of times cheaper than Opus.** Keeping Opus on Phase 1/Phase 6 is still pennies against the background of the search; you need to save on fan-out (N sub-agents in Phase 4), not on these phases.
 
-**Fable 5.1: номинальная ставка завышает цену.** Кэш-чтение $0.25/MTok (−75% против Fable 5) даёт ~25% экономии на типовых нагрузках и до 45% на агентных — там, где кэш переиспользуется. Множитель в таблице считать по номиналу нельзя. При этом на суб-агентов это не влияет: Fable в них всё равно не пускаем, а `subagentPromptCacheTtl: 1h` в settings.json работает на всех.
+**Fable 5.1: the nominal rate overstates the price.** Cache reads at $0.25/MTok (−75% against Fable 5) give ~25% savings on typical loads and up to 45% on agentic ones — where the cache is reused. The multiplier in the table cannot be taken at nominal. This does not affect sub-agents anyway: we do not let Fable into them regardless, and `subagentPromptCacheTtl: 1h` in settings.json works for everyone.
 
-**Effort в матрице ниже читать как желаемую глубину, а не как политику сессии.** Политика (`CLAUDE.md` § Модели; дата — `NOTES_dated.md`): дефолт `medium`, `xhigh` только на необратимом. Клетки `high`/`xhigh` в матрице оправданы там, где ошибка фазы переезжает на весь ресёрч (Phase 1 reframing, Phase 6 red-team) — это ровно класс «необратимое внутри задачи». Остальные клетки при сомнении опускать, а не поднимать.
+**Read the Effort in the matrix below as the desired depth, not as the session policy.** The policy (`CLAUDE.md` § Models; date — `NOTES_dated.md`): default `medium`, `xhigh` only on the irreversible. The `high`/`xhigh` cells in the matrix are justified where a phase's mistake carries over into the whole research (Phase 1 reframing, Phase 6 red-team) — that is exactly the class «irreversible within the task». Lower the other cells when in doubt, do not raise them.
 
-**Окно больше не повод для Sonnet.** У Haiku 5.5 контекст 1M, как у остальных (NOTES.md), поэтому подзадача «прочитать 5-10 длинных страниц» остаётся у `sub: deepdive-fetcher`. Sonnet — только там, где Haiku не тянет по качеству (агентный код, многокритериальные гейты).
+**The window is no longer a reason for Sonnet.** Haiku 5.5 has a 1M context, like the others (NOTES.md), so the subtask «read 5-10 long pages» stays with `sub: deepdive-fetcher`. Sonnet — only where Haiku does not hold up on quality (agentic code, multi-criteria gates).
 
-**Fable 5.1 главным оркестратором не ставить.** Только по явному запросу пользователя и только на многодневные прогоны; в deepdive его цена не окупается ни на одной фазе.
+**Do not put Fable 5.1 as the main orchestrator.** Only on an explicit user request and only for multi-day runs; in deepdive its price does not pay off on any phase.
 
-## Effort: чем управляем, а чем нет
+## Effort: what we control and what we do not
 
-С Claude Code v2.1.292 `Agent` tool принимает **`model` и `effort`**. Управляемые рычаги:
+Since Claude Code v2.1.292 the `Agent` tool accepts **`model` and `effort`**. The controllable levers:
 
-- **главный поток** — `/effort` в сессии (`low`/`medium`/`high`/`xhigh`/`max`);
-- **суб-агенты `deepdive-*` и `explore-haiku`** — модель и effort во frontmatter файла агента; колонка Effort матрицы для них повторяет frontmatter, вызовом не передаётся. Расходятся — правь frontmatter, не вызов;
-- **встроенные суб-агенты** (`general-purpose`) — `model` + `effort` per-call; без них наследуют модель и effort сессии;
-- **`Workflow`-скрипты** — `agent()` с `opts.effort`, как и раньше.
+- **the main thread** — `/effort` in the session (`low`/`medium`/`high`/`xhigh`/`max`);
+- **the `deepdive-*` and `explore-haiku` sub-agents** — model and effort in the agent file's frontmatter; the Effort column of the matrix repeats the frontmatter for them and is not passed by the call. If they diverge — fix the frontmatter, not the call;
+- **built-in sub-agents** (`general-purpose`) — `model` + `effort` per-call; without them they inherit the session's model and effort;
+- **`Workflow` scripts** — `agent()` with `opts.effort`, as before.
 
-Уровни `xhigh` и `max` появились после первой редакции этого файла. `xhigh` — рабочий максимум для кодинга и агентных задач; `max` прожорлив и склонен к overthinking. Для deepdive: `xhigh` — только на фазе, где замер показал выигрыш (Opus 5.5 на xhigh думает заметно дольше Opus 5), `max` — не уместен нигде (ресёрч упирается в качество источников, не в глубину рассуждения одной модели).
+The `xhigh` and `max` levels appeared after the first edition of this file. `xhigh` is the working maximum for coding and agentic tasks; `max` is greedy and prone to overthinking. For deepdive: `xhigh` — only on a phase where a measurement showed a gain (Opus 5.5 on xhigh thinks noticeably longer than Opus 5), `max` — is not appropriate anywhere (research runs into the quality of sources, not into the depth of one model's reasoning).
 
-**Иллюстрация (deep, ~5 sub-agents):** цифры прежней редакции (Haiku 4.5 $1/$5) устарели и не пересчитаны; Phase 4 на 5×`deepdive-fetcher` (Haiku 5.5) стоит копейки против Opus (цены — NOTES.md). Правило архитектурное (узкая задача = дешёвая модель, Phase 1/6 не экономить), не ценовое.
+**Illustration (deep, ~5 sub-agents):** the numbers of the previous edition (Haiku 4.5 $1/$5) are outdated and not recalculated; Phase 4 on 5×`deepdive-fetcher` (Haiku 5.5) costs pennies against Opus (prices — NOTES.md). The rule is architectural (narrow task = cheap model, do not skimp on Phase 1/6), not about price.
 
-(Проверяй актуальные цены.)
+(Check the current prices.)
 
 ---
 
-## Как передать модель в `Agent`-tool
+## How to pass the model into the `Agent` tool
 
-Агенты deepdive берут модель и effort из своего frontmatter, вызов называет только тип:
+The deepdive agents take the model and effort from their frontmatter, the call names only the type:
 
 ```
 Agent({
-  subagent_type: "deepdive-fetcher",   // haiku / medium из frontmatter; fetch+save нужен Write
+  subagent_type: "deepdive-fetcher",   // haiku / medium from the frontmatter; fetch+save needs Write
   description: "...",
   prompt: "..."
 })
 ```
 
-Встроенному типу модель и effort передаются явно (пример — эскалация fetch после отказа или провала Haiku):
+For a built-in type the model and effort are passed explicitly (an example — fetch escalation after a Haiku refusal or failure):
 
 ```
 Agent({
@@ -153,60 +155,60 @@ Agent({
   model: "sonnet",
   effort: "high",
   description: "...",
-  prompt: "... формат и правила — прочитай ~/.claude/agents/deepdive-fetcher.md ..."
+  prompt: "... format and rules — read ~/.claude/agents/deepdive-fetcher.md ..."
 })
 ```
 
-Встроенный тип без `model` наследует модель главной (сейчас Opus 5.5); забытый параметр `model` = дорогой вызов.
+A built-in type without `model` inherits the main model (currently Opus 5.5); a forgotten `model` parameter = an expensive call.
 
 ---
 
-## Как сообщать пользователю
+## How to tell the user
 
-В начале medium/deep ресёрча, после Phase 3 (plan готов), один раз:
+At the start of a medium/deep research, after Phase 3 (the plan is ready), once:
 
 ```
-Запускаю medium ресёрч. Routing:
+Starting a medium research. Routing:
 - Phase 1, 3, 6 (synthesis): main (Opus)
 - Phase 6 red team: deepdive-redteam (Opus/high)
 - Phase 4: 4 deepdive-fetcher (Haiku/medium)
 - Phase 3.5, 5, 5.5, 6.5: explore-haiku
 
-Estimated cost: ~$2 (vs ~$8 если бы всё на Opus)
+Estimated cost: ~$2 (vs ~$8 if everything were on Opus)
 ```
 
-Это не маркетинг — это **прозрачность**, у пользователя должна быть возможность сказать «нет, мне нужно качество, гони всё на Opus».
+This is not marketing — it is **transparency**, the user must be able to say «no, I need quality, run everything on Opus».
 
 ---
 
-## Override-механика
+## Override mechanics
 
-Пользователь может явно перебить:
+The user can explicitly override:
 
 ```
 > deepdive X with all on opus
 ```
 
-Тогда router игнорируется, и **все** фазы и sub-agents идут на Opus. Цена выше, для high-stakes решений ОК.
+Then the router is ignored and **all** phases and sub-agents run on Opus. The price is higher; for high-stakes decisions it is OK.
 
-Аналогично:
-- `... with cheap mode` → всё на Haiku где возможно, Sonnet только на Phase 1/6
-- `... with default routing` (или ничего) → matrix выше
+Likewise:
+- `... with cheap mode` → everything on Haiku where possible, Sonnet only on Phase 1/6
+- `... with default routing` (or nothing) → the matrix above
 
 ---
 
 ## Anti-patterns
 
-**❌ Запускать Phase 6 adversarial на Haiku.** Adversarial — это критическое мышление. Haiku тут будет soft-pushback'ом без реальной атаки на гипотезы. Только `sub: deepdive-redteam` (Opus/high).
+**❌ Running Phase 6 adversarial on Haiku.** Adversarial is critical thinking. Haiku here will be a soft pushback without a real attack on the hypotheses. Only `sub: deepdive-redteam` (Opus/high).
 
-**❌ Запускать 5 параллельных sub-agents все на Opus.** Это умножение цены на 5 без оправдания. Sub-agents с узкой задачей — `deepdive-fetcher` (Haiku).
+**❌ Running 5 parallel sub-agents all on Opus.** That is multiplying the price by 5 with no justification. Sub-agents with a narrow task — `deepdive-fetcher` (Haiku).
 
-**❌ Поднимать fetch-агентов Phase 4.1 на Opus «для качества».** Дело не только в цене. Способность модели ортогональна её «просоциальности» в многоагентной конфигурации (Anthropic Frontier Red Team, 13.08.2026): более сильная модель не координируется лучше — она увереннее и быстрее делает по-своему. У fetch-агента есть `Write` и изолированный контекст, то есть право действовать без надзора; на сильной модели растёт не качество поиска, а цена ошибки — увереннее выбранная не та трактовка подтемы, увереннее проставленный `root`, увереннее отброшенный источник. Границы (диапазон id, зафиксированный dispatch, обязательные поля) держат качество лучше, чем класс модели.
+**❌ Raising the Phase 4.1 fetch agents to Opus «for quality».** It is not only about the price. A model's capability is orthogonal to its «prosociality» in a multi-agent configuration (Anthropic Frontier Red Team, 13.08.2026): a stronger model does not coordinate better — it does its own thing more confidently and faster. A fetch agent has `Write` and an isolated context, that is, the right to act without supervision; on a strong model what grows is not the quality of the search but the price of an error — a wrong interpretation of the subtopic chosen more confidently, a `root` set more confidently, a source discarded more confidently. The boundaries (the id range, the fixed dispatch, the mandatory fields) hold quality better than the model class.
 
-**❌ Считать `xhigh`/`max` бесплатным улучшением.** Выше effort — длиннее траектория и больше склонность к overthinking. На Phase 4 это прямо вредно: агенту нужно собрать источники по зафиксированной стратегии, а не переизобрести её.
+**❌ Treating `xhigh`/`max` as a free improvement.** Higher effort — a longer trajectory and a greater tendency to overthink. On Phase 4 that is directly harmful: the agent needs to collect sources by the fixed strategy, not to reinvent it.
 
-**❌ Не сообщать пользователю про routing.** Прозрачность экономии — это **фича**, не пасхалка. Один раз вначале сказать какой routing и estimated cost.
+**❌ Not telling the user about the routing.** Transparency about the savings is a **feature**, not an easter egg. Say once at the start what the routing and the estimated cost are.
 
-**❌ Игнорировать override.** Если пользователь сказал «всё на Opus» — слушайся, не «оптимизируй за спиной».
+**❌ Ignoring the override.** If the user said «everything on Opus» — obey, do not «optimize behind their back».
 
-**❌ Hardcoded routing «всегда одна модель везде».** Это потеря преимуществ Haiku на простой работе и Opus на критической.
+**❌ Hardcoded routing «always one model everywhere».** That is losing Haiku's advantages on simple work and Opus's on the critical parts.

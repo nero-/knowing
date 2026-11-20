@@ -1,66 +1,67 @@
-# Search channels — каталог <!--gen:count:channels-->29<!--/gen--> каналов поиска
+<!-- translated from upstream/references/channels.md @ e233797 — see docs/TRANSLATION.md -->
+# Search channels — a catalog of <!--gen:count:channels-->29<!--/gen--> search channels
 
-## Содержание
+## Contents
 
-- Как использовать
-- Каталог <!--gen:count:channels-->29<!--/gen--> каналов
-- Channel selection — по жанрам
-- Channel selection — по типам данных в вопросе
-- Paywall fallback protocol (универсальный)
+- How to use
+- Catalog of <!--gen:count:channels-->29<!--/gen--> channels
+- Channel selection — by genre
+- Channel selection — by data types in the question
+- Paywall fallback protocol (universal)
 - Bot-block ≠ paywall
-- Открытые двери закрытых сайтов
-- Forbidden patterns (не использовать)
-- Когда канал «не работает»
-- Future channels (TODO когда появятся возможности)
+- Open doors of closed sites
+- Forbidden patterns (do not use)
+- When a channel «does not work»
+- Future channels (TODO when capabilities appear)
 
-Каналы — это **именованные search strategies** под разные типы источников. Каждый канал имеет известные query patterns, ожидаемый формат результатов, и known limitations.
+Channels are **named search strategies** for different types of sources. Each channel has known query patterns, an expected result format, and known limitations.
 
-## Как использовать
+## How to use
 
-1. После Фазы 2 (genre & block selection) — определи какие каналы релевантны для каждой подтемы.
-2. В `plan.md` секция Information sourcing strategy указывает каналы per subtopic.
-3. В промпт суб-агента передаётся `channels: [список]` — агент знает где искать.
-4. В `sources/NN.md` фиксируется `channel:` поле — какой канал дал источник.
+1. After Phase 2 (genre & block selection) — determine which channels are relevant for each subtopic.
+2. In `plan.md` the Information sourcing strategy section states the channels per subtopic.
+3. The sub-agent prompt gets `channels: [list]` — the agent knows where to search.
+4. In `sources/NN.md` the `channel:` field records which channel produced the source.
 
-Канал говорит, ГДЕ искать; конкретные проверенные адреса под сигнал лежат в `references/registry/` (см. `source_dispatch.md`, раздел «Registry»). Каналы `news-current`, `industry-specific`, `preprint-servers`, `forum-discussion`, `api-direct`, `regulatory-legal` там покрыты плотнее всего.
+A channel says WHERE to search; the concrete vetted addresses per signal live in `references/registry/` (see `source_dispatch.md`, the «Registry» section). The channels `news-current`, `industry-specific`, `preprint-servers`, `forum-discussion`, `api-direct`, `regulatory-legal` are covered most densely there.
 
-## Каталог <!--gen:count:channels-->29<!--/gen--> каналов
+## Catalog of <!--gen:count:channels-->29<!--/gen--> channels
 
-### Часть A — Web и discovery
+### Часть A — Web and discovery
 
 #### 1. `web-general`
-**Что:** Широкий WebSearch без specific сайтов.
+**What:** Broad WebSearch without specific sites.
 **Query pattern:** `<topic> <keyword>` — broad.
-**Возвращает:** mainstream media, blogs, general references.
-**Когда:** первый round для понимания темы, common knowledge.
-**Limitations:** SEO-перекошено, recent dominate, мало academic.
-**По жанрам:** baseline везде.
+**Returns:** mainstream media, blogs, general references.
+**When:** the first round for understanding the topic, common knowledge.
+**Limitations:** SEO-skewed, recent dominates, little academic.
+**By genre:** baseline everywhere.
 
 #### 2. `wikipedia-references`
-**Что:** Wikipedia как **навигационный hub** к первичным источникам.
+**What:** Wikipedia as a **navigation hub** to primary sources.
 **Query patterns:**
-- `site:en.wikipedia.org <topic>` (английская)
-- `site:ru.wikipedia.org <topic>` (русская)
+- `site:en.wikipedia.org <topic>` (English)
+- `site:ru.wikipedia.org <topic>` (Russian)
 - Find specific articles, then follow References/Bibliography
-**Возвращает:** ссылки на primary sources через bibliography.
-**Когда:** в начале любого ресёрча для quick framing.
-**Quality:** Wikipedia сама C-grade. Use only for navigation, never as citation.
+**Returns:** links to primary sources via the bibliography.
+**When:** at the start of any research for quick framing.
+**Quality:** Wikipedia itself is C-grade. Use only for navigation, never as citation.
 
 #### 3. `archive-historical`
-**Что:** archive.org Wayback Machine, archive.today для paywalled/deleted.
+**What:** archive.org Wayback Machine, archive.today for paywalled/deleted.
 **Query patterns:**
-- `https://web.archive.org/web/*/<url>` — для конкретного URL
+- `https://web.archive.org/web/*/<url>` — for a specific URL
 - `archive.today/<url>` — newer mirror
-**Возвращает:** старые версии страниц, removed content, paywalled через cached.
-**Когда:** fallback когда live source блокирован; проверка изменений со временем.
-**Limitations:** не всё в архиве; recent dynamic content часто отсутствует.
+**Returns:** older versions of pages, removed content, paywalled content via cache.
+**When:** fallback when the live source is blocked; checking changes over time.
+**Limitations:** not everything is in the archive; recent dynamic content is often missing.
 
 ---
 
 ### Часть B — Academic / Scholarly
 
 #### 4. `academic`
-**Что:** Поиск в academic sources.
+**What:** Search in academic sources.
 **Query patterns:**
 - `site:scholar.google.com <topic>` — broad scholarly
 - `site:semanticscholar.org <topic>` — AI-powered
@@ -75,12 +76,12 @@
 3. `"<paper title>" filetype:pdf` — institutional copy
 4. `site:edu "<paper title>"` — university hosting
 5. Unpaywall search
-6. Если ничего — fetch abstract, отметить `access: paywalled-abstract-only`
+6. If nothing — fetch the abstract, mark `access: paywalled-abstract-only`
 
-**Когда:** validation научных claims, deep explainer, любой scientific topic.
+**When:** validation of scientific claims, deep explainer, any scientific topic.
 
 #### 5. `preprint-servers`
-**Что:** Legal open access scholarly preprints — **первый стоп для recent academic**.
+**What:** Legal open access scholarly preprints — **the first stop for recent academic**.
 **Query patterns:**
 - `site:arxiv.org <topic>` — CS, physics, math
 - `site:biorxiv.org <topic>` — biology
@@ -91,13 +92,13 @@
 - `site:chemrxiv.org <topic>` — chemistry
 - `site:engrxiv.org <topic>` — engineering
 
-**Возвращает:** open access scholarly papers full text.
-**Когда:** validation, любой recent scientific claim.
+**Returns:** open access scholarly papers full text.
+**When:** validation, any recent scientific claim.
 **Advantage:** free, legal, full text. Often preprint = final version.
-**Limitations:** некоторые preprints not peer-reviewed eventually; check «later published».
+**Limitations:** some preprints are never peer-reviewed eventually; check «later published».
 
 #### 6. `conference-proceedings`
-**Что:** Conference papers from major academic venues.
+**What:** Conference papers from major academic venues.
 **Query patterns:**
 - `site:acm.org <topic>`
 - `site:ieee.org <topic>`
@@ -105,16 +106,16 @@
 - `<topic> conference proceedings filetype:pdf`
 - `<topic> "workshop"`
 
-**Возвращает:** cutting-edge research, peer-reviewed conference papers.
-**Когда:** academic-deep validation, tech research где конференции главные.
-**Limitations:** часто paywalled — fallback на preprint-servers.
+**Returns:** cutting-edge research, peer-reviewed conference papers.
+**When:** academic-deep validation, tech research where conferences are the main venue.
+**Limitations:** often paywalled — fallback to preprint-servers.
 
 ---
 
 ### Часть C — Code
 
 #### 7. `code-github`
-**Что:** Public GitHub repositories.
+**What:** Public GitHub repositories.
 **Query patterns:**
 - `site:github.com <topic>`
 - `site:github.com <topic> stars:>1000` — only popular
@@ -123,55 +124,55 @@
 - `<topic> ADR site:github.com` — architecture decision records
 - `<topic> filetype:md site:github.com` — READMEs/docs
 
-**Возвращает:** real implementations, READMEs, issue discussions, ADRs.
-**Когда:** tech explainer, decision (как X решается на практике), validation tech claims.
-**Limitations:** только public; код требует understanding.
+**Returns:** real implementations, READMEs, issue discussions, ADRs.
+**When:** tech explainer, decision (how X is solved in practice), validation of tech claims.
+**Limitations:** public only; code requires understanding.
 
 #### 8. `code-other`
-**Что:** GitLab, Bitbucket, sourcehut, прочие code hosts.
+**What:** GitLab, Bitbucket, sourcehut, other code hosts.
 **Query patterns:**
 - `site:gitlab.com <topic>`
 - `site:bitbucket.org <topic>`
 - `site:sr.ht <topic>`
 
-**Когда:** проекты которые сознательно не на GitHub (некоторые EU/government/privacy-focused).
+**When:** projects that deliberately are not on GitHub (some EU/government/privacy-focused).
 
 ---
 
 ### Часть D — Community / Discussion
 
 #### 9. `forum-discussion`
-**Что:** Targeted поиск в discussion-сайтах.
+**What:** Targeted search on discussion sites.
 **Query patterns:**
-- `site:reddit.com <topic>` (или subreddit-specific: `site:reddit.com/r/<sub>`)
+- `site:reddit.com <topic>` (or subreddit-specific: `site:reddit.com/r/<sub>`)
 - `site:news.ycombinator.com <topic>`
 - `site:stackexchange.com <topic>` / `site:stackoverflow.com`
 - `site:lobste.rs <topic>`
 - `<topic> "my experience" reddit`
-- `<topic> "regret" reddit` — для validation/decision
+- `<topic> "regret" reddit` — for validation/decision
 
-**Возвращает:** real-user experiences, anecdotes, community sentiment, contrarian voices.
-**Когда:** validation («работает ли X на практике»), landscape (community signals), decision (regret stories).
-**Quality:** anecdotal — C по нашей шкале. Use для signal, not proof. Хорош для opposition voice.
+**Returns:** real-user experiences, anecdotes, community sentiment, contrarian voices.
+**When:** validation («does X work in practice»), landscape (community signals), decision (regret stories).
+**Quality:** anecdotal — C on our scale. Use for signal, not proof. Good for an opposition voice.
 
 #### 10. `social-twitter`
-**Что:** Twitter/X public posts.
+**What:** Twitter/X public posts.
 **Query patterns:**
 - `site:twitter.com <topic>` / `site:x.com <topic>`
 - `<person> twitter <topic>`
 - `<topic> "viral"` recent
 - `<topic> "controversial"`
 
-**Возвращает:** real-time discourse, hot takes.
-**Когда:** landscape (current discourse), validation contrarian voices.
-**Limitations:** WebSearch плохо индексирует Twitter с 2023+ (API closure); часто только cached/embedded. Weak signal source.
+**Returns:** real-time discourse, hot takes.
+**When:** landscape (current discourse), validation contrarian voices.
+**Limitations:** WebSearch indexes Twitter poorly from 2023+ (API closure); often only cached/embedded. Weak signal source.
 
 ---
 
 ### Часть E — News and Industry
 
 #### 11. `news-current`
-**Что:** News sources + date filters.
+**What:** News sources + date filters.
 **Query patterns:**
 - `<topic>` + filter «last year/month»
 - `site:reuters.com <topic>`
@@ -180,24 +181,24 @@
 - `site:ft.com <topic>` (financial)
 - `<topic> "announced"` recent
 
-**Возвращает:** current events, announcements, recent changes.
-**Когда:** landscape current state, trends, recent context.
-**Limitations:** sensationalism, churn, устаревает.
+**Returns:** current events, announcements, recent changes.
+**When:** landscape current state, trends, recent context.
+**Limitations:** sensationalism, churn, goes stale.
 
 #### 12. `industry-reports`
-**Что:** Consulting firms, analyst houses.
+**What:** Consulting firms, analyst houses.
 **Query patterns:**
 - `site:mckinsey.com <topic>`
 - `site:bcg.com <topic>`
 - `site:bain.com <topic>`
-- `site:gartner.com <topic>` (часто paywalled — ищи press releases)
+- `site:gartner.com <topic>` (often paywalled — look for press releases)
 - `site:cbinsights.com <topic>`
 - `<topic> "market size" <year>`
 - `<topic> "industry report" filetype:pdf`
 
-**Возвращает:** market sizing, trend analyses, expert commentary.
-**Когда:** landscape, market sizing, decision context.
-**Limitations:** конфликт интересов (selling services), часто paywalled — ищи summaries.
+**Returns:** market sizing, trend analyses, expert commentary.
+**When:** landscape, market sizing, decision context.
+**Limitations:** conflict of interest (selling services), often paywalled — look for summaries.
 **See also:** stat_sources/core/consulting_industry.md
 
 ---
@@ -205,49 +206,49 @@
 ### Часть F — Multimedia
 
 #### 13. `video-talks`
-**Что:** Conference talks и видео-лекции.
+**What:** Conference talks and video lectures.
 **Query patterns:**
 - `<topic> transcript`
-- `<topic> conference talk PDF` (slides доступны чаще transcript)
+- `<topic> conference talk PDF` (slides are more often available than a transcript)
 - `<speaker> talk <topic>`
 - `<conference> <year> <topic>` (e.g., AWS re:Invent, RustConf)
-- `site:youtube.com <topic>` — найти видео, потом искать transcript
+- `site:youtube.com <topic>` — find the video, then look for a transcript
 
-**Возвращает:** conference talks (slides+transcripts), interviews, lectures.
-**Когда:** explainer deep, expert opinion, cutting-edge topics без формальной литературы.
-**Limitations:** transcripts inconsistent. Найди summary blog by speaker как proxy.
+**Returns:** conference talks (slides+transcripts), interviews, lectures.
+**When:** explainer deep, expert opinion, cutting-edge topics without formal literature.
+**Limitations:** transcripts inconsistent. Find a summary blog by the speaker as a proxy.
 
 #### 14. `podcasts`
-**Что:** Podcast episodes with notes/transcripts.
+**What:** Podcast episodes with notes/transcripts.
 **Query patterns:**
 - `<topic> "show notes"`
 - `<topic> transcript podcast`
-- `<topic> podcast site:lexfridman.com` (или другие топ-podcasts)
+- `<topic> podcast site:lexfridman.com` (or other top podcasts)
 - `<topic> "deep dive" podcast`
 
-**Возвращает:** глубокие интервью, длинные дискуссии.
-**Когда:** expert-opinion, deep explainer, thought leader landscape.
-**Limitations:** transcripts uneven; time investment большой.
+**Returns:** in-depth interviews, long discussions.
+**When:** expert-opinion, deep explainer, thought leader landscape.
+**Limitations:** transcripts uneven; the time investment is large.
 
 ---
 
 ### Часть G — People
 
 #### 15. `expert-individual`
-**Что:** Конкретные эксперты, авторы, founders.
+**What:** Specific experts, authors, founders.
 **Query patterns:**
-- `"<Person Name>" <topic>` — что говорил
+- `"<Person Name>" <topic>` — what they said
 - `<Person> blog`
 - `<Person> interview <topic>`
 - `<Person> "I think"` / `<Person> "predict"`
 - `site:linkedin.com/in/<person>` — bio
 
-**Возвращает:** мнения экспертов, их blogs, интервью.
-**Когда:** validation (expert opinion), landscape (key people), understanding конкретных школ мысли.
-**Limitations:** один голос — нужна триангуляция. Conflict of interest всегда возможен.
+**Returns:** expert opinions, their blogs, interviews.
+**When:** validation (expert opinion), landscape (key people), understanding specific schools of thought.
+**Limitations:** one voice — triangulation needed. Conflict of interest is always possible.
 
 #### 16. `books-literature`
-**Что:** Books, длинные тексты, summaries.
+**What:** Books, long texts, summaries.
 **Query patterns:**
 - `site:books.google.com <topic>` — preview
 - `site:openlibrary.org <topic>`
@@ -255,16 +256,16 @@
 - `<book title> "summary"`
 - `<topic> "in his book"`
 
-**Возвращает:** ссылки на книги, fragments через preview, summaries.
-**Когда:** explainer глубокие, historical-context, expert-individual (книги автора).
-**Limitations:** full text часто недоступен; preview ограниченный.
+**Returns:** links to books, fragments via preview, summaries.
+**When:** deep explainers, historical-context, expert-individual (the author's books).
+**Limitations:** full text often unavailable; preview is limited.
 
 ---
 
 ### Часть H — Official / Legal
 
 #### 17. `regulatory-legal`
-**Что:** Government sites, regulators, official documents.
+**What:** Government sites, regulators, official documents.
 **Query patterns:**
 - `site:sec.gov <company>` — SEC filings
 - `site:eur-lex.europa.eu <topic>` — EU regulations
@@ -273,29 +274,29 @@
 - `<company> 10-K` — annual reports
 - `<topic> "directive" site:europa.eu`
 
-**Возвращает:** официальные документы, регуляторные тексты, financial filings.
-**Когда:** regulatory context, validation legal claims, financial due diligence.
-**Limitations:** длинные документы; нужна навигация по конкретным секциям.
+**Returns:** official documents, regulatory texts, financial filings.
+**When:** regulatory context, validation of legal claims, financial due diligence.
+**Limitations:** long documents; navigation to specific sections is needed.
 **See also:** stat_sources/core/gov_macro.md, stat_sources/core/companies_public.md
 
 #### 18. `patents`
-**Что:** Patent databases.
+**What:** Patent databases.
 **Query patterns:**
 - `site:patents.google.com <topic>`
 - `inventor:"<Name>" site:patents.google.com`
 - `assignee:"<Company>" site:patents.google.com`
 - `<topic> patent USPTO`
 
-**Возвращает:** patent filings, inventors, prior art.
-**Когда:** tech history, competitive analysis (что patented), validation tech claims.
-**Limitations:** patents legal language, не technical clarity. Patent ≠ working tech.
+**Returns:** patent filings, inventors, prior art.
+**When:** tech history, competitive analysis (what is patented), validation of tech claims.
+**Limitations:** patents use legal language, not technical clarity. Patent ≠ working tech.
 
 ---
 
 ### Часть I — Quantitative
 
 #### 19. `data-statistical-gov`
-**Что:** Government и intergovernmental статистические агентства.
+**What:** Government and intergovernmental statistical agencies.
 **Query patterns:**
 - `site:data.gov <topic>`
 - `site:eurostat.ec.europa.eu <topic>`
@@ -304,12 +305,12 @@
 - `site:fred.stlouisfed.org <topic>` (US macro)
 - `<country> "statistics" <topic>`
 
-**Возвращает:** official statistics, time series.
-**Когда:** numbers blocks (metric-tracker, historical-data), validation quantitative claims.
+**Returns:** official statistics, time series.
+**When:** numbers blocks (metric-tracker, historical-data), validation of quantitative claims.
 **See also:** stat_sources/core/gov_macro.md
 
 #### 20. `product-analytics`
-**Что:** Open stat-сайты для apps, SaaS, web products.
+**What:** Open stat sites for apps, SaaS, web products.
 **Query patterns:**
 - `site:sensortower.com/blog <app>` — mobile
 - `site:similarweb.com/website/<domain>`
@@ -319,12 +320,12 @@
 - `site:producthunt.com/products/<product>`
 - `<company> "MAU" OR "DAU" OR "ARR"` — leaked stats
 
-**Возвращает:** product analytics, traffic, tech stacks, user reviews.
-**Когда:** competitive-signals, profile-card в landscape, market sizing apps/SaaS, validation популярности.
+**Returns:** product analytics, traffic, tech stacks, user reviews.
+**When:** competitive-signals, profile-card in a landscape, market sizing for apps/SaaS, validation of popularity.
 **See also:** stat_sources/core/consumer_digital.md
 
 #### 21. `crypto-analytics`
-**Что:** On-chain data, crypto market analytics.
+**What:** On-chain data, crypto market analytics.
 **Query patterns:**
 - `site:coingecko.com/en/coins/<coin>`
 - `site:defillama.com <protocol>`
@@ -332,62 +333,62 @@
 - `site:etherscan.io <address>` — on-chain Ethereum
 - `<protocol> "TVL"` / `<token> "market cap"`
 
-**Возвращает:** market data, TVL, on-chain analytics.
-**Когда:** crypto/web3 ресёрчи.
-**Quality:** high — данные верифицируемы on-chain.
+**Returns:** market data, TVL, on-chain analytics.
+**When:** crypto/web3 research.
+**Quality:** high — the data is verifiable on-chain.
 **See also:** stat_sources/core/crypto.md
 
 #### 22. `social-creator-stats`
-**Что:** Stats для social media creators.
+**What:** Stats for social media creators.
 **Query patterns:**
 - `site:socialblade.com/<platform>/user/<name>`
 - `site:twitchtracker.com <streamer>`
 - `<creator> "subscribers"` / `<creator> "growth"`
 
-**Возвращает:** YouTube/Twitter/Twitch/etc creator stats.
-**Когда:** influence analysis, content creator landscape.
+**Returns:** YouTube/Twitter/Twitch/etc creator stats.
+**When:** influence analysis, content creator landscape.
 
 #### 23. `industry-benchmarks`
-**Что:** Industry surveys и benchmark reports.
+**What:** Industry surveys and benchmark reports.
 **Query patterns:**
 - `<industry> "developer survey" <year>` (Stack Overflow, JetBrains)
 - `<topic> "State of <industry>" report`
 - `<topic> survey <year>`
 - `<topic> "industry report"`
 
-**Возвращает:** quantitative opinion + benchmarks.
-**Когда:** validation popular claims, benchmark-numbers block, persona research.
+**Returns:** quantitative opinion + benchmarks.
+**When:** validation of popular claims, benchmark-numbers block, persona research.
 **See also:** stat_sources/core/consulting_industry.md
 
 #### 24. `surveys-polls`
-**Что:** Surveys, polls.
+**What:** Surveys, polls.
 **Query patterns:**
 - `<topic> survey <year>`
 - `site:pewresearch.org <topic>`
 - `site:gallup.com <topic>`
 - `<topic> "n=" survey`
 
-**Возвращает:** public opinion data with sample sizes.
-**Когда:** persona research, behavioral-patterns, validation popular sentiment.
-**Limitations:** sampling bias, методология variable.
+**Returns:** public opinion data with sample sizes.
+**When:** persona research, behavioral-patterns, validation of popular sentiment.
+**Limitations:** sampling bias, variable methodology.
 
 ---
 
 ### Часть J — Indirect signals
 
 #### 25. `competitive-signals`
-**Что:** Indirect signals про компании.
+**What:** Indirect signals about companies.
 **Query patterns:**
-- `site:linkedin.com/jobs <company>` — что нанимает
+- `site:linkedin.com/jobs <company>` — what they are hiring for
 - `<company> "raised"` / `<company> "funding"`
 - `<company> crunchbase`
 - `<company> linkedin company size`
 - `<company> "leaked"` (deck leaks etc)
 - `<company> "founders" interview`
 
-**Возвращает:** indirect signals about company state.
-**Когда:** landscape, profile-card, due diligence без direct access.
-**Limitations:** indirect — outdated, sample-biased; нужна триангуляция.
+**Returns:** indirect signals about company state.
+**When:** landscape, profile-card, due diligence without direct access.
+**Limitations:** indirect — outdated, sample-biased; triangulation needed.
 **See also:** stat_sources/core/companies_private.md
 
 ---
@@ -395,31 +396,31 @@
 ### Часть K — Local context
 
 #### 26. `local-project`
-**Что:** Local files in current project. Используется только когда `subagent_type=general-purpose` или главный поток сам читает.
-**НЕ WebSearch — это file system access.**
+**What:** Local files in the current project. Used only when `subagent_type=general-purpose` or the main thread reads them itself.
+**NOT WebSearch — this is file system access.**
 
 **Targets:**
 - `CLAUDE.md`, `CLAUDE.local.md` — project context
 - `docs/`, `README.md`
-- `research/<other-slug>/<date>_*.md` — предыдущие ресёрчи
-- Source code (если relevant)
+- `research/<other-slug>/<date>_*.md` — previous research runs
+- Source code (if relevant)
 - `memory/MEMORY.md`
 
-**Когда:** project-specific ресёрчи; гибридные (внешнее + внутреннее).
-**Limitations:** `subagent_type=Explore` НЕ может писать файлы и не имеет полного file access. Либо main thread, либо general-purpose subagent.
+**When:** project-specific research; hybrid (external + internal).
+**Limitations:** `subagent_type=Explore` can NOT write files and does not have full file access. Either the main thread, or a general-purpose subagent.
 
 ---
 
 ### Часть L — Trade associations / Industry-specific
 
 #### 27. `trade-associations`
-**Что:** Trade associations specific to industries.
-**Pattern для поиска:**
+**What:** Trade associations specific to industries.
+**Search pattern:**
 - `"<industry> association" stats`
 - `"<industry> trade association" report`
 - `"<industry> federation" data`
 
-Примеры (см. stat_sources/industries/<industry>.md):
+Examples (see stat_sources/industries/<industry>.md):
 - Software: BSA, SIIA
 - Auto: OICA, ACEA
 - Aviation: IATA
@@ -429,37 +430,37 @@
 - Pharma: PhRMA, EFPIA
 - Steel: worldsteel.org
 
-**Возвращает:** industry-specific data, ассоциации часто public reports.
-**Когда:** landscape индустрии, market sizing, regulatory landscape.
+**Returns:** industry-specific data, associations often publish public reports.
+**When:** industry landscape, market sizing, regulatory landscape.
 
 #### 28. `industry-specific`
-**Что:** Catch-all для industry-specific data sources.
-**Использовать через каталог:** `references/stat_sources/industries/<industry>.md`
+**What:** Catch-all for industry-specific data sources.
+**Use via the catalog:** `references/stat_sources/industries/<industry>.md`
 
-Each industry file has its own curated source list. Use the catalog как map: какая индустрия — какие источники.
+Each industry file has its own curated source list. Use the catalog as a map: which industry — which sources.
 
 ---
 
-### Часть M — API-direct (программный access)
+### Часть M — API-direct (programmatic access)
 
 #### 29. `api-direct`
 
-**Что:** Прямой запрос к API endpoint (JSON/XML) вместо парсинга HTML страницы. Полный каталог в `api_sources/INDEX.md`.
+**What:** A direct request to an API endpoint (JSON/XML) instead of parsing an HTML page. Full catalog in `api_sources/INDEX.md`.
 
-**Когда использовать:**
-- Нужны структурированные данные (JSON), не HTML
-- Bulk queries — «дай 100 papers одним запросом»
+**When to use:**
+- Structured data (JSON) is needed, not HTML
+- Bulk queries — «give me 100 papers in one request»
 - Server-side filtering (`?industry=fintech&min_funding=10M`)
 - Real-time data (prices, on-chain metrics)
 - Programmatic search (Brave/Tavily/Exa)
 
-**Когда НЕ использовать:**
-- WebFetch HTML работает и данных хватает
-- API требует ключа, у тебя его нет → fallback на HTML
-- Free tier исчерпан → fallback или alternative API
-- Простой однократный lookup → WebSearch быстрее
+**When NOT to use:**
+- WebFetch HTML works and the data is sufficient
+- The API requires a key and you do not have one → fallback to HTML
+- The free tier is exhausted → fallback or an alternative API
+- A simple one-off lookup → WebSearch is faster
 
-**Главные free no-auth APIs (приоритет для агентов):**
+**Main free no-auth APIs (priority for agents):**
 
 - `Semantic Scholar` — 200M papers, academic search
 - `OpenAlex` — 250M scholarly works, citation graph
@@ -467,24 +468,24 @@ Each industry file has its own curated source list. Use the catalog как map: 
 - `arXiv` — preprints, free full-text
 - `DefiLlama` — DeFi TVL/protocols
 - `CoinGecko` — crypto markets
-- `Reddit JSON` — добавь `.json` к любому Reddit URL
+- `Reddit JSON` — add `.json` to any Reddit URL
 - `HN Algolia` — Hacker News search
 - `World Bank` — global development
-- `SEC EDGAR` — US public filings (нужен User-Agent header)
+- `SEC EDGAR` — US public filings (needs a User-Agent header)
 - `ClinicalTrials.gov` — trial registry
 - `PubMed E-utilities` — biomedical literature
 - `GDELT` — global news events
 - `PyPI / npm` — package metadata
 
-**APIs с key (one-time setup, environment variable):**
+**APIs with a key (one-time setup, environment variable):**
 
 - `FRED` — US economic data (instant key)
 - `GitHub` — 5000 req/h authenticated
-- `Stack Exchange` — 10k req/day с key
+- `Stack Exchange` — 10k req/day with a key
 - `NewsAPI` — 100 req/day free
 - `Etherscan` — 100k req/day
 
-**Paid (когда стоит платить):**
+**Paid (when it is worth paying):**
 
 - `Brave Search` — Google-quality search, $3/1k
 - `Tavily` — AI-optimized search with built-in answers
@@ -493,26 +494,26 @@ Each industry file has its own curated source list. Use the catalog как map: 
 - `Crunchbase Basic` — startup funding data
 - `Dune Analytics` — custom on-chain SQL queries
 
-**Auth dispatch для агента:**
+**Auth dispatch for the agent:**
 
 ```
-если нужен API:
-  → проверить env var для ключа (FRED_API_KEY, GITHUB_TOKEN, ...)
-  → если есть → использовать API
-  → если нет:
-     → есть free no-key tier? → использовать
-     → нет → fallback на HTML версию через WebFetch
-     → пометить в sources/NN.md: access: html-fallback (api blocked)
+if an API is needed:
+  → check the env var for the key (FRED_API_KEY, GITHUB_TOKEN, ...)
+  → if present → use the API
+  → if not:
+     → is there a free no-key tier? → use it
+     → no → fallback to the HTML version via WebFetch
+     → mark in sources/NN.md: access: html-fallback (api blocked)
 ```
 
 **Rate limit handling:**
 
-При 429 (rate limit):
-1. Подождать время из `Retry-After` header
-2. Если ждать > 30 сек → fallback на HTML или alternative API
-3. Пометить в `sources/NN.md` notes: `rate-limited at <ts>, fell back to <source>`
+On 429 (rate limit):
+1. Wait the time from the `Retry-After` header
+2. If the wait > 30 sec → fallback to HTML or an alternative API
+3. Mark in `sources/NN.md` notes: `rate-limited at <ts>, fell back to <source>`
 
-**Метки в sources/NN.md frontmatter:**
+**Marks in sources/NN.md frontmatter:**
 
 ```yaml
 channel: api-direct
@@ -520,13 +521,13 @@ access: api-free-no-key   # | api-free-with-key | api-paid | api-fallback-html
 ```
 
 **Caveats:**
-- Скилл НЕ хранит API ключи — только через environment variables
-- Никогда не запрашивать ключ inline — попросить добавить в shell config
-- Free tiers быстро заканчиваются на active research — спланируй budget
+- The skill does NOT store API keys — only via environment variables
+- Never ask for a key inline — ask for it to be added to the shell config
+- Free tiers run out fast on active research — plan the budget
 
 **Where to find docs:**
 
-См. `api_sources/` каталог. Файлы организованы по 10 категориям:
+See the `api_sources/` catalog. The files are organized into 10 categories:
 - `search/` — Brave, Tavily, Exa, SerpAPI, You.com
 - `academic/` — Semantic Scholar, OpenAlex, CrossRef, arXiv
 - `financial/` — FRED, World Bank, SEC EDGAR, OECD, Alpha Vantage
@@ -538,34 +539,34 @@ access: api-free-no-key   # | api-free-with-key | api-paid | api-fallback-html
 - `stats/` — Eurostat, Census US, UN Data
 - `domain_specific/` — PubMed, ClinicalTrials, EMA, NASA, OpenWeather
 
-Каждый файл API имеет: endpoint, auth, free tier, rate limits, query templates, example queries для deepdive, limitations, combine-with рекомендации, fallback strategy.
+Every API file has: endpoint, auth, free tier, rate limits, query templates, example queries for deepdive, limitations, combine-with recommendations, fallback strategy.
 
 ---
 
-## Channel selection — по жанрам
+## Channel selection — by genre
 
-| Жанр | Primary channels | Secondary | Use sparingly |
+| Genre | Primary channels | Secondary | Use sparingly |
 |---|---|---|---|
 | **explainer** | web-general, academic, wikipedia-references, code-github | books-literature, video-talks, expert-individual, api-direct (Semantic Scholar/arXiv) | social-twitter |
-| **decision** | web-general, forum-discussion, industry-reports, code-github (tech) | expert-individual, surveys-polls, podcasts, api-direct (CoinGecko/SEC EDGAR для данных) | conference-proceedings |
+| **decision** | web-general, forum-discussion, industry-reports, code-github (tech) | expert-individual, surveys-polls, podcasts, api-direct (CoinGecko/SEC EDGAR for data) | conference-proceedings |
 | **landscape** | competitive-signals, news-current, industry-reports, product-analytics | patents, forum-discussion, trade-associations, industry-specific, api-direct (Crunchbase/OpenCorporates) | social-twitter, books-literature |
-| **validation** | academic, preprint-servers, conference-proceedings | forum-discussion (opposition), expert-individual, surveys-polls, archive-historical (retractions), api-direct (PubMed/Semantic Scholar для bulk literature scan) | patents |
-| **qa** | web-general + 2-3 channels по подтемам | api-direct если есть relevant API | varies |
-| **custom** | под выбранные blocks | varies | — |
+| **validation** | academic, preprint-servers, conference-proceedings | forum-discussion (opposition), expert-individual, surveys-polls, archive-historical (retractions), api-direct (PubMed/Semantic Scholar for a bulk literature scan) | patents |
+| **qa** | web-general + 2-3 channels by subtopic | api-direct if there is a relevant API | varies |
+| **custom** | for the chosen blocks | varies | — |
 
-## Channel selection — по типам данных в вопросе
+## Channel selection — by data types in the question
 
-| Что ищем | Канал |
+| What we are looking for | Channel |
 |---|---|
-| Научный consensus | academic + preprint-servers + conference-proceedings |
+| Scientific consensus | academic + preprint-servers + conference-proceedings |
 | Real-user experiences | forum-discussion + surveys-polls |
 | Current state (recent events) | news-current + social-twitter |
 | Market size | industry-reports + data-statistical-gov + industry-benchmarks |
-| Конкретная компания (public) | regulatory-legal (filings) + news-current + competitive-signals |
-| Конкретная компания (private) | competitive-signals + crunchbase via product-analytics |
-| Mobile apps данные | product-analytics + industry-reports |
+| A specific company (public) | regulatory-legal (filings) + news-current + competitive-signals |
+| A specific company (private) | competitive-signals + crunchbase via product-analytics |
+| Mobile app data | product-analytics + industry-reports |
 | Crypto/DeFi | crypto-analytics + forum-discussion |
-| Industry-specific KPI | industry-specific (через каталог) + trade-associations |
+| Industry-specific KPI | industry-specific (via the catalog) + trade-associations |
 | Legal precedents | regulatory-legal + academic (law) |
 | Historical context | archive-historical + books-literature + academic |
 | Expert opinions | expert-individual + podcasts + video-talks |
@@ -573,84 +574,84 @@ access: api-free-no-key   # | api-free-with-key | api-paid | api-fallback-html
 
 ---
 
-## Paywall fallback protocol (универсальный)
+## Paywall fallback protocol (universal)
 
-Когда натыкаемся на paywall — следовать sequence:
+When we hit a paywall — follow the sequence:
 
 ```
-1. Try preprint-servers (для academic)
+1. Try preprint-servers (for academic)
 2. Try archive-historical (Wayback / archive.today)
 3. Try author's personal site / institutional repo
-4. Try alternative source с тем же контентом (summary, news article, blog)
-5. Try ResearchGate / Academia.edu (для academic)
+4. Try an alternative source with the same content (summary, news article, blog)
+5. Try ResearchGate / Academia.edu (for academic)
 6. Try Google Cache
-7. Если ничего не работает:
-   - `access: paywalled-abstract-only` (если abstract есть)
-   - `access: closed` (если совсем недоступно)
-   - Записать в `gaps` источника в JSON суб-агента
+7. If nothing works:
+   - `access: paywalled-abstract-only` (if an abstract exists)
+   - `access: closed` (if it is entirely unavailable)
+   - Write to the source's `gaps` in the sub-agent JSON
 ```
 
 ## Bot-block ≠ paywall
 
-Два разных отказа, и путают их постоянно. Протокол выше — про **paywall**: контент есть, но за деньги или логином. Отдельный случай — когда контент публичный и бесплатный, а закрыт именно AI-агент: `robots.txt` с `Disallow` для `GPTBot`/`ClaudeBot`/`CCBot`. WebFetch такие правила соблюдает и отвечает «unable to fetch from …», из-за чего живой открытый источник выглядит мёртвым.
+Two different refusals, and they are constantly confused. The protocol above is about a **paywall**: the content exists, but behind money or a login. A separate case is when the content is public and free, but it is the AI agent specifically that is blocked: `robots.txt` with `Disallow` for `GPTBot`/`ClaudeBot`/`CCBot`. WebFetch honors such rules and answers «unable to fetch from …», which makes a live open source look dead.
 
-Замер на 7 URL (цифры и дата — `NOTES_dated.md`): WebFetch брал не все; `scripts/fetch_source.py` вернул контент на первом тире для сайтов, которые отдают страницу обычному клиенту и режут только AI-токены (nytimes, theverge, wired). Остальные — не бот-блок, а auth-волл (reuters 401, reddit 403, stackoverflow 403 Cloudflare).
+A measurement on 7 URLs (numbers and date — `NOTES_dated.md`): WebFetch did not get them all; `scripts/fetch_source.py` returned content on the first tier for sites that serve the page to an ordinary client and cut only AI tokens (nytimes, theverge, wired). The rest were not a bot block but an auth wall (reuters 401, reddit 403, stackoverflow 403 Cloudflare).
 
-Отсюда правило: **сначала классифицируй отказ, потом выбирай протокол.**
+Hence the rule: **classify the refusal first, then choose the protocol.**
 
-| Отказ | Признак | Куда идти |
+| Refusal | Sign | Where to go |
 |---|---|---|
-| AI-исключение | WebFetch «unable to fetch», robots режет AI-токены, `*` разрешён | fetch ladder, Фаза 4.2 |
-| Paywall / auth-волл | 401/402, «sign in», «subscribers only», «developer token» | `fallback_routes.yaml` → протокол выше |
-| Анти-бот-челлендж | 403, Cloudflare, «verify you are human» | `fallback_routes.yaml` → API/фид, не сила |
-| Site-wide `Disallow` | robots закрывает путь для всех клиентов | `gaps`, спросить пользователя |
+| AI exclusion | WebFetch «unable to fetch», robots cuts AI tokens, `*` allowed | fetch ladder, Phase 4.2 |
+| Paywall / auth wall | 401/402, «sign in», «subscribers only», «developer token» | `fallback_routes.yaml` → the protocol above |
+| Anti-bot challenge | 403, Cloudflare, «verify you are human» | `fallback_routes.yaml` → API/feed, not force |
+| Site-wide `Disallow` | robots closes the path for all clients | `gaps`, ask the user |
 
-## Открытые двери закрытых сайтов
+## Open doors of closed sites
 
-`references/fallback_routes.yaml` — курируемая карта «домен → официальный API / фид / архив», которую `fetch_source.py` печатает сам при вердиктах `antibot` и `auth-wall`. Карта ручная не по лени: у `api_sources/` нет поля с веб-доменом (аудит, цифры — `NOTES_dated.md`: `Endpoint base:`/`Auth:`/`Docs:` есть у всех файлов, домена нет ни у одного), и связь бывает двух видов — `self` (API на том же домене) и `proxy` (сторонний агрегатор отдаёт чужой контент). Машинно это не выводится.
+`references/fallback_routes.yaml` is a curated map «domain → official API / feed / archive», which `fetch_source.py` prints itself on `antibot` and `auth-wall` verdicts. The map is manual not out of laziness: `api_sources/` has no field for the web domain (the audit and numbers are in `NOTES_dated.md`: `Endpoint base:`/`Auth:`/`Docs:` exist in every file, the domain in none), and the relation is of two kinds — `self` (the API on the same domain) and `proxy` (a third-party aggregator serving someone else's content). This is not derivable by machine.
 
-**Главная находка замера (дата — `NOTES_dated.md`): фид переживает блокировку HTML.** Пайплайн фида отдельный и анти-бот-слоем обычно не прикрыт.
+**The main finding of the measurement (date — `NOTES_dated.md`): a feed survives an HTML block.** The feed pipeline is separate and is usually not covered by the anti-bot layer.
 
-| Сайт | HTML | Фид / API |
+| Site | HTML | Feed / API |
 |---|---|---|
-| stackoverflow.com | 403 Cloudflare | Atom 200 · 115 КБ; StackExchange API 200 без ключа |
-| economist.com | paywall | RSS 200 · 151 КБ |
-| theguardian.com | — | RSS 200 · 96 КБ |
-| nytimes.com | robots режет 7 AI-токенов | RSS 200 · 55 КБ |
+| stackoverflow.com | 403 Cloudflare | Atom 200 · 115 KB; StackExchange API 200 without a key |
+| economist.com | paywall | RSS 200 · 151 KB |
+| theguardian.com | — | RSS 200 · 96 KB |
+| nytimes.com | robots cuts 7 AI tokens | RSS 200 · 55 KB |
 | wsj.com / ft.com | paywall | RSS 200 |
-| reddit.com | 403 | только OAuth — `.rss` тоже 403 под тремя UA |
-| reuters.com | 401 | RSS мёртв (404), только агрегаторы (GDELT, NewsAPI) |
+| reddit.com | 403 | only OAuth — `.rss` is also 403 under three UAs |
+| reuters.com | 401 | RSS dead (404), aggregators only (GDELT, NewsAPI) |
 
-Оговорки:
+Caveats:
 
-- **Фид ≠ статья.** Заголовок, дата, аннотация, URL — да. Полный текст — нет. Цитата из аннотации помечается как аннотация.
-- **Архив отвечает на «что там было», не «что там сейчас».** Брать `as_of` снимка в `data_as_of`.
-- **`verified` без даты и кода ответа — не `verified`.** Протухший маршрут хуже отсутствующего: он съедает раунд поиска и выглядит как рабочий.
-- Известные дыры карты: twitter/x (API платный), youtube (только через SerpAPI), wikipedia (не заведён, хотя MediaWiki API открыт).
+- **A feed ≠ an article.** Title, date, annotation, URL — yes. Full text — no. A quote from the annotation is marked as an annotation.
+- **The archive answers «what was there», not «what is there now».** Take the snapshot's `as_of` into `data_as_of`.
+- **`verified` without a date and a response code is not `verified`.** A stale route is worse than a missing one: it eats a search round and looks like it works.
+- Known holes in the map: twitter/x (the API is paid), youtube (only via SerpAPI), wikipedia (not wired up, although the MediaWiki API is open).
 
-## Forbidden patterns (не использовать)
+## Forbidden patterns (do not use)
 
-Эти подходы НЕ применять, даже как fallback:
-- Решение CAPTCHA и Cloudflare-челленджей, stealth-фингерпринтинг под анти-бот — в `fetch_source.py` этого нет намеренно, и дописывать не надо. 403 — сигнал идти в API сайта, а не наращивать маскировку.
-- Credential reuse / login bypass / обход paywall — НИКОГДА. Auth-волл это терминальный вердикт.
-- Site-wide `Disallow` в robots.txt (запрет для всех клиентов, а не для AI-токенов) — не переступать самому. `--ignore-robots` есть, но ставит его пользователь, и override пишется в `fetch_note:` источника.
-- Произвольный `curl -A 'Mozilla/…'` в обход WebFetch — не потому что «нельзя ходить», а потому что мимо `fetch_source.py` теряются проверка robots, санитайзер prompt injection и `fetch_tier` в провенансе.
+Do NOT apply these approaches, even as a fallback:
+- Solving CAPTCHAs and Cloudflare challenges, stealth fingerprinting against the anti-bot layer — `fetch_source.py` deliberately does not have this, and it is not to be added. A 403 is a signal to go to the site's API, not to increase the camouflage.
+- Credential reuse / login bypass / circumventing a paywall — NEVER. An auth wall is a terminal verdict.
+- Site-wide `Disallow` in robots.txt (a ban for all clients, not for AI tokens) — do not step over it yourself. `--ignore-robots` exists, but the user sets it, and the override is written to the source's `fetch_note:`.
+- An arbitrary `curl -A 'Mozilla/…'` bypassing WebFetch — not because «you must not fetch», but because bypassing `fetch_source.py` loses the robots check, the prompt-injection sanitizer and the `fetch_tier` in the provenance.
 
-## Когда канал «не работает»
+## When a channel «does not work»
 
-Если канал должен был дать результаты, но не даёт — варианты:
-1. Query too narrow — пробуй более broad
-2. Topic not covered этим каналом — попробуй другой
-3. Источник заблокирован — fallback sequence (paywall protocol)
-4. Тема слишком новая — нет ещё данных, переходи в news-current/social-twitter
+If a channel should have produced results but does not — the options:
+1. Query too narrow — try a broader one
+2. Topic not covered by this channel — try another
+3. Source blocked — fallback sequence (paywall protocol)
+4. The topic is too new — no data yet, move to news-current/social-twitter
 
-В `sources/NN.md` JSON суб-агента secrets поле `channel:` показывает откуда брали — если несколько channels вернули нулевые — фиксируй в `gaps`.
+In `sources/NN.md` of the sub-agent JSON the `secrets` field `channel:` shows where material was taken from — if several channels returned zero, record it in `gaps`. <!-- translator: ambiguous -->
 
-## Future channels (TODO когда появятся возможности)
+## Future channels (TODO when capabilities appear)
 
-Эти каналы пока недоступны через стандартный WebSearch+WebFetch — отмечаю на будущее:
-- Twitter Streaming API (требует API key)
+These channels are not yet available through standard WebSearch+WebFetch — noted for the future:
+- Twitter Streaming API (requires an API key)
 - LinkedIn data (login required)
-- Specific paywalled databases (Bloomberg, Refinitiv) — требует subscriptions
+- Specific paywalled databases (Bloomberg, Refinitiv) — requires subscriptions
 - YouTube transcripts API
-- Spotify API для music
+- Spotify API for music

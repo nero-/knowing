@@ -125,12 +125,12 @@ def test_swarm_ref_warns_against_one_call_per_whole_run():
 def test_source_dispatch_documents_prior_based_extra_channel():
     text = DISPATCH.read_text(encoding="utf-8")
     assert "update_priors.py --qclass" in text
-    assert "Приор при выборе канала сверх обязательного минимума" in text
+    assert "Prior when choosing a channel beyond the mandatory minimum" in text
 
 
 def test_source_dispatch_forbids_prior_overriding_mandatory_channels():
     text = DISPATCH.read_text(encoding="utf-8")
-    assert "Приором подменять Primary/Secondary" in text
+    assert "Substituting Primary/Secondary with a prior" in text
 
 
 def test_documented_cli_flags_actually_exist_in_argparse():

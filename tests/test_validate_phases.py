@@ -441,7 +441,8 @@ def test_resolve_mode_infers_medium_from_artifacts_and_warns(tmp_path):
         p.write_text("no frontmatter\n", encoding="utf-8")
     r = vp.Report()
     assert vp.resolve_mode(d, None, r) == "medium"
-    assert any("inferred" in w and "medium" in w for w in r.warnings)
+    # knowing: a missing declaration fails closed instead of inferring a depth
+    assert any("would have inferred" in e and "medium" in e for e in r.errors)
 
 
 def test_resolve_mode_infers_shallow_when_no_medium_artifacts(tmp_path):
@@ -450,7 +451,8 @@ def test_resolve_mode_infers_shallow_when_no_medium_artifacts(tmp_path):
         p.write_text("no frontmatter\n", encoding="utf-8")
     r = vp.Report()
     assert vp.resolve_mode(d, None, r) == "shallow"
-    assert any("inferred" in w for w in r.warnings)
+    # knowing: same, for the shallow inference that used to disable the breadth floors
+    assert any("would have inferred" in e for e in r.errors)
 
 
 def test_resolve_mode_infers_medium_from_source_count(tmp_path):

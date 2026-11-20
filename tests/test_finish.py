@@ -27,7 +27,8 @@ def test_step_order_is_fixed_and_gate_is_last(tmp_path):
     run = _fake_runner(fail=set())
     results = finish.run_finish(d, mode="medium", offline=False, wiki_root=None, runner=run)
     assert [r.name for r in results] == [s.name for s in finish.STEPS]
-    assert results[-1].name == "phase_gate"
+    assert results[-1].name == "knowing"  # knowing: overlay gate runs last, in-process
+    assert results[-2].name == "phase_gate"
     assert finish.exit_code(results) == 0
 
 
@@ -68,13 +69,31 @@ def test_end_to_end_on_synthetic_run(tmp_path):
     """Real subprocesses, no network: sources.csv gets built, wiki receipt written,
     number checks pass, gate is green."""
     d = make_run(tmp_path, mode="medium", phases=FULL_SET - {"wiki"})
+    # knowing: the synthetic run must satisfy the overlay contract too — read scope on the
+    # card, an anchor with a quote hash on the claim, and an adjudication verdict.
     (d / "sources" / "01_x.md").write_text(
-        "---\nurl: https://example.org/x\ntitle: X\ntype: web\n---\n> quote\n\n> quote two\n",
+        "---\nurl: https://example.org/x\ntitle: X\ntype: web\nread_scope: full_text\n---\n"
+        "> The quote that backs the claim.\n\n> quote two\n",
         encoding="utf-8",
     )
     ledger = d / "claims.csv"
-    ledger.write_text(
-        ledger.read_text(encoding="utf-8").replace("triangulated,high", "weak,low"),
+    text = (ledger.read_text(encoding="utf-8")
+            .replace("triangulated,high", "weak,low")
+            .replace(",s01,", ",01_x,"))  # fixture cites s01 for a card named 01_x
+    lines = text.rstrip("\n").split("\n")
+    quoted = "> The quote that backs the claim."
+    sys.path.insert(0, str(REPO / "overlay"))
+    import knowing_gate as kg
+    lines[0] += ",anchor,quote_sha256"
+    lines[1] += f",01_x:7,{kg.quote_hash(quoted)}"  # line 7 of the card: the blockquote
+    ledger.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (d / "plan.md").write_text(
+        "---\ndepth: medium\nreversibility: irreversible\ncost_of_error: high\n"
+        "answer_exists: no\n---\nplan\n",
+        encoding="utf-8",
+    )
+    (d / "adversarial.md").write_text(
+        "# Adversarial review\n\nVERDICT: REVISE\n\n## DECLINED TO JUDGE\n\n- nothing\n",
         encoding="utf-8",
     )
     results = finish.run_finish(

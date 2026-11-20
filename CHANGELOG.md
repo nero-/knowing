@@ -33,6 +33,16 @@ floor, patched in seven places, and given the four checks the base documented bu
   `runner/orchestrator.py:385` records "faithfulness not implemented".
 - `check_quotes.py` returned 0 on every path.
 
+### Notes from the test pass
+- `eval/check_quotes.py` and upstream's `tests/` disagreed about source ids (`s01` vs `01_x`); the anchor
+  pattern is format-agnostic and validates the id against the claim row's own `sources` column instead.
+- Read-scope errors now attach to *use*: an unscoped source nobody cites is a warning, an unscoped
+  source a claim leans on is an error. Discovered by running our gate over upstream's synthetic run.
+- `finish.py` runs the knowing step **without** `--strict`: errors block, warnings inform. CI can
+  escalate with `knowing_gate.py --strict`.
+- `runner/priors.py` accepts both `### Часть X` and `### Part X`; two `tests/test_docs_swarm.py`
+  assertions were updated to the translated canonical strings.
+
 ### Known gaps (v0.1)
 - English translation covers the floor only; backlog in `docs/TRANSLATION.md`.
 - "No method critique below `full_text`" not implemented (needs reliable prose detection).

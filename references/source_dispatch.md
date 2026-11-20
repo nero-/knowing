@@ -1,198 +1,199 @@
-# Source Dispatch — как выбирать каналы и источники под подвопрос
+<!-- translated from upstream/references/source_dispatch.md @ e233797 — see docs/TRANSLATION.md -->
+# Source Dispatch — how to choose channels and sources for a subquestion
 
-## Содержание
+## Contents
 
-- Принципы
-- Matrix: типовой подвопрос → каналы
-- Registry-first: за числами не ходят в веб
-- Registry — проверенные адреса под сигнал
-- Discovery patterns — когда каталога не хватает
-- Decomposition recipes — типовые декомпозиции тем
-- Когда лезть в репозитории явно
-- Output: что записать в plan.md
-- Приор при выборе канала сверх обязательного минимума
+- Principles
+- Matrix: typical subquestion → channels
+- Registry-first: numbers are not fetched from the web
+- Registry — vetted addresses per signal
+- Discovery patterns — when the catalog is not enough
+- Decomposition recipes — typical topic decompositions
+- When to go into repositories explicitly
+- Output: what to record in plan.md
+- Prior when choosing a channel beyond the mandatory minimum
 - Anti-patterns
 
-**Когда используется:** в начале Phase 4 (Search). После того как `plan.md` готов и подвопросы декомпозированы — для **каждого подвопроса** прогоняешь его через этот файл и записываешь dispatch-решение в plan.md секцию 12 «Information sourcing strategy».
+**When it is used:** at the start of Phase 4 (Search). Once `plan.md` is ready and the subquestions are decomposed — for **each subquestion** you run it through this file and write the dispatch decision into plan.md section 12 «Information sourcing strategy».
 
-**Что делает:** превращает подвопрос («какова доля рынка X в EU») в **упорядоченный список каналов и конкретных источников**: primary → secondary → fallback. Без этого Claude каждый раз заново угадывает «откуда брать данные».
-
----
-
-## Принципы
-
-1. **Источник выбирается под подвопрос, не под тему целиком.** Тема «vertical farming market in EU» декомпозируется на 5-8 подвопросов, и каждый получает свой dispatch.
-2. **Каждый подвопрос → минимум 2 канала разных типов** (требование триангуляции из Phase 5). Если один канал — это уже флаг к адверсариал-пассу.
-3. **Primary = ожидаемо самый сильный по credibility/recency.** Secondary = независимая проверка. Fallback = если primary недоступен.
-4. **Открытые API > HTML scraping.** Если для подвопроса есть API из `api_sources/` — он primary. HTML только если API нет.
-5. **Awesome-lists и репозитории — это discovery, а не finite-каталог.** Используй их когда твой каталог не покрывает тему (см. секцию «Discovery patterns» ниже).
+**What it does:** turns a subquestion («what is X's market share in the EU») into an **ordered list of channels and concrete sources**: primary → secondary → fallback. Without this, Claude guesses anew every time «where to get the data from».
 
 ---
 
-## Matrix: типовой подвопрос → каналы
+## Principles
 
-Сигналы в подвопросе → primary/secondary/fallback каналы. Каналы из `channels.md`, конкретные API из `api_sources/`, статы из `stat_sources/`.
+1. **The source is chosen for the subquestion, not for the whole topic.** The topic «vertical farming market in EU» is decomposed into 5-8 subquestions, and each gets its own dispatch.
+2. **Every subquestion → at least 2 channels of different types** (the triangulation requirement from Phase 5). One channel alone — that is already a flag for the adversarial pass.
+3. **Primary = expected to be the strongest on credibility/recency.** Secondary = independent verification. Fallback = if primary is unavailable.
+4. **Open APIs > HTML scraping.** If there is an API from `api_sources/` for the subquestion — it is primary. HTML only if there is no API.
+5. **Awesome-lists and repositories are discovery, not a finite catalog.** Use them when your catalog does not cover the topic (see the «Discovery patterns» section below).
 
-| Сигнал в подвопросе | Primary channel | Secondary | Fallback |
+---
+
+## Matrix: typical subquestion → channels
+
+Signals in the subquestion → primary/secondary/fallback channels. Channels from `channels.md`, concrete APIs from `api_sources/`, stats from `stat_sources/`.
+
+| Signal in the subquestion | Primary channel | Secondary | Fallback |
 |---|---|---|---|
-| «размер рынка X», «market size» | `industry-reports` (Statista alt, IBISWorld free, McKinsey/BCG/Bain public reports) | `data-statistical-gov` (FRED, World Bank, Eurostat industry codes) | `web-general` + `competitive-signals` (top players' annual reports) |
-| «тренд X по времени», «time series» | `api-direct` (FRED, World Bank, OECD, Eurostat) | `data-statistical-gov` (национальные стат-сайты) | `news-current` (GDELT для качественной хронологии) |
-| «правда ли X с научной точки зрения» | `academic` (OpenAlex, Semantic Scholar) + `preprint-servers` (arXiv, bioRxiv, medRxiv, SSRN) | Cochrane reviews + Crossref для цитирований | `web-general` для научпопа |
-| «кто игроки в X пространстве» | `competitive-signals` (Crunchbase, OpenCorporates, Companies House) | `code-github` (для tech) + `industry-reports` | `forum-discussion` (Reddit, HN — community knowledge о игроках) |
-| «X в стране Y» | `data-statistical-gov` страны Y (нац-стат, центробанк) | `api-direct` (World Bank, IMF, OECD по country code) | `news-current` + локальная пресса |
-| «как работает X технически» | `code-github` (reference implementations) + `academic` (foundational papers) | `forum-discussion` (Stack Exchange, technical blogs) | `web-general` (docs официальных продуктов) |
-| «свежие изменения в X», «recent» | `news-current` (NewsAPI, GDELT, Currents) + `industry-reports` | `forum-discussion` (Reddit, HN — обсуждения новостей) | `api-direct` regulatory feeds |
-| «регулирование X в юрисдикции Y» | `regulatory-legal` (регулятор страны Y, EUR-Lex для EU, CFR для US) | `news-current` (юр-пресса, Law360, Reuters Legal) | `academic` (legal scholarship) |
-| «производительность X», «benchmark» | `code-github` (paperswithcode, lmarena, leaderboards) + `academic` | `forum-discussion` (HN threads, Reddit r/MachineLearning, ML twitter) | `news-current` |
-| «sentiment / общественное мнение» | `forum-discussion` (Reddit, HN Algolia, Twitter API) | `news-current` + `competitive-signals` (reviews aggregators) | Survey-данные через `data-statistical-gov` (Pew, Eurobarometer) |
-| «adoption / usage data» | `product-analytics` (SimilarWeb, App Annie, Sensor Tower public data) | `code-github` (для open-source — stars/downloads via PyPI/npm stats) | `industry-reports` |
-| «цена / стоимость X», pricing | официальные сайты + `web-general` | `competitive-signals` (price comparison sites) | `forum-discussion` (reddit threads about pricing) |
-| «крипто/DeFi проект X» | `crypto-analytics` (DefiLlama, Etherscan, Dune) + `api-direct` (CoinGecko) | `code-github` (репо проекта + аудиты) | `forum-discussion` (Crypto Twitter, r/cryptocurrency, governance forums) |
-| «health/clinical X» | `domain-specific` (PubMed, ClinicalTrials.gov, EMA) | `academic` (Cochrane, OpenAlex) | `news-current` (медицинская пресса, STAT, Endpoints) |
+| «market size of X», «market size» | `industry-reports` (Statista alt, IBISWorld free, McKinsey/BCG/Bain public reports) | `data-statistical-gov` (FRED, World Bank, Eurostat industry codes) | `web-general` + `competitive-signals` (top players' annual reports) |
+| «trend of X over time», «time series» | `api-direct` (FRED, World Bank, OECD, Eurostat) | `data-statistical-gov` (national stat sites) | `news-current` (GDELT for a qualitative chronology) |
+| «is X true from a scientific standpoint» | `academic` (OpenAlex, Semantic Scholar) + `preprint-servers` (arXiv, bioRxiv, medRxiv, SSRN) | Cochrane reviews + Crossref for citations | `web-general` for pop science |
+| «who the players are in X space» | `competitive-signals` (Crunchbase, OpenCorporates, Companies House) | `code-github` (for tech) + `industry-reports` | `forum-discussion` (Reddit, HN — community knowledge about the players) |
+| «X in country Y» | `data-statistical-gov` of country Y (national statistics, central bank) | `api-direct` (World Bank, IMF, OECD by country code) | `news-current` + local press |
+| «how X works technically» | `code-github` (reference implementations) + `academic` (foundational papers) | `forum-discussion` (Stack Exchange, technical blogs) | `web-general` (docs of official products) |
+| «recent changes in X», «recent» | `news-current` (NewsAPI, GDELT, Currents) + `industry-reports` | `forum-discussion` (Reddit, HN — news discussions) | `api-direct` regulatory feeds |
+| «regulation of X in jurisdiction Y» | `regulatory-legal` (country Y's regulator, EUR-Lex for the EU, CFR for the US) | `news-current` (legal press, Law360, Reuters Legal) | `academic` (legal scholarship) |
+| «performance of X», «benchmark» | `code-github` (paperswithcode, lmarena, leaderboards) + `academic` | `forum-discussion` (HN threads, Reddit r/MachineLearning, ML twitter) | `news-current` |
+| «sentiment / public opinion» | `forum-discussion` (Reddit, HN Algolia, Twitter API) | `news-current` + `competitive-signals` (reviews aggregators) | Survey data via `data-statistical-gov` (Pew, Eurobarometer) |
+| «adoption / usage data» | `product-analytics` (SimilarWeb, App Annie, Sensor Tower public data) | `code-github` (for open-source — stars/downloads via PyPI/npm stats) | `industry-reports` |
+| «price / cost of X», pricing | official sites + `web-general` | `competitive-signals` (price comparison sites) | `forum-discussion` (reddit threads about pricing) |
+| «crypto/DeFi project X» | `crypto-analytics` (DefiLlama, Etherscan, Dune) + `api-direct` (CoinGecko) | `code-github` (the project's repo + audits) | `forum-discussion` (Crypto Twitter, r/cryptocurrency, governance forums) |
+| «health/clinical X» | `domain-specific` (PubMed, ClinicalTrials.gov, EMA) | `academic` (Cochrane, OpenAlex) | `news-current` (medical press, STAT, Endpoints) |
 | «environmental / climate X» | `data-statistical-gov` (NASA, NOAA, ESA, Copernicus, IEA) | `academic` (Nature, Science) + `api-direct` (OpenWeather) | `news-current` (climate journalism) |
 | «job market / hiring X» | `data-statistical-gov` (BLS, Eurostat labor) | `competitive-signals` (LinkedIn — HTML, Glassdoor) | `industry-reports` (HR firms — Korn Ferry, Mercer) |
 | «philosophical / qualitative / framework» | `academic` + `web-general` (long-form essays — substack, blogs, books online) | `forum-discussion` (LessWrong, Marginal Revolution, philosopher's stone) | own community archives |
 
-**Второй поисковый движок как отдельная ось.** Если в env есть `BRAVE_SEARCH_API_KEY` / `TAVILY_API_KEY` / `EXA_API_KEY` / `FIRECRAWL_API_KEY` (см. `capability_discovery.md`) — независимо от строки матрицы добавь ось `search-engine-2` через `scripts/search_query.py --engine auto --qclass <qclass подвопроса> --query "..."`, помимо `web-general`/WebSearch харнесса. Это не замена Primary/Secondary из матрицы, а дополнительная независимая траектория поиска; пересечение с WebSearch пишется в `plan.md` §15 как `overlap_rate`.
+**A second search engine as a separate axis.** If the env has `BRAVE_SEARCH_API_KEY` / `TAVILY_API_KEY` / `EXA_API_KEY` / `FIRECRAWL_API_KEY` (see `capability_discovery.md`) — regardless of the matrix row, add a `search-engine-2` axis via `scripts/search_query.py --engine auto --qclass <subquestion qclass> --query "..."`, in addition to the harness `web-general`/WebSearch. This is not a replacement for the Primary/Secondary from the matrix but an additional independent search trajectory; the overlap with WebSearch is written to `plan.md` §15 as `overlap_rate`.
 
-**Какой движок берёт `--engine auto`:** первый с ключом из порядка для `qclass` (`ENGINE_ROUTES` в `search_query.py`). Научные и концептуальные классы начинают с exa, свежие (`recent-change`, `sentiment`, `crypto`) с tavily → brave, фактические с tavily → exa. Выбор печатается в stderr, запиши его в §12. Источникам с этой оси ставь в `discovery_path` канал `search-engine-2/<движок>` (печатается там же): по нему роевая постобработка считает отдачу каждого движка, и когда по классу появится статистика, `auto` выбирает движок по приорам, а не по таблице.
+**Which engine `--engine auto` takes:** the first one with a key from the order for the `qclass` (`ENGINE_ROUTES` in `search_query.py`). Scientific and conceptual classes start with exa, fresh ones (`recent-change`, `sentiment`, `crypto`) with tavily → brave, factual ones with tavily → exa. The choice is printed to stderr; write it into §12. For sources from this axis set the channel `search-engine-2/<engine>` in `discovery_path` (it is printed there too): the swarm post-processing uses it to count each engine's yield, and once there is statistics per class, `auto` picks the engine by priors rather than by the table.
 
-**Если подвопрос не матчится** ни одну строку — действуй по умолчанию: `web-general` + `academic` + `news-current` минимум. И **сразу же запиши в plan.md секцию 12, что dispatch был ad-hoc** — это сигнал для Phase 6 (adversarial) что покрытие могло быть слабым.
-
----
-
-## Registry-first: за числами не ходят в веб
-
-**Правило.** Подвопрос количественный (ответ — число: размер, доля, цена, темп, срок)
-⇒ **primary-канал обязан быть `api-direct` или `data-statistical-gov`**, то есть
-реестр, датасет, отчётность. Веб-статья с цифрой не может быть корнем числа — она
-указатель на корень.
-
-Обрати внимание: две строки матрицы выше сейчас противоречат этому правилу —
-«размер рынка X» ведёт в `industry-reports`, «цена / стоимость X» в `web-general`.
-Для количественной формулировки правило перекрывает матрицу: сначала ищется реестр,
-отраслевой отчёт идёт вторым.
-
-**Зачем.** Дешевле не порождать мусор на входе, чем фильтровать на выходе. Веб-поиск
-отдаёт SEO-топ, и цифры там живут своей жизнью: market-sizing от контор, торгующих
-отчётами; «74% компаний...» из презентации 2011 года, чей первоисточник мёртв;
-vendor-бенчмарк, пересказанный четырьмя изданиями. Ни `recency`, ни `bias` их не
-ловят — у свежей перепечатки честные оценки по обеим шкалам.
-
-**Как исполнять на шаге 4.0:**
-
-1. Разметь каждый подвопрос: количественный / качественный.
-2. Для количественного — проверь покрытие в `stat_sources/INDEX.md` и
-   `api_sources/INDEX.md` ДО назначения каналов. Нашёл endpoint — он primary, веб
-   уходит в fallback.
-3. Запиши в `plan.md` §12 конкретный endpoint (не «FRED», а серию), чтобы суб-агент
-   не искал его заново.
-4. Покрытия нет — так и напиши: «метрика M реестром не покрыта, берём из вторичных,
-   `origin_kind: secondary`». Это честный результат, он должен быть виден, а не
-   замаскирован уверенной цифрой.
-
-**Проверяется машинно.** Число, попавшее в выводы из веб-источника при наличии
-покрывающего endpoint, — дефект дисциплины, а не вкусовщина:
-`scripts/check_number_provenance.py` пометит источник по `origin_kind`/`chain_len`, а
-fail-closed правило не пустит такое число в `memo.md`.
-
-**Анти-паттерн:** взять цифру из статьи, потом «подтвердить» её тремя другими
-статьями. Это не триангуляция, а тираж одного корня — правило `≥2 корней` и детектор
-циркуляции ловят ровно этот случай.
+**If the subquestion does not match** any row — act by default: `web-general` + `academic` + `news-current` at minimum. And **immediately write into plan.md section 12 that the dispatch was ad-hoc** — this is a signal for Phase 6 (adversarial) that the coverage may have been weak.
 
 ---
 
-## Registry — проверенные адреса под сигнал
+## Registry-first: numbers are not fetched from the web
 
-`references/registry/` — 1072 адреса с пометкой доступа (free / ключ / User-Agent) по типу сигнала: science, regulatory (парламентские API), markets, technology, security, climate_health, society, registries, open_source_releases. Нужен свежий поток или прямой эндпоинт, которого нет в `api_sources/` — открой ОДИН файл по теме, не INDEX. Достоверность в таблице — метка разведки, не результат Фазы 5.5; срок годности списка — месяцы, мёртвый адрес лечится обычным fallback.
+**Rule.** The subquestion is quantitative (the answer is a number: size, share, price, rate, deadline)
+⇒ **the primary channel must be `api-direct` or `data-statistical-gov`**, that is
+a registry, a dataset, reporting. A web article with a number cannot be the root of the number — it is
+a pointer to the root.
 
-## Discovery patterns — когда каталога не хватает
+Note: two rows of the matrix above currently contradict this rule —
+«market size of X» leads to `industry-reports`, «price / cost of X» to `web-general`.
+For a quantitative formulation the rule overrides the matrix: the registry is searched first,
+the industry report comes second.
 
-Каталог `stat_sources/` + `api_sources/` + `registry/` покрывает базовые domains, но **редкие темы** (niche industries, esoteric academic fields, region-specific topics) требуют поиска *новых источников* в runtime. Алгоритм:
+**Why.** It is cheaper not to generate garbage at the input than to filter it at the output. Web search
+returns the SEO top, and numbers there live a life of their own: market sizing from firms that sell
+reports; «74% of companies...» from a 2011 presentation whose primary source is dead;
+a vendor benchmark retold by four publications. Neither `recency` nor `bias` catches them —
+a fresh reprint has honest ratings on both scales.
+
+**How to execute it at step 4.0:**
+
+1. Mark each subquestion: quantitative / qualitative.
+2. For a quantitative one — check coverage in `stat_sources/INDEX.md` and
+   `api_sources/INDEX.md` BEFORE assigning channels. If you found an endpoint — it is primary, the web
+   goes to fallback.
+3. Write the concrete endpoint into `plan.md` §12 (not «FRED», but the series), so that the sub-agent
+   does not look it up again.
+4. No coverage — say so: «metric M is not covered by a registry, we take it from secondary sources,
+   `origin_kind: secondary`». This is an honest result, it must be visible and not
+   masked by a confident number.
+
+**It is checked by machine.** A number that got into the findings from a web source while a
+covering endpoint exists is a discipline defect, not a matter of taste:
+`scripts/check_number_provenance.py` will flag the source by `origin_kind`/`chain_len`, and
+the fail-closed rule will not let such a number into `memo.md`.
+
+**Anti-pattern:** take a number from an article, then «confirm» it with three other
+articles. That is not triangulation but a print run of one root — the `≥2 roots` rule and the circulation
+detector catch exactly this case.
+
+---
+
+## Registry — vetted addresses per signal
+
+`references/registry/` — 1072 addresses with an access mark (free / key / User-Agent) by signal type: science, regulatory (parliamentary APIs), markets, technology, security, climate_health, society, registries, open_source_releases. If you need a fresh stream or a direct endpoint that is not in `api_sources/` — open ONE file by topic, not the INDEX. The reliability in the table is a reconnaissance mark, not a Phase 5.5 result; the list's shelf life is months, and a dead address is cured by the usual fallback.
+
+## Discovery patterns — when the catalog is not enough
+
+The catalog `stat_sources/` + `api_sources/` + `registry/` covers the basic domains, but **rare topics** (niche industries, esoteric academic fields, region-specific topics) require searching for *new sources* at runtime. The algorithm:
 
 ### 1. GitHub topic search
 ```
 https://github.com/topics/<keyword>
 https://github.com/search?q=topic:<keyword>+sort:stars
 ```
-**Зачем:** Найти:
-- `awesome-<keyword>` репозитории — кураторские списки источников
-- Open-source datasets под темой
-- Tools/libraries (значит есть API или ETL pipeline)
+**Why:** To find:
+- `awesome-<keyword>` repositories — curated source lists
+- Open-source datasets on the topic
+- Tools/libraries (which means there is an API or an ETL pipeline)
 
-**Пример:** Тема «satellite imagery» → `github.com/topics/satellite-imagery` → `awesome-satellite-imagery-datasets` → 30+ dataset ссылок которые не в нашем каталоге.
+**Example:** the topic «satellite imagery» → `github.com/topics/satellite-imagery` → `awesome-satellite-imagery-datasets` → 30+ dataset links that are not in our catalog.
 
 ### 2. Awesome-lists registry
-`references/awesome_lists_registry.md` уже содержит 25+ кураторских списков. **В Phase 4 первым делом** проверь его на тему:
-- Tier 1: `public-apis`, `awesome-public-datasets` (универсальные)
-- Tier 2: специализированные по domain (finance, science, crypto, health)
-- Tier 3-4: niche и aggregators
+`references/awesome_lists_registry.md` already contains 25+ curated lists. **In Phase 4, first thing**, check it for the topic:
+- Tier 1: `public-apis`, `awesome-public-datasets` (universal)
+- Tier 2: specialized by domain (finance, science, crypto, health)
+- Tier 3-4: niche and aggregators
 
 ### 3. HuggingFace + Kaggle datasets
 ```
 https://huggingface.co/datasets?search=<topic>
 https://www.kaggle.com/datasets?search=<topic>
 ```
-**Зачем:** Готовые датасеты для ML/анализа. Часто содержат уже очищенные данные + метаданные источника.
+**Why:** Ready-made datasets for ML/analysis. They often contain already cleaned data + source metadata.
 
 ### 4. PyPI / npm / crates search
 ```
 https://pypi.org/search/?q=<topic>
 https://www.npmjs.com/search?q=<topic>
 ```
-**Зачем:** Библиотеки часто:
-- Оборачивают чужой API → значит есть API
-- Включают bundled datasets
-- Документируют где брать данные
+**Why:** Libraries often:
+- Wrap someone else's API → which means there is an API
+- Include bundled datasets
+- Document where to get the data
 
-**Пример:** тема «satellite imagery» → PyPI search `satellite` → `sentinelsat` → Copernicus Open Access Hub API.
+**Example:** the topic «satellite imagery» → PyPI search `satellite` → `sentinelsat` → Copernicus Open Access Hub API.
 
 ### 5. Data portals (government / EU)
 - `data.gov` — US federal datasets
 - `data.europa.eu` — EU open data portal
-- `data.gouv.fr`, `data.gov.uk` и др. национальные
-- `data.worldbank.org/data-catalog` — WB полный каталог
+- `data.gouv.fr`, `data.gov.uk` and other national ones
+- `data.worldbank.org/data-catalog` — the full WB catalog
 
-**Зачем:** Авторитетные источники для гос-стат, регуляторных данных, демографии.
+**Why:** Authoritative sources for government statistics, regulatory data, demographics.
 
 ### 6. Academic dataset registries
 - `datadryad.org` — research datasets
-- `zenodo.org` — multi-domain научные датасеты
-- `figshare.com` — supplementary data к статьям
+- `zenodo.org` — multi-domain scientific datasets
+- `figshare.com` — supplementary data for articles
 - `re3data.org` — registry of research data repositories
 
-**Зачем:** Если тема академическая и нужны исходные данные за статьями.
+**Why:** If the topic is academic and you need the underlying data behind the articles.
 
 ### 7. Industry-specific registries
-По мере необходимости — секторные:
+As needed — sector-specific ones:
 - Healthcare: NIH BioLINCC, GHDx, IHME
 - Finance: BIS, IMF datamapper, FSB
 - Climate: NASA NEX, NOAA Climate Data Online, IEA datasets
 - Crypto: Dune dashboards, Messari, Glassnode (paid)
 
-Если тема узкая — спроси USER нет ли у него подсказки.
+If the topic is narrow — ask the USER whether they have a hint.
 
 ---
 
-## Decomposition recipes — типовые декомпозиции тем
+## Decomposition recipes — typical topic decompositions
 
-Не каждый подвопрос виден из формулировки. Эти рецепты — **типовые разбиения больших тем**, чтобы получить полный набор подвопросов перед dispatch'ем.
+Not every subquestion is visible from the wording. These recipes are **typical splits of large topics**, so as to obtain the full set of subquestions before the dispatch.
 
 ### «Market analysis of X»
 1. **Size & growth** → industry-reports + gov_macro
 2. **Segmentation** → industry-reports + competitive-signals
-3. **Top players** → competitive-signals (Crunchbase/OpenCorporates) + code-github если tech
+3. **Top players** → competitive-signals (Crunchbase/OpenCorporates) + code-github if tech
 4. **Recent news / events** → news-current (NewsAPI/GDELT last 6mo)
 5. **Academic context** → academic on underlying tech/practice
-6. **Consumer sentiment** → forum-discussion (Reddit, HN) если consumer-facing
+6. **Consumer sentiment** → forum-discussion (Reddit, HN) if consumer-facing
 7. **Regulatory landscape** → regulatory-legal per relevant jurisdictions
-8. **Forecasts** → industry-reports + osebene mention каких analyst houses cover это (Gartner, IDC, Forrester)
+8. **Forecasts** → industry-reports + especially mention which analyst houses cover it (Gartner, IDC, Forrester)
 
 ### «Is X true / does X work»
 1. **Foundational claim** → academic (peer-reviewed)
 2. **Systematic reviews / meta-analyses** → Cochrane, PROSPERO
 3. **Counter-evidence / replication failures** → preprint-servers, retraction-watch
-4. **Real-world adoption / case studies** → industry-reports, code-github если tool
+4. **Real-world adoption / case studies** → industry-reports, code-github if a tool
 5. **Critics / sceptics** → academic critiques + forum-discussion (LessWrong, EA forum)
 6. **Mechanism / how it would work** → academic + technical blogs
 
@@ -205,7 +206,7 @@ https://www.npmjs.com/search?q=<topic>
 6. **Benchmarks / performance** → code-github (leaderboards) + academic
 
 ### «Should I do X» (decision genre)
-1. **What does X actually involve** → web-general (vendor docs) + academic если есть
+1. **What does X actually involve** → web-general (vendor docs) + academic if there is any
 2. **Cost / ROI** → industry-reports + forum-discussion (real practitioners)
 3. **Risk factors** → academic on failure modes + news-current (recent failures)
 4. **Alternatives** → competitive-signals + academic comparisons
@@ -222,8 +223,8 @@ https://www.npmjs.com/search?q=<topic>
 6. **Open-source ecosystem** → code-github (topics, awesome-lists)
 7. **Geographic distribution** → industry-reports + national stat sources per region
 
-### «Validation: правда ли что [claim]»
-1. **Original source of claim** → найти первоисточник в news/academic/blogs
+### «Validation: is it true that [claim]»
+1. **Original source of claim** → find the primary source in news/academic/blogs
 2. **Primary evidence** → academic + data-statistical-gov
 3. **Counter-evidence** → academic critiques + retracted-papers DB
 4. **Independent replication** → preprint-servers + academic
@@ -233,66 +234,66 @@ https://www.npmjs.com/search?q=<topic>
 
 ---
 
-## Когда лезть в репозитории явно
+## When to go into repositories explicitly
 
-Источник `code-github` через `WebFetch` или GitHub API (`GITHUB_TOKEN` если есть) — primary в этих случаях:
+The `code-github` source via `WebFetch` or the GitHub API (`GITHUB_TOKEN` if present) is primary in these cases:
 
-1. **Тема упоминает технический инструмент:** «open source», «library», «framework», «protocol», «standard»
-2. **«Как работает X» где X — алгоритм/практика:** велика вероятность что есть reference implementation
-3. **Поиск датасетов:** `topic:dataset`, `topic:open-data`, `topic:public-data`
-4. **Поиск кураторских списков:** `awesome-<topic>` repo naming convention
-5. **Бенчмарки:** `topic:benchmark`, `topic:leaderboard`
-6. **Реализации academic papers:** добавь `paperswithcode` или ищи repo с названием статьи
+1. **The topic mentions a technical instrument:** «open source», «library», «framework», «protocol», «standard»
+2. **«How X works» where X is an algorithm/practice:** there is a high probability that a reference implementation exists
+3. **Searching for datasets:** `topic:dataset`, `topic:open-data`, `topic:public-data`
+4. **Searching for curated lists:** `awesome-<topic>` repo naming convention
+5. **Benchmarks:** `topic:benchmark`, `topic:leaderboard`
+6. **Implementations of academic papers:** add `paperswithcode` or search for a repo with the paper's title
 
-Что искать в репозитории:
-- **README** — описание, цель, datasets used, methodology
-- **stars + recent commits** — proxy качества и активности (Phase 5 scoring)
-- **issues** — known problems, edge cases, что не работает (опционально для adversarial)
+What to look for in the repository:
+- **README** — description, purpose, datasets used, methodology
+- **stars + recent commits** — a proxy for quality and activity (Phase 5 scoring)
+- **issues** — known problems, edge cases, what does not work (optional for adversarial)
 - **discussions / wiki** — best practices, FAQ
-- **CITATION.cff** или `papers/` — формальные ссылки на работы
+- **CITATION.cff** or `papers/` — formal references to the papers
 
-**Не лазь в репо просто чтобы было.** Только если ожидаешь там данные или код, релевантный подвопросу.
+**Do not go into a repo just for the sake of it.** Only if you expect data or code there that is relevant to the subquestion.
 
 ---
 
-## Output: что записать в plan.md
+## Output: what to record in plan.md
 
-После того как все подвопросы прогнаны через этот файл — заполни секцию 12 plan.md в таком формате:
+Once all subquestions have been run through this file — fill in section 12 of plan.md in this format:
 
-### Поле `qclass`
+### The `qclass` field
 
-Каждый подвопрос получает `qclass` — класс, по которому накапливается статистика
-отдачи каналов. Ставится вместе с dispatch-решением, пишется в §12 рядом с каналами:
+Each subquestion gets a `qclass` — the class by which channel
+yield statistics accumulate. It is set together with the dispatch decision, written into §12 next to the channels:
 
 `market-size` · `time-series` · `scientific-claim` · `players` · `country-stat` ·
 `how-it-works` · `recent-change` · `regulation` · `benchmark` · `sentiment` ·
 `adoption` · `pricing` · `crypto` · `health` · `climate` · `jobs` · `qualitative`
 
-Класс соответствует строке матрицы выше. Подвопрос, не попавший ни в одну строку,
-получает `qclass: qualitative` и помечается как ad-hoc — как и сейчас.
+The class corresponds to a row of the matrix above. A subquestion that falls into no row
+gets `qclass: qualitative` and is marked as ad-hoc — as it is now.
 
-Формат строки в §12:
+The line format in §12:
 
 - **qclass:** `market-size`
 
 ```markdown
 ## 12. Information sourcing strategy
 
-### Подвопрос Q1: «What's the EU vertical farming market size and growth rate?»
+### Subquestion Q1: «What's the EU vertical farming market size and growth rate?»
 - **Primary:** industry-reports → search "EU vertical farming market" agri-tech analyst houses (AgFunder, Plenty/Infarm public summaries)
 - **Secondary:** data-statistical-gov → Eurostat agricultural production NACE codes A.01 for greenhouse/protected cultivation
 - **Fallback:** web-general → top EU vertical farming company annual reports (Infarm, Jungle, Nordic Harvest)
 - **Decomposition note:** classic «market analysis» recipe — adding Q1b «top EU players» and Q1c «forecast 2025-2030»
 
-### Подвопрос Q2: «Is vertical farming economically viable at scale?»
+### Subquestion Q2: «Is vertical farming economically viable at scale?»
 - **Primary:** academic → OpenAlex + Semantic Scholar with API key, "controlled environment agriculture" reviews
 - **Secondary:** industry-reports → unit economics analyses from AgFunder Network, McKinsey AgTech
 - **Fallback:** forum-discussion → r/verticalfarming, AgTech Twitter, conference proceedings (Indoor Ag-Con)
 - **Adversarial pre-flag:** bankruptcies (Infarm 2024 restructuring, AeroFarms Chapter 11), failure-mode papers
 
-### Подвопрос Q3: «What's the regulatory status of vertical farming across EU member states?»
+### Subquestion Q3: «What's the regulatory status of vertical farming across EU member states?»
 - **Primary:** regulatory-legal → EUR-Lex CAP (Common Agricultural Policy) on controlled environment, EFSA food safety guidance
-- **Secondary:** per-country → national agriculture ministries (BMEL Germany, MASAF Italy, DEFRA UK для post-Brexit context)
+- **Secondary:** per-country → national agriculture ministries (BMEL Germany, MASAF Italy, DEFRA UK for post-Brexit context)
 - **Fallback:** news-current → Reuters Sustainability, Politico EU on AgTech policy
 
 ### Discovery executed:
@@ -305,59 +306,59 @@ https://www.npmjs.com/search?q=<topic>
 - No real-time regulatory feed — manual check per member state needed
 ```
 
-**Это и есть deliverable** Source Dispatch шага. Без него Phase 4 — это хаотичный поиск.
+**This is the deliverable** of the Source Dispatch step. Without it, Phase 4 is chaotic search.
 
 ---
 
-## Приор при выборе канала сверх обязательного минимума
+## Prior when choosing a channel beyond the mandatory minimum
 
-Primary и Secondary из матрицы выше — обязательная часть покрытия. Она держит
-триангуляцию (≥2 разнотипных канала) и приором не двигается никогда: игнорировать
-матрицу в пользу «канала с лучшей статистикой» — способ тихо сломать независимость
-источников.
+Primary and Secondary from the matrix above are the mandatory part of coverage. That part holds
+triangulation (≥2 channels of different types) and is never moved by a prior: ignoring
+the matrix in favor of «the channel with the best statistics» is a way to quietly break the independence
+of sources.
 
-**Когда встаёт вопрос о дополнительном канале** — а не о замене Primary/Secondary:
-depth=deep требует более широкого покрытия подвопроса · сработал deviation-триггер
-(`unexpected_finding`/`contradiction`, см. Фазу 4 в `SKILL.md`) и нужен ещё один
-раунд · Fallback из матрицы выглядит слабым вариантом для конкретной темы.
+**When the question of an additional channel arises** — and not of replacing Primary/Secondary:
+depth=deep requires broader coverage of the subquestion · a deviation trigger fired
+(`unexpected_finding`/`contradiction`, see Phase 4 in `SKILL.md`) and one more
+round is needed · the Fallback from the matrix looks like a weak option for this particular topic.
 
-**Как решать:**
+**How to decide:**
 
 ```
-python3 scripts/update_priors.py --qclass <qclass текущего подвопроса>
+python3 scripts/update_priors.py --qclass <qclass of the current subquestion>
 ```
 
-Печатает все известные каналы этого `qclass`, ранжированные по posterior mean
-(0..1, выше — лучше отдавал улики в прошлых прогонах), без обрезки топ-20 — обрезка
-там уместна для общего обзора, а не для одного класса, где выборка и так мала.
-Взять канал с наибольшим значением среди ещё не использованных в этом подвопросе.
-Пустой вывод — приора по этому `qclass` ещё нет, действовать по матрице как обычно.
+Prints all known channels of this `qclass`, ranked by posterior mean
+(0..1, higher — gave better evidence in past runs), without trimming to the top-20 — trimming
+is appropriate for a general overview, not for a single class where the sample is small anyway.
+Take the channel with the highest value among those not yet used in this subquestion.
+Empty output — there is no prior for this `qclass` yet, act by the matrix as usual.
 
-**Не заменяй Primary/Secondary этим шагом.** Он решает только про добавочный канал
-сверх обязательного минимума. Матрица и registry-first правило (выше) сильнее любой
-накопленной статистики — они закрывают систематическую ошибку (веб как источник
-чисел), а приор всего лишь ранжирует эмпирическую отдачу.
+**Do not replace Primary/Secondary with this step.** It decides only about an additional channel
+beyond the mandatory minimum. The matrix and the registry-first rule (above) are stronger than any
+accumulated statistics — they close off a systematic error (the web as a source of
+numbers), while the prior merely ranks empirical yield.
 
-**Как эта статистика вообще появляется** — `SKILL.md`, раздел «Постобработка
-прогона — сбор наблюдений байесовского роя»: после Фазы 7 каждый прогон пишет
-наблюдения по фактически использованным каналам, а найденные здесь через Discovery
-patterns ad-hoc источники, ставшие `root`/`dissent` claim'а, регистрируются как
-кандидаты на промоушен в каталог тем же шагом.
+**How this statistics comes into being at all** — `SKILL.md`, the section «Post-processing
+of a run — collecting Bayesian swarm observations»: after Phase 7 each run writes
+observations on the channels actually used, and ad-hoc sources found here through Discovery
+patterns that became a claim's `root`/`dissent` are registered as
+candidates for promotion into the catalog by the same step.
 
 ---
 
 ## Anti-patterns
 
-**❌ «Просто гуглить»** — `web-general` это всегда **fallback**, не primary. Если он primary — ты не прогнал тему через dispatch.
+**❌ «Just googling»** — `web-general` is always a **fallback**, not primary. If it is primary — you did not run the topic through dispatch.
 
-**❌ Один канал на подвопрос** — нарушает требование триангуляции в Phase 5. Минимум 2 разнотипных канала.
+**❌ One channel per subquestion** — violates the triangulation requirement in Phase 5. Minimum 2 channels of different types.
 
-**❌ Игнорировать awesome-lists registry** — он там для того чтобы каталог не был finite. Всегда проверяй его если тема узкая.
+**❌ Ignoring the awesome-lists registry** — it is there so that the catalog is not finite. Always check it if the topic is narrow.
 
-**❌ Лезть в репозитории без причины** — `code-github` это primary только когда подвопрос про код/инструмент/датасет. Не для «найти что-нибудь по теме».
+**❌ Going into repositories without a reason** — `code-github` is primary only when the subquestion is about code/a tool/a dataset. Not for «find something on the topic».
 
-**❌ Не записывать dispatch в plan.md** — без записи Phase 6 adversarial не сможет проверить покрытие.
+**❌ Not recording the dispatch in plan.md** — without the record Phase 6 adversarial will not be able to check the coverage.
 
-**❌ Использовать paid-источники когда есть free** — если у user нет ключа Statista/Crunchbase/Bloomberg, не строй стратегию вокруг них. Сначала free, потом paid если free не хватает.
+**❌ Using paid sources when free ones exist** — if the user has no Statista/Crunchbase/Bloomberg key, do not build the strategy around them. Free first, paid after, if free is not enough.
 
-**❌ Приором подменять Primary/Secondary** — приор ранжирует только добавочный канал сверх обязательного минимума (см. выше). Обязательная часть матрицы приором не двигается никогда — иначе рой обучится ходить туда, где уже сильно, и точки роста никогда не проверятся заново.
+**❌ Substituting Primary/Secondary with a prior** — a prior ranks only the additional channel beyond the mandatory minimum (see above). The mandatory part of the matrix is never moved by a prior — otherwise the swarm will learn to go where it is already strong, and the growth points will never be re-checked.
