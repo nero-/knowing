@@ -1,4 +1,8 @@
-"""Tests for tier routing — the layer that puts different model tiers on different endpoints."""
+"""Tests for tier routing: pools, rotation, failover, cooldown.
+
+The negative and failure cases carry the value here — a pool that cannot survive a dead cluster is
+a single endpoint with extra config.
+"""
 
 from __future__ import annotations
 
@@ -14,151 +18,214 @@ sys.path.insert(0, str(ROOT / "runner"))
 
 import tier_routing as tr  # noqa: E402
 
-SPARKS = {"base_url": "http://tp4.example:8015/v1", "model": "DeepSeek-V4.1-Flash"}
-TP2 = {"base_url": "http://tp2.example:8000/v1", "model": "Qwen3.8-Flash-Next"}
+A = {"base_url": "http://a/v1", "model": "model-a"}
+B = {"base_url": "http://b/v1", "model": "model-b"}
+C = {"base_url": "http://c/v1", "model": "model-c"}
 
 
-class FakeChoice:
+class FakeClock:
+    def __init__(self):
+        self.t = 1000.0
+
+    def __call__(self):
+        return self.t
+
+    def advance(self, seconds):
+        self.t += seconds
+
+
+class Resp:
     def __init__(self, text):
-        self.message = type("M", (), {"content": text})()
+        self.choices = [type("Ch", (), {"message": type("M", (), {"content": text})()})()]
 
 
-class FakeResponse:
-    def __init__(self, text):
-        self.choices = [FakeChoice(text)]
+class Client:
+    """Records calls; fails with whatever `fail` says for its endpoint."""
+
+    def __init__(self, base_url, fail, sink):
+        self.base_url, self.fail, self.sink = base_url, fail, sink
+        self.chat = type("C", (), {"completions": type("Comp", (), {"create": self._create})()})()
+
+    def _create(self, *, model, messages, **kw):
+        if base_url_fails := self.fail.get(self.base_url):
+            self.sink.append(("fail", self.base_url))
+            raise base_url_fails
+        self.sink.append(("ok", self.base_url, model))
+        return Resp(f"{self.base_url}|{model}")
 
 
-class FakeCompletions:
-    def __init__(self, sink):
-        self.sink = sink
+def provider(tiers, *, fail=None, clock=None):
+    sink: list = []
+    calls = {"n": 0}
 
-    def create(self, *, model, messages, **kw):
-        self.sink.append(model)
-        return FakeResponse(f"ok:{model}")
-
-
-class FakeClient:
-    def __init__(self, base_url, sink):
-        self.base_url = base_url
-        self.chat = type("C", (), {"completions": FakeCompletions(sink)})()
-
-
-def make(sink):
     def factory(base_url, api_key):
-        sink.append(("client", base_url))
-        return FakeClient(base_url, sink)
-    return factory
+        calls["n"] += 1
+        return Client(base_url, fail or {}, sink)
+
+    p = tr.TierMapProvider(tiers, client_factory=factory, clock=clock or FakeClock())
+    p.sink = sink
+    p.client_count = lambda: calls["n"]
+    return p
 
 
-# ---------------------------------------------------------------------- config
-def test_env_json_config():
-    tiers = tr.load_tiers({"KNOWING_TIERS": '{"strong": {"base_url": "http://a/", "model": "A"},'
-                                             ' "cheap": {"base_url": "http://b/", "model": "B"}}'})
-    assert tiers["strong"]["base_url"] == "http://a"  # trailing slash normalised
-    assert set(tiers) == {"strong", "cheap"}
+def single(base, rotate="rr", fallback=None):
+    spec = {"endpoints": [base], "rotate": rotate}
+    if fallback is not None:
+        spec["fallback"] = fallback
+    return {"cheap": spec}
 
 
-def test_per_tier_env_vars():
-    tiers = tr.load_tiers({
-        "KNOWING_TIER_STRONG_BASE_URL": "http://a/v1", "KNOWING_TIER_STRONG_MODEL": "A",
-        "KNOWING_TIER_CHEAP_BASE_URL": "http://b/v1", "KNOWING_TIER_CHEAP_MODEL": "B",
-        "OPENAI_API_KEY": "sk-shared",
-    })
-    assert tiers["cheap"]["model"] == "B"
-    assert tiers["strong"]["api_key"] == "sk-shared"
+# --------------------------------------------------------------------- config
+def test_config_accepts_single_object_list_and_pool():
+    assert tr.load_tiers({"KNOWING_TIERS": '{"cheap": {"base_url": "http://x/v1", "model": "m"}}'})[
+        "cheap"]["endpoints"][0]["model"] == "m"
+    assert len(tr.load_tiers({"KNOWING_TIERS": '{"cheap": [{"base_url": "http://x/v1", "model": "m"}]}'})[
+        "cheap"]["endpoints"]) == 1
+    pool = tr.load_tiers({"KNOWING_TIERS": '{"cheap": {"endpoints": [{"base_url": "http://x/v1", '
+                                           '"model": "m"}, {"base_url": "http://y/v1", "model": "n"}]}}'})
+    assert [c["model"] for c in pool["cheap"]["endpoints"]] == ["m", "n"]
 
 
-def test_config_file(tmp_path):
-    f = tmp_path / "tiers.json"
-    f.write_text('{"mid": {"base_url": "http://m/v1", "model": "M"}}')
-    assert tr.load_tiers({"KNOWING_TIERS_FILE": str(f)})["mid"]["model"] == "M"
+def test_config_rejects_bad_rotation_and_self_fallback():
+    with pytest.raises(tr.TierConfigError, match="rotate must be"):
+        tr.load_tiers({"KNOWING_TIERS": '{"cheap": {"endpoints": [{"base_url": "http://x/v1", '
+                                       '"model": "m"}], "rotate": "random"}}'})
+    with pytest.raises(tr.TierConfigError, match="lists itself"):
+        tr.load_tiers({"KNOWING_TIERS": '{"cheap": {"endpoints": [{"base_url": "http://x/v1", '
+                                       '"model": "m"}], "fallback": ["cheap"]}}'})
 
 
-def test_missing_file_is_named():
-    with pytest.raises(tr.TierConfigError, match="missing file"):
-        tr.load_tiers({"KNOWING_TIERS_FILE": "/nope/tiers.json"})
+def test_config_conflict_between_file_and_env_is_an_error():
+    with pytest.raises(tr.TierConfigError, match="configured twice"):
+        tr.load_tiers({"KNOWING_TIERS": '{"cheap": {"base_url": "http://x/v1", "model": "m"}}',
+                       "KNOWING_TIER_CHEAP_MODEL": "n"})
 
 
-def test_no_config_names_the_variables():
-    with pytest.raises(tr.TierConfigError, match="KNOWING_TIER_STRONG_BASE_URL"):
-        tr.load_tiers({})
+def test_documented_default_fallback_chain():
+    tiers = tr.load_tiers({"KNOWING_TIERS": '{"cheap": {"base_url": "http://x/v1", "model": "m"}}'})
+    assert tiers["cheap"]["fallback"] == []
 
 
-def test_missing_model_is_an_error():
-    with pytest.raises(tr.TierConfigError, match="no model"):
-        tr.load_tiers({"KNOWING_TIER_MID_BASE_URL": "http://m/v1"})
-
-
-def test_unknown_tier_rejected():
-    with pytest.raises(tr.TierConfigError, match="unknown tier"):
-        tr.load_tiers({"KNOWING_TIERS": '{"heavy": {"base_url": "http://x/", "model": "X"}}'})
-
-
-# ------------------------------------------------------------------- fallback
-def test_resolve_falls_back_down_a_tier():
-    tiers = {"cheap": TP2}
-    eff, cfg = tr.resolve_tier("strong", tiers)
-    assert eff == "cheap" and cfg["model"] == "Qwen3.8-Flash-Next"
-
-
-def test_resolve_prefers_the_configured_tier():
-    tiers = {"strong": SPARKS, "cheap": TP2}
-    eff, cfg = tr.resolve_tier("strong", tiers)
-    assert eff == "strong" and cfg["model"] == "DeepSeek-V4.1-Flash"
-
-
-def test_no_endpoint_at_all_is_an_error():
-    with pytest.raises(tr.TierConfigError, match="no endpoint for tier 'cheap'"):
-        tr.resolve_tier("cheap", {})
-
-
-# --------------------------------------------------------------------- routing
-def test_each_tier_hits_its_own_endpoint():
-    sink: list = []
-    p = tr.TierMapProvider({"strong": SPARKS, "mid": TP2, "cheap": TP2},
-                           client_factory=make(sink))
-    p.complete("plan this", model_tier="strong")
-    p.complete("read this", model_tier="mid")
-    p.fanout(["a", "b"], model_tier="cheap")
-    assert [r[1] for r in p.routed] == [SPARKS["base_url"], TP2["base_url"], TP2["base_url"]]
-    assert p.routed[0][2] == "DeepSeek-V4.1-Flash"
-
-
-def test_one_client_per_endpoint():
-    sink: list = []
-    p = tr.TierMapProvider({"strong": SPARKS, "mid": TP2, "cheap": TP2},
-                           client_factory=make(sink))
-    for _ in range(3):
+# ------------------------------------------------------------------ rotation
+def test_round_robin_spreads_calls_across_the_pool():
+    p = provider({"cheap": {"endpoints": [A, B], "rotate": "rr", "fallback": []}})
+    for _ in range(4):
         p.complete("x", model_tier="cheap")
-    p.complete("y", model_tier="mid")  # mid and cheap share one endpoint -> no second client
-    clients = [s for s in sink if isinstance(s, tuple)]
-    assert len(clients) == 1
-    p.complete("z", model_tier="strong")  # a different endpoint -> exactly one more
-    assert len([s for s in sink if isinstance(s, tuple)]) == 2
+    assert [s[1] for s in p.sink] == ["http://a/v1", "http://b/v1", "http://a/v1", "http://b/v1"]
 
 
-def test_unconfigured_tier_falls_back_and_is_reported():
-    p = tr.TierMapProvider({"cheap": TP2}, client_factory=make([]))
-    p.complete("synthesise", model_tier="strong")
-    assert p.routed[0][0] == "cheap"
+def test_sticky_keeps_one_endpoint_for_the_process():
+    p = provider({"strong": {"endpoints": [A, B], "rotate": "sticky", "fallback": []}})
+    for _ in range(4):
+        p.complete("x", model_tier="strong")
+    assert {s[1] for s in p.sink} == {"http://a/v1"}
 
 
-def test_unknown_tier_raises_at_call_time():
-    p = tr.TierMapProvider({"cheap": TP2}, client_factory=make([]))
-    with pytest.raises(tr.TierConfigError, match="unknown tier"):
-        p.complete("x", model_tier="huge")
+def test_one_client_per_endpoint_even_under_round_robin():
+    p = provider({"cheap": {"endpoints": [A, B], "rotate": "rr", "fallback": []}})
+    for _ in range(6):
+        p.complete("x", model_tier="cheap")
+    assert p.client_count() == 2
+
+
+# ------------------------------------------------------------------ failover
+def test_dead_cluster_fails_over_to_the_next_candidate():
+    p = provider({"cheap": {"endpoints": [A, B], "rotate": "rr", "fallback": []}},
+                 fail={"http://a/v1": ConnectionError("cluster down")})
+    out = p.complete("x", model_tier="cheap")
+    assert out.startswith("http://b/v1")
+    reasons = [r["reason"] for r in p.routed]
+    assert reasons == ["failover", "ok"]
+
+
+def test_429_is_transient_and_rotates_away():
+    err = type("RateLimitError", (Exception,), {"status_code": 429})("slow down")
+    p = provider({"cheap": {"endpoints": [A, B], "rotate": "rr", "fallback": []}},
+                 fail={"http://a/v1": err})
+    assert p.complete("x", model_tier="cheap").startswith("http://b/v1")
+
+
+def test_bad_request_is_not_retried_elsewhere():
+    err = type("BadRequestError", (Exception,), {"status_code": 400})("malformed")
+    p = provider({"cheap": {"endpoints": [A, B], "rotate": "rr", "fallback": []}},
+                 fail={"http://a/v1": err})
+    with pytest.raises(Exception, match="malformed"):
+        p.complete("x", model_tier="cheap")
+    assert [s for s in p.sink] == [("fail", "http://a/v1")]  # B was never tried
+
+
+def test_cooldown_skips_a_failing_endpoint_on_the_next_call():
+    clock = FakeClock()
+    p = provider({"cheap": {"endpoints": [A, B], "rotate": "rr", "fallback": []}},
+                 fail={"http://a/v1": ConnectionError("down")}, clock=clock)
+    p.complete("x", model_tier="cheap")          # A fails, B answers
+    p.complete("y", model_tier="cheap")          # A is cooling down -> B first
+    assert [s[1] for s in p.sink if s[0] == "ok"] == ["http://b/v1", "http://b/v1"]
+    assert [s for s in p.sink if s[0] == "fail"] == [("fail", "http://a/v1")]
+
+
+def test_endpoint_becomes_eligible_again_after_cooldown():
+    clock = FakeClock()
+    p = provider({"cheap": {"endpoints": [A, B], "rotate": "rr", "fallback": []}},
+                 fail={"http://a/v1": ConnectionError("down")}, clock=clock)
+    cfg_a = p.tiers["cheap"]["endpoints"][0]
+    p.complete("x", model_tier="cheap")
+    assert not p._available(cfg_a)                     # cooling down
+    clock.advance(tr.COOLDOWN_BASE + 1)
+    assert p._available(cfg_a)                          # eligible again
+    p.fail = {}                                         # cluster came back
+    p._providers.clear()
+    p = provider({"cheap": {"endpoints": [A], "rotate": "rr", "fallback": []}}, clock=clock)
+    p.complete("y", model_tier="cheap")
+    assert p.sink and p.sink[-1][0] == "ok"
+
+
+def test_cooldown_doubles_while_the_endpoint_keeps_failing():
+    clock = FakeClock()
+    p = provider({"cheap": {"endpoints": [A], "rotate": "rr", "fallback": ["mid"]},
+                  "mid": {"endpoints": [B], "rotate": "rr", "fallback": []}},
+                 fail={"http://a/v1": ConnectionError("down")}, clock=clock)
+    key = p._key(p.tiers["cheap"]["endpoints"][0])
+    p.complete("x", model_tier="cheap")
+    _, streak1 = p._down[key]
+    clock.advance(tr.COOLDOWN_BASE + 1)
+    p.complete("y", model_tier="cheap")
+    until, streak2 = p._down[key]
+    assert streak2 == streak1 + 1
+    assert until - clock() > tr.COOLDOWN_BASE
+
+
+# ------------------------------------------------------------------ fallback
+def test_tier_falls_back_down_the_chain_and_says_so():
+    p = provider({"cheap": {"endpoints": [A], "rotate": "rr", "fallback": ["mid"]},
+                  "mid": {"endpoints": [B], "rotate": "rr", "fallback": []}},
+                 fail={"http://a/v1": ConnectionError("down")})
+    assert p.complete("x", model_tier="cheap").startswith("http://b/v1")
+    assert p.routed[-1]["reason"] == "fallback-from-cheap"
+
+
+def test_all_endpoints_down_raises_with_every_attempt_named():
+    p = provider({"cheap": {"endpoints": [A, B], "rotate": "rr", "fallback": []}},
+                 fail={"http://a/v1": ConnectionError("a down"), "http://b/v1": ConnectionError("b down")})
+    with pytest.raises(RuntimeError, match="no endpoint answered for tier 'cheap'.*2"):
+        p.complete("x", model_tier="cheap")
+
+
+def test_unknown_tier_raises():
+    p = provider({"cheap": {"endpoints": [A], "rotate": "rr", "fallback": []}})
+    with pytest.raises(tr.TierConfigError, match="no endpoint for tier 'enormous'"):
+        p.complete("x", model_tier="enormous")
 
 
 def test_search_is_explicitly_unsupported():
-    p = tr.TierMapProvider({"cheap": TP2}, client_factory=make([]))
+    p = provider({"cheap": {"endpoints": [A], "rotate": "rr", "fallback": []}})
     with pytest.raises(NotImplementedError, match="Anthropic-specific"):
         p.search("q")
 
 
 def test_build_provider_knows_the_tiers_backend(monkeypatch):
-    """Upstream's build_provider must accept name='tiers' after the knowing patch."""
-    import providers  # upstream runner/providers.py
-    monkeypatch.setenv("KNOWING_TIERS", '{"mid": {"base_url": "http://m/v1", "model": "M"}}')
+    import providers  # upstream runner/providers.py, via the knowing patch
+    monkeypatch.setenv("KNOWING_TIERS", '{"mid": {"endpoints": [{"base_url": "http://m/v1", "model": "M"}]}}')
     p = providers.build_provider("tiers")
     assert p.name == "tiers"
-    assert p.tiers["mid"]["model"] == "M"
+    assert p.tiers["mid"]["endpoints"][0]["model"] == "M"

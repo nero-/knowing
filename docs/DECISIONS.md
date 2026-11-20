@@ -118,6 +118,25 @@ mapping to *more than one endpoint*: `OpenAICompatProvider` pins one `base_url` 
 fallback that *records* which tier actually answered (`routed`). A run whose config silently degraded
 still finishes, but the degradation is auditable.
 
-Deliberately out of scope: rate limiting and cross-run queueing (a gateway's job), routing within a
-tier (a load balancer's job), and `search()` (upstream's is Anthropic-specific). A skill that guesses
-about load is a skill that hides a 429.
+**Revised after review.** The first cut bound each tier to a single endpoint, which makes a dead
+cluster an outage and a second box unusable. It is now a **pool**: candidates are tried in rotation,
+a transient failure (connection error, timeout, 408/409/425/429/5xx) cools that endpoint down for
+30 s doubling to 300 s, and the call moves on. A non-transient failure (400, auth) is *not* retried
+elsewhere — trying a second endpoint would only hide a bug behind a second failure.
+
+Rotation is per tier because the right behaviour differs: `rr` for the fan-out, where calls are
+independent and no prefix cache survives; `sticky` for planning and synthesis, where switching models
+mid-run loses the cache and can change quality between two steps that must agree. Round-robin spreads
+*load*; it does not balance *quality*. Two endpoints in one tier are a claim that they are
+interchangeable, and a weaker model in the pool means half the runs get it silently — so a different
+model gets a different tier and an explicit `fallback` entry, where the downgrade is recorded.
+
+Endpoints are declared once as named providers and referenced `provider/model`, with credentials from
+a literal, an env var, or a command (`api_key_cmd` — the same `!command` convention pi uses), resolved
+lazily. Dialects: `openai` (vLLM, Ollama, llama.cpp, LM Studio, TGI, OpenRouter, Together, Groq,
+OpenAI) and `anthropic`. Anything else is a gateway away, and gateways speak OpenAI.
+
+Deliberately out of scope: active health probes (spend and noise; passive failure detection answers
+the only question that matters), weighted or latency-based balancing (needs measurements you do not
+have on call one), rate limiting and cross-run queueing (a gateway's job), and `search()` (upstream's
+is Anthropic-specific). A skill that guesses about load is a skill that hides a 429.

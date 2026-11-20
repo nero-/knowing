@@ -70,3 +70,27 @@ this release. Backlog remaining is 40 files / ~37k words, all outside the load p
 blocks, leaf data cards, export/refresh docs, code messages).
 Two cross-file heading references were repaired (`«Оркестрация»`, «Эвристика подбора блоков»), and
 `tests/test_docs_swarm.py` accepts the English "not used" note as well as the Russian one.
+
+## 0.2.1 — 2026-11-20
+
+### Changed — tiers are pools, not machines
+- A tier now holds **one or more candidates**. Transient failures (connection error, timeout,
+  408/409/425/429/5xx, `RateLimit`/`Timeout`/`Overloaded` classes) cool an endpoint down — 30 s
+  doubling to 300 s, cleared on success — and the call fails over to the next candidate. A 400 or an
+  auth error is **not** retried elsewhere: that would hide a bug behind a second failure.
+- Rotation policy is per tier: `rr` (per call, for fan-out) or `sticky` (per process, for planning and
+  synthesis, where switching models loses the prompt cache). `TierMapProvider.routed` records every
+  attempt and every tier downgrade.
+
+### Added — endpoints are declared once
+- `overlay/config.py`: `[providers.*]` tables (`base_url`, `kind = openai|anthropic`, credentials,
+  `models`) referenced from `[tiers.*]` as `provider/model`. TOML or JSON; the earlier single-object
+  and bare-list shapes still load.
+- Credentials resolve lazily from `api_key`, `api_key_env`, or `api_key_cmd` (the `!command` convention
+  pi's `models.json` already uses). A missing variable is an error naming it.
+- `python3 overlay/config.py check [--probe]` — shows tiers, whether keys resolve, and with `--probe`
+  GETs `<base_url>/models` to flag a model the server does not actually serve.
+- `python3 overlay/config.py from-pi ~/.pi/agent/models.json` — emits a starting config from pi's
+  provider list.
+- 18 config tests (dialects, credential sources, ref resolution, probe against a local HTTP server,
+  CLI exit codes); 57 overlay tests total.

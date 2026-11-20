@@ -1,63 +1,143 @@
-# Model tiers → endpoints
+# Model tiers → endpoint pools
 
-Upstream's runner never names a model. It asks for a **tier** (the methodology says "strong/mid/cheap"),
-and the provider maps the tier to whatever hardware you have. That means the same skill runs on one
-big box, two small ones, or a mixture — and the split is a config file, not a fork.
+Upstream's runner never names a model. It asks for a **tier** (`strong` / `mid` / `cheap`) and the
+provider answers with an endpoint. `overlay/tier_routing.py` is that layer.
 
-`overlay/tier_routing.py` does the mapping. Three ways to configure it, first match wins:
+A tier is a **pool, not a machine**. One cluster going down rotates to the next candidate instead of
+turning the run red, and the rotation is recorded so a degraded run is auditable.
 
-```bash
-# 1. inline JSON
-export KNOWING_TIERS='{
-  "strong": {"base_url": "http://100.120.4.113:8015/v1", "model": "DeepSeek-V4.1-Flash"},
-  "mid":    {"base_url": "http://100.97.112.71:8000/v1",  "model": "Qwen3.8-Flash-Next"},
-  "cheap":  {"base_url": "http://100.97.112.71:8000/v1",  "model": "Qwen3.8-Flash-Next"}
-}'
+## Config: declare an endpoint once, reference it as `provider/model`
 
-# 2. a file (same JSON), easier to keep out of your shell history
-export KNOWING_TIERS_FILE=~/.config/knowing/tiers.json
+`~/.config/knowing/tiers.toml` (or `$KNOWING_CONFIG`, or JSON if you prefer):
 
-# 3. per-tier environment variables
-export KNOWING_TIER_STRONG_BASE_URL=http://100.120.4.113:8015/v1
-export KNOWING_TIER_STRONG_MODEL=DeepSeek-V4.1-Flash
-export KNOWING_TIER_CHEAP_BASE_URL=http://100.97.112.71:8000/v1
-export KNOWING_TIER_CHEAP_MODEL=Qwen3.8-Flash-Next
-export OPENAI_API_KEY=vllm          # used for every tier that has no api_key of its own
+```toml
+# --- endpoints, declared once -------------------------------------------------
+[providers.sparks]                    # local vLLM box
+base_url = "http://100.120.4.113:8015/v1"
+models = ["DeepSeek-V4.1-Flash"]
+
+[providers.tp2]
+base_url = "http://100.97.112.71:8000/v1"
+
+[providers.ollama]                    # local llama.cpp / LM Studio / Ollama: any /v1
+base_url = "http://localhost:11434/v1"
+
+[providers.openrouter]                # cloud, OpenAI-compatible
+base_url = "https://openrouter.ai/api/v1"
+api_key_env = "OPENROUTER_API_KEY"
+
+[providers.anthropic]                 # cloud, different dialect
+kind = "anthropic"
+base_url = "https://api.anthropic.com"
+api_key_cmd = "pass show anthropic/key"
+
+# --- tiers reference endpoints ------------------------------------------------
+[tiers.strong]
+endpoints = ["sparks/DeepSeek-V4.1-Flash", "anthropic/claude-opus-5"]
+rotate = "sticky"
+fallback = ["mid"]
+
+[tiers.mid]
+endpoints = ["tp2/Qwen3.8-Flash-Next"]
+
+[tiers.cheap]
+endpoints = ["tp2/Qwen3.8-Flash-Next", "ollama/qwen3:8b", "openrouter/deepseek/deepseek-v4"]
 ```
 
-Then `--provider tiers`. The provider is an ordinary OpenAI-compatible client per endpoint: vLLM,
-Ollama, OpenRouter, a gateway — anything speaking `/v1`.
+Then `--provider tiers`. Local servers (vLLM, Ollama, llama.cpp, LM Studio) need no key — any value is
+accepted by them, so the default `"vllm"` is fine. Cloud endpoints take one of:
 
-## Why tiers, not per-phase model names
+| credential | when |
+|---|---|
+| `api_key = "..."` | throwaway/testing; not recommended for a repo |
+| `api_key_env = "VAR"` | standard; resolved when the endpoint is first used |
+| `api_key_cmd = "..."` | a secret manager or a file you already keep (`pass`, `op read`, `grep …`) — the same `!command` convention pi's own `models.json` uses |
 
-The methodology's own routing table is the authority on *which* work is expensive: reframing, the
-plan gate, and the adversarial pass are `strong`; search fan-out and mechanical scoring are `cheap`.
-Encoding that as hardware means the split survives a model change, and re-balancing is a config edit.
+Credentials resolve **lazily**, on first use, so rotating a key is not a config edit. A missing
+variable is an error naming the variable, never a silent fallback.
 
-The two things that should drive your mapping, in order:
+### Mixing dialects
 
-1. **Context window.** Planning and synthesis hold the fan-in. If one endpoint has a materially
-   larger window, that is the `strong` tier regardless of speed — a synthesis step that gets compacted
-   mid-way is worse than a slow one.
-2. **Queue depth.** The `cheap` tier is where a run's parallelism lands (`MIN_CANDIDATES` of 60–100 at
-   medium, the fetcher pool at 3–6 agents). Put it on the endpoint with the most headroom, and check
-   what its server advertises — vLLM-style gateways often publish a concurrency limit you can read
-   from `/v1/models`.
+`kind = "openai"` (default) covers vLLM, Ollama, llama.cpp, LM Studio, TGI, OpenRouter, Together,
+Groq, Fireworks, DeepInfra, and OpenAI itself. `kind = "anthropic"` uses the Anthropic SDK. That is the
+whole list on purpose: anything else (Bedrock, Vertex) is a gateway away, and the gateway is
+OpenAI-compatible.
 
-## Fallback, and what it tells you
+### Check it before you run
 
-A tier that is not configured falls back down the chain `strong → mid → cheap`, and the provider
-records which tier actually answered (`TierMapProvider.routed`). A run that quietly routes everything
-to `cheap` still completes — that is what the fallback is for — but `routed` is the honest audit: it
-shows whether the split you configured is the split that ran.
+```bash
+python3 overlay/config.py check             # tiers, endpoints, and whether each key resolves
+python3 overlay/config.py check --probe     # + GET <base_url>/models, flag a model the server
+                                            #   does not actually serve
+python3 overlay/config.py from-pi ~/.pi/agent/models.json > ~/.config/knowing/tiers.toml
+```
 
-A tier with **no** endpoint anywhere is an error naming the missing variable, not a default.
+`from-pi` turns your existing pi provider list into a starting config (including `!command` keys),
+which is the fastest path from "these are my endpoints" to "the skill uses them". Edit the
+`[tiers.*]` plan it emits — it puts everything in all three tiers as a placeholder.
 
-## What this does not do
+## Two rotation policies, on purpose
 
-- It does not do per-provider rate limiting or cross-process queueing. If several runs share two boxes,
-  the fairness belongs in the gateway (litellm or equivalent), not in the skill.
-- It does not route *within* a tier. One tier, one endpoint — anything cleverer is a load balancer's
-  job, and a skill that guesses is a skill that hides a 429.
-- `search()` is not implemented here: upstream's web search is Anthropic-specific. Tier routing covers
-  completions, fan-out and scoring; bring your own fetcher for the search phase.
+| `rotate` | behaviour | use for |
+|---|---|---|
+| `"rr"` (default) | next candidate on every call | the fan-out, screening, extraction — independent calls, no prefix cache survives anyway |
+| `"sticky"` | one candidate for the life of the process | planning, synthesis, adjudication — switching models mid-run loses the prompt cache and can change quality between two steps that must agree |
+
+**Round-robin is not a quality balancer.** It spreads load across candidates you declared
+interchangeable. If two endpoints serve *different* models and one is weaker, putting them in the same
+tier means half your synthesis runs get the weaker model and nothing says so. If they are not
+interchangeable, they belong in different tiers — that is what the tiers are for.
+
+## Health is passive, and classified
+
+A candidate is marked unhealthy only by a request that failed in a way that means *try elsewhere*:
+
+- connection error, timeout, `OSError`
+- HTTP 408, 409, 425, 429, 500, 502, 503, 504
+- exception class names containing `RateLimit`, `Timeout`, `APIConnection`, `Overloaded`,
+  `ServiceUnavailable`, `InternalServer`
+
+Anything else — a 400, an auth error, a malformed request — **is not retried on another endpoint**,
+because trying elsewhere would only hide the bug behind a second failure. It propagates.
+
+Cooldown starts at 30 s and doubles per consecutive failure up to 300 s; a success clears it. No
+probe calls, so a dead cluster costs nothing until something asks for it. If every candidate is
+cooling down they are all tried anyway, in order — a stale cooldown must never be able to fail a run.
+
+## Fallback between tiers, and the audit trail
+
+`fallback` names the tiers to try when a tier's whole pool refuses (default `strong → mid → cheap`,
+empty for `cheap`). Every attempt appends to `TierMapProvider.routed`:
+
+```python
+[{"tier": "strong", "index": 0, "model": "DeepSeek-V4.1-Flash",
+  "base_url": "http://100.120.4.113:8015/v1", "reason": "failover", "error": "ConnectionError"},
+ {"tier": "strong", "index": 1, "model": "DeepSeek-V4.1-Flash",
+  "base_url": "http://backup-box:8015/v1", "reason": "ok"},
+ {"tier": "cheap",  "index": 0, "model": "Qwen3.8-Flash-Next",
+  "base_url": "http://100.97.112.71:8000/v1", "reason": "fallback-from-strong"}]
+```
+
+The third entry is the one that matters: the run *degraded a tier*, and said so. `finish.py` output is
+where to look when a report feels thin.
+
+## What this deliberately does not do
+
+- **No active health checks.** A probe loop is spend and noise; passive failure detection answers the
+  only question that matters — did a call fail in a way another endpoint would survive.
+- **No weighted or latency-based balancing.** Those need measurements you do not have on the first
+  call, and a skill that guesses at load hides a 429.
+- **No cross-run queueing.** If several runs share two boxes, fairness belongs in the gateway
+  (litellm or equivalent). A per-process pool can only be fair to itself.
+- **No `search()`.** Upstream's web search is Anthropic-specific; tier routing covers completions,
+  fan-out and scoring.
+
+## Choosing the mapping
+
+1. **Context window decides `strong`.** Planning and synthesis hold the fan-in; a synthesis step that
+   gets compacted mid-way is worse than a slow one.
+2. **Headroom decides `cheap`.** That is where parallelism lands (`MIN_CANDIDATES` of 60–100 at
+   medium, 3–6 fetchers). Check what the server advertises on `/v1/models`.
+3. **Interchangeability decides pool membership.** Same model, same quantisation, same context window
+   → same pool. Anything else gets its own tier and an explicit `fallback` entry, so the downgrade is
+   visible instead of statistical.
