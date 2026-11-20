@@ -1,13 +1,13 @@
 {
-  "name": "deepdive",
+  "name": "knowing",
   "owner": {
-    "name": "Socialpranker"
+    "name": "nero-"
   },
   "plugins": [
     {
-      "name": "deepdive",
+      "name": "knowing",
       "source": "./",
-      "description": "Meta-research под вопрос или решение: веб-поиск, академические источники, Q&A отчёт с атомарными пере-используемыми тезисами.",
+      "description": "Evidence-disciplined research (fork of deepdive): a report with an anchored quote behind every fact, derived depth, read scope, and an adjudication verdict that can block a run.",
       "skills": [
         "./"
       ]
