@@ -45,6 +45,15 @@ The **floor**: the files in `context_budget.py::ALWAYS_LOAD` (what a run loads u
 backlog; the load profiles in `context_budget.py` are the authority on what a run actually pulls, so
 the backlog is ordered by that list, not by file count.
 
+## Known coupling regressions in v0.1
+
+- Section locators inside translated files (e.g. «§ Routing for sub-agents», «§ Fourth condition»)
+  now point at English headings that live in files still in Russian — `source_scoring.md`,
+  `subagents_v2.md`, `adversarial_pass.md`. They will resolve once the backlog is done; until then a
+  reader of those files must search by meaning, not by heading. This is the exact cost the reviews
+  predicted ("56 references run out of translated files into untranslated ones"), recorded rather
+  than hidden.
+
 ## How a translation is verified
 
 - `overlay/tests/test_coupling.py` asserts that every pattern listed in the glossary above still

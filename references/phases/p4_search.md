@@ -1,7 +1,7 @@
 <!-- translated from upstream/references/phases/p4_search.md @ e233797 — see docs/TRANSLATION.md -->
 ## Phase 4. Search
 
-**Model:** main thread `sonnet` / `medium`. Sub-agents — **different models** by subtask type (see `model_routing.md`, section «Routing для sub-agents»): web/news/api-direct → `haiku`, academic/long-source → `sonnet`, heavy reasoning subtask → `opus`.
+**Model:** main thread `sonnet` / `medium`. Sub-agents — **different models** by subtask type (see `model_routing.md`, section «Routing for sub-agents»): web/news/api-direct → `haiku`, academic/long-source → `sonnet`, heavy reasoning subtask → `opus`.
 
 **Phase 4 is an orchestrator-driven loop, not a single salvo.** Round 1 executes the
 approved plan (Phase 4.0 dispatch). After *every* round the orchestrator evaluates the
@@ -16,7 +16,7 @@ plan stays authoritative as the starting point; deviations are bounded and recor
 
 1. Open `source_dispatch.md` → find the row in the Matrix matching the subquestion's signal
 2. Write the **primary / secondary / fallback channels** into `plan.md` section 12 in the format given at the end of `source_dispatch.md`
-3. If the topic is narrow or does not match — run the Discovery patterns (GitHub topics, awesome-lists registry, HuggingFace, PyPI/npm, data portals) and **record what you found** in the "Discovery executed" section
+3. If the topic is narrow or does not match — run the Discovery patterns (GitHub topics, awesome-lists registry, HuggingFace, PyPI/npm, data portals) and **record what you found** in the «Discovery executed» section
 4. If the decomposition recipe in `source_dispatch.md` adds subquestions that plan.md does not have — **go back to Phase 3** and extend the decomposition, then continue
 
 **Output 4.0:** a filled section 12 of plan.md with the per-subquestion sourcing strategy. Without it 4.1 does not start.
@@ -39,7 +39,7 @@ We select wide and cheap, read narrow and deep. Benchmark 2026-10-28: 6 of 6 run
    | against the hypothesis | `hypothesis_evidence: contradicts` | 3 |
    | vendor (`caveat: vendor`, including competitor marketing) | — | no more than half |
 
-   Retellings of a single `root:` count as one source for quotas. If a quota cannot be met honestly (the topic has no science) — a `quota_waiver: <key> — <why>` in `plan.md`, written **after** selection: the reason refers to something that is not in `candidates.csv`. Budget is not a reason. `count`, `candidates`, `round2` are never waived at all; the validator prints the remaining keys. The gate then warns instead of blocking, and the caveat goes into "What we don't know".
+   Retellings of a single `root:` count as one source for quotas. If a quota cannot be met honestly (the topic has no science) — a `quota_waiver: <key> — <why>` in `plan.md`, written **after** selection: the reason refers to something that is not in `candidates.csv`. Budget is not a reason. `count`, `candidates`, `round2` are never waived at all; the validator prints the remaining keys. The gate then warns instead of blocking, and the caveat goes into «What we don't know».
 
 4. **Reading** — `deepdive-fetcher` (haiku) receives the list of selected URLs and an id range, not the topic: it searches only to replace a dead URL. Then `sonnet`/low, in batches of 5–8 files, appends into each `## Source dissection` (`source_scoring.md`, file template); without the card the validator warns.
 5. **A second round is mandatory**: after the first reading, name the variable the decision depends on (from the Decision Spec forks: price at our volume, latency, headcount), and gather ≥5 more candidates with `round=2`, `target=<variable>`. If a measurement surfaced, read it outside the quotas.
@@ -64,10 +64,10 @@ in `references/fetch_ladder.md`. Read it when WebFetch actually failed to return
 ### 4.3 Save sources
 
 - Every source found → its own file in `sources/SNN_<slug>.md` with a filled frontmatter: `channel:`, `access:`, `subquestion_ids: [Q1, Q3]`, `credibility/recency/bias`.
-- No "we'll collect it at the end" — write immediately after dedup.
+- No «we'll collect it at the end» — write immediately after dedup.
 - If a source covers several subquestions — list all of them in the frontmatter via `subquestion_ids:`, do not duplicate the file.
 
-**Output Phase 4 (Round 1):** a filled `sources/` folder + an updated `sources.csv` + "open gaps" flags in plan.md for subquestions where ≥3 sources of different types could not be gathered.
+**Output Phase 4 (Round 1):** a filled `sources/` folder + an updated `sources.csv` + «open gaps» flags in plan.md for subquestions where ≥3 sources of different types could not be gathered.
 
 ### Round structure
 
@@ -146,7 +146,7 @@ in `references/fetch_ladder.md`. Read it when WebFetch actually failed to return
 
 Sub-agents write to files, only index rows reach the main thread — but between rounds
 the orchestrator keeps dragging the whole history along (agent JSON, goal-check, triggers,
-contradiction scan) and by the third round decides "where next" in a window where past
+contradiction scan) and by the third round decides «where next» in a window where past
 rounds have pushed out the current instruction.
 
 **Rule:** before each next round the main thread REWRITES (does not append to) `state.md` —

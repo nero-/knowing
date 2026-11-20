@@ -1,48 +1,49 @@
-## Фаза 5. Claims-ledger и триангуляция
+<!-- translated from upstream/references/phases/p5_claims.md @ e233797 — see docs/TRANSLATION.md -->
+## Phase 5. Claims ledger and triangulation
 
-**Исполнитель:** сборка `claims.csv` из index-строк — `sub: explore-haiku` (haiku / medium из frontmatter; на low Haiku 5.5 пропускает проверки). Triangulation check — скрипт `score_claims.py --write`, модель не нужна (правило механическое, см. ниже — только подсчёт источников/типов/корней по строке).
+**Executor:** assembly of `claims.csv` from index rows — `sub: explore-haiku` (haiku / medium from the frontmatter; on low, Haiku 5.5 skips the checks). Triangulation check — the script `score_claims.py --write`, no model needed (the rule is mechanical, see below — only a count of sources/types/roots per row).
 
-**Скоринг источников больше не отдельный шаг.** Каждый источник в `sources/NN.md` уже имеет заполненный frontmatter со scoring — его проставил fetch sub-agent на шаге 4.1, в момент когда читал источник (H7-правило: скорит тот, кто читал). Здесь, в Фазе 5, шкала подробно описана в `source_scoring.md` для справки, но повторного прохода по всем источникам не требуется.
+**Source scoring is no longer a separate step.** Every source in `sources/NN.md` already has a filled frontmatter with its scoring — the fetch sub-agent set it at step 4.1, at the moment it read the source (H7 rule: whoever read it, scores it). Here, in Phase 5, the scale is described in detail in `source_scoring.md` for reference, but a second pass over all sources is not required.
 
-**Claims-ledger (`claims.csv`)** — новый артефакт-ledger рядом с `sources.csv`. Схема:
+**Claims ledger (`claims.csv`)** — a new ledger artifact next to `sources.csv`. Schema:
 
 ```
 claim_id, claim, hypothesis, sources, source_types, roots, paths, status, confidence, primary_source, source_caveat, dissent, as_of
 ```
 
-- `claim` — тезис одной строкой.
-- `hypothesis` — H1-H4 или `-` если не привязан к гипотезе.
-- `sources` — список id (`s01;s07;s12`).
-- `source_types` — типы источников через `;` (`primary;academic;industry`).
-- `roots` — корни через `;`, тот же порядок что `sources` (`own;study-smith-2024;own`); из `root:` во frontmatter каждого источника. Без этой колонки третье условие триангуляции нечем проверить.
-- `paths` — пути обнаружения через `;`, тот же порядок; из `discovery_path:`. Без неё нечем проверить четвёртое условие (независимость поиска, а не только источников).
+- `claim` — the thesis in one line.
+- `hypothesis` — H1-H4 or `-` if not tied to a hypothesis.
+- `sources` — list of ids (`s01;s07;s12`).
+- `source_types` — source types separated by `;` (`primary;academic;industry`).
+- `roots` — roots separated by `;`, same order as `sources` (`own;study-smith-2024;own`); from `root:` in each source's frontmatter. Without this column the third triangulation condition cannot be checked.
+- `paths` — discovery paths separated by `;`, same order; from `discovery_path:`. Without it the fourth condition cannot be checked (independence of the search, not only of the sources).
 - `status` — `triangulated | contested | weak | single-type | single-root | single-path | contradicted | data-insufficient`.
 - `confidence` — `high | medium | low`.
 - `primary_source` — `Y | N`.
 - `source_caveat` — `- | vendor | self-reported | disputed:sNN`.
-- `dissent` — id источников, ПРОТИВОРЕЧАЩИХ тезису (`s12;s19`), или `-`. Берётся из полей `dissent`/`contradictions` в JSON суб-агентов. Пустое поле в спорной теме — сигнал, что оппозицию не искали, а не что её нет.
-- `claim_class` (опционально, после `as_of`) — `empirical` (по умолчанию: утверждение о мире) | `documentary` («документ X говорит Y» — закон, стандарт, условия продукта; high на одном первичном источнике законен, сам документ и есть доказательство).
-- `as_of` — для волатильных чисел (цена, доля рынка, версия, курс): дата ЗАМЕРА `YYYY-MM`/`YYYY-QN` из поля `data_as_of` источника; `unknown` — число есть, даты нет; `-` для нечисловых. **Источник значения — `data_as_of` во frontmatter, а не дата публикации статьи и не догадка главного потока** (он источников не читал). Число без даты замера — не факт, а мина для будущего `update`, и по fail-closed правилу оно не попадает в `memo.md`.
+- `dissent` — ids of sources CONTRADICTING the thesis (`s12;s19`), or `-`. Taken from the `dissent`/`contradictions` fields in the sub-agents' JSON. An empty field on a contested topic is a signal that the opposition was not sought, not that it does not exist.
+- `claim_class` (optional, after `as_of`) — `empirical` (by default: a statement about the world) | `documentary` ("document X says Y" — a law, a standard, product terms; high on a single primary source is legitimate, the document itself is the proof).
+- `as_of` — for volatile numbers (price, market share, version, exchange rate): the MEASUREMENT date `YYYY-MM`/`YYYY-QN` from the source's `data_as_of` field; `unknown` — the number exists, the date does not; `-` for non-numeric ones. **The source of the value is `data_as_of` in the frontmatter, not the article's publication date and not the main thread's guess** (it has not read the sources). A number without a measurement date is not a fact but a mine for a future `update`, and by the fail-closed rule it does not get into `memo.md`.
 
-**Одна строка — одно утверждение.** «X вырос на 20%; Y упал на 5%» — две строки: у каждой свои источники и свой статус. `;` или два предложения в `claim` скрипт считает составным тезисом и роняет finish.
+**One row — one statement.** "X grew 20%; Y fell 5%" — two rows: each has its own sources and its own status. The script counts a `;` or two sentences in `claim` as a composite thesis and fails the finish.
 
-**Заполнение:** главный поток собирает `claims.csv` из `claim_candidates`, которые вернул каждый fetch sub-agent (см. `subagents_v2.md`), плюс из явного чтения claims в уже записанных `sources/NN.md`. Дублирующиеся claim'ы от разных агентов — смёржить в одну строку (объединить `sources`/`source_types`).
+**Filling:** the main thread assembles `claims.csv` from the `claim_candidates` each fetch sub-agent returned (see `subagents_v2.md`), plus from an explicit reading of the claims in the already written `sources/NN.md`. Duplicate claims from different agents — merge into one row (union `sources`/`source_types`).
 
-**Статус и потолок confidence считает скрипт, не модель.** Модель пишет `claim_id`, `claim`, `hypothesis`, `sources`, `source_caveat`, `dissent`, `as_of`, `claim_class`; затем
-`python scripts/build_sources_csv.py --research-dir <run> && python scripts/score_claims.py --research-dir <run> --write` — скрипт заполняет `source_types`/`roots`/`paths`/`primary_source` из `sources.csv`, считает `status` и режет `confidence` до потолка. Один URL в двух файлах — одно плечо: во всех ячейках остаётся наименьший id группы, остальные файлы группы слей в него: `--strict` краснеет на любой паре файлов с одним URL; тонкий источник — не плечо. Модель может только понизить: `contradicted`/`data-insufficient` скрипт сохраняет. Аудит 70 прогонов: 18 `triangulated` на <3 источниках и 282 `high` на одном источнике — правила ниже были верны, их применение моделью — нет. `finish.py` гоняет тот же скрипт с `--strict`: расхождение леджера с подсчётом = красный finish.
+**The script computes status and the confidence ceiling, not the model.** The model writes `claim_id`, `claim`, `hypothesis`, `sources`, `source_caveat`, `dissent`, `as_of`, `claim_class`; then
+`python scripts/build_sources_csv.py --research-dir <run> && python scripts/score_claims.py --research-dir <run> --write` — the script fills `source_types`/`roots`/`paths`/`primary_source` from `sources.csv`, computes `status` and cuts `confidence` to the ceiling. One URL in two files — one leg: the lowest id of the group stays in all the cells, merge the group's remaining files into it: `--strict` goes red on any pair of files with the same URL; a thin source is not a leg. The model can only lower it: `contradicted`/`data-insufficient` the script preserves. Audit of 70 runs: 18 `triangulated` on <3 sources and 282 `high` on a single source — the rules below were correct, the model's application of them was not. `finish.py` runs the same script with `--strict`: a ledger that disagrees with the count = red finish.
 
-**Triangulation rule (механическая):** строка получает `status: triangulated`, если ≥3 источника **И** ≥2 разных типа **И** ≥2 различных корней (`root:`) **И** ≥2 различных пути обнаружения (`discovery_path:`) — см. `source_scoring.md` «Provenance» и «Четвёртое условие». Иначе:
-- < 3 источников → `status: weak`, confidence: low (исключение — `claim_class: documentary` с первичным источником: high)
-- ≥3 источника, но один тип → `status: single-type`, confidence: medium (max)
-- ≥3 источника и ≥2 типов, но все сводятся к одному `root:` → `status: single-root`, confidence: medium (max) — десять пересказов одного пресс-релиза это один голос; правило считает корни, не URL
-- ≥3 источника, ≥2 типов, ≥2 корней, но все найдены одним `discovery_path` → `status: single-path`, confidence: medium (max) — одна формулировка в одном канале даёт одну выборку из одного индекса, а не три независимых голоса
-- Есть непогашенный `dissent` от источника с `type: Primary` или `credibility ≥ 4` → `status: contested`, confidence: medium (max) — **правило большинства здесь не действует**; в отчёт идут обе позиции с явным основанием выбора (см. «Правило dissent» в `source_scoring.md`)
-- Явное противоречие между источниками без выраженного меньшинства → `status: contradicted` — отдельный counter-argument (Z1)
-- После gap-волны (см. выше) всё ещё не закрыто → `status: data-insufficient` (честный результат, не скрывать)
+**Triangulation rule (mechanical):** a row gets `status: triangulated` if ≥3 sources **AND** ≥2 different types **AND** ≥2 distinct roots (`root:`) **AND** ≥2 different discovery paths (`discovery_path:`) — see `source_scoring.md` «Provenance» and «Fourth condition». Otherwise:
+- < 3 sources → `status: weak`, confidence: low (exception — `claim_class: documentary` with a primary source: high)
+- ≥3 sources but one type → `status: single-type`, confidence: medium (max)
+- ≥3 sources and ≥2 types, but all reduce to one `root:` → `status: single-root`, confidence: medium (max) — ten retellings of one press release are one voice; the rule counts roots, not URLs
+- ≥3 sources, ≥2 types, ≥2 roots, but all found by one `discovery_path` → `status: single-path`, confidence: medium (max) — one wording in one channel gives one sample from one index, not three independent voices
+- There is unresolved `dissent` from a source with `type: Primary` or `credibility ≥ 4` → `status: contested`, confidence: medium (max) — **the majority rule does not apply here**; both positions go into the report with an explicit basis for the choice (see «Dissent rule» in `source_scoring.md`)
+- An explicit contradiction between sources with no clear minority → `status: contradicted` — a separate counter-argument (Z1)
+- After the gap wave (see above) still not closed → `status: data-insufficient` (an honest result, do not hide it)
 
-**Primary-first правило:** ключевое число/факт без хотя бы одного primary-источника (`primary_source: N`) не может получить `confidence` выше `medium`, даже если формально triangulated по количеству/разнотипности. Primary здесь — filing, официальная дока, датасет, оригинальное исследование (см. Credibility=5 в `source_scoring.md`).
+**Primary-first rule:** a key number/fact without at least one primary source (`primary_source: N`) cannot get a `confidence` above `medium`, even if formally triangulated by count/type diversity. Primary here means a filing, official docs, a dataset, original research (see Credibility=5 in `source_scoring.md`).
 
-**После сборки** — обнови `sources.csv` (индекс источников, как раньше) и новый `claims.csv`:
+**After assembly** — update `sources.csv` (the source index, as before) and the new `claims.csv`:
 
 ```csv
 №,URL,Title,Type,Author,Date,Credibility,Recency,Bias,Total,Used,File,Note
@@ -56,17 +57,17 @@ CL1,"Logical replication scales to N nodes without external tooling",H1,s01;s07;
 CL2,"CDC adds >200ms p99 latency at scale",H2,s09;s14,industry;industry,own;own,web-general|CDC latency benchmark|en;web-general|CDC latency benchmark|en,single-type,medium,N,-,-,2026-02
 ```
 
-### Gap-волна (Фаза 5 продолжается — не новая фаза, аналогично loop-конвенции Фазы 4)
+### Gap wave (Phase 5 continues — not a new phase, same as the Phase 4 loop convention)
 
-**Исполнитель:** `sub: deepdive-fetcher` (haiku / medium из frontmatter). Узкая точечная задача на конкретную дыру — дорогая модель не нужна, но это поиск, а на low Haiku 5.5 пропускает поиски.
+**Executor:** `sub: deepdive-fetcher` (haiku / medium from the frontmatter). A narrow, pointed task on one specific hole — an expensive model is not needed, but this is searching, and on low Haiku 5.5 skips searches.
 
-После первого заполнения `claims.csv` собери список дыр — строки со `status ≠ triangulated`.
+After the first filling of `claims.csv`, compile the list of holes — rows with `status ≠ triangulated`.
 
-**Точечная вторая волна:** по одному агенту на дыру (или пачкой, параллельно), промпт = конкретный claim + чего конкретно не хватает:
-- «нужен primary-источник для CL2»
-- «нужен 3-й тип источника, сейчас только industry×2»
-- «противоречие между s09 и s14 — найти причину или дополнительный арбитр»
+**Pointed second wave:** one agent per hole (or in batches, in parallel), the prompt = the specific claim + what exactly is missing:
+- "a primary source is needed for CL2"
+- "a 3rd source type is needed, right now only industry×2"
+- "contradiction between s09 and s14 — find the cause or an additional arbiter"
 
-**Максимум 2 круга.** Если после второго круга дыра не закрылась — строка помечается `status: data-insufficient`. Это честный результат отчёта, не провал: попадает в Open Questions (Z2), а не маскируется.
+**Maximum 2 rounds.** If the hole is not closed after the second round — the row is marked `status: data-insufficient`. This is an honest result of the report, not a failure: it goes into Open Questions (Z2), not masked.
 
-**Выход:** обновлённый `claims.csv`, обновлённые `sources/NN.md` (новые источники в свежем диапазоне номеров — следующий свободный блок после уже занятых).
+**Output:** an updated `claims.csv`, updated `sources/NN.md` (new sources in a fresh number range — the next free block after the ones already taken).

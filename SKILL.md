@@ -1,78 +1,90 @@
 ---
-name: deepdive
-description: "Веб-ресёрч под решение: отчёт с источником и цитатой под каждый факт, контраргументы, рекомендация. Вызывать: «deepdive», «сделай ресёрч», «исследуй», «копни глубоко», «обоснуй данными». НЕ для: одного факта, брейншторма, ответа из проекта, аудита репо (zodchiy), API Claude (claude-api)."
+name: knowing
+description: "Evidence-disciplined web research for a decision (fork: knowing, from deepdive): a report with a source and a quote behind every fact, counter-arguments, a recommendation. Invoke: «deepdive», «do research», «investigate», «dig deep», «back it with data». NOT for: a single fact, brainstorming, an answer from the project, a repo audit (zodchiy), the Claude API (claude-api)."
 ---
+<!-- translated from upstream/SKILL.md @ e233797 — see docs/TRANSLATION.md -->
 
-# Deepdive — meta-research с дисциплиной
+# Deepdive — meta-research with discipline
 
-Источник = файл с дословными цитатами, отчёт = Q&A. Скрипты запускать из `~/.claude/skills/deepdive`: `uv run scripts/X.py`. Проверки печатают первые 15 ошибок и 5 предупреждений; `--verbose` — только когда чинишь конкретную. N конкурентов по фиксированной матрице — обычная таблица, не deepdive.
+A source = a file with verbatim quotes, the report = Q&A. Run the scripts from this skill's own directory (the folder holding `SKILL.md`), with plain `python3 scripts/X.py` under pi or `uv run scripts/X.py` if you use uv. The checks print the first 15 errors and 5 warnings; `--verbose` — only when you are fixing a specific one. N competitors by a fixed matrix — an ordinary table, not deepdive.
 
-## Глубина
+## Depth
 
-По умолчанию **medium**; shallow или deep — только если тема явно тривиальна или решение high-stakes. Объяви режим с обоснованием, после Genre+Plan — одной строкой model routing (фазы по моделям, цена, как перебить: «всё на opus» / «cheap mode»); `model_routing.md`.
+By default **medium**; shallow or deep — only if the topic is explicitly trivial or the decision is high-stakes. Announce the depth with a rationale, after Genre+Plan — with one model routing line (phases by model, price, how to override: «everything on opus» / «cheap mode»); `model_routing.md`.
 
-| Режим | Источников | Fetcher-агентов | Всего суб-агентов за прогон |
+**Depth is declared, derived and checked.** `plan.md` must carry four lines, and `overlay/knowing_gate.py` fails the run if they are missing, out of range, or contradict the declared depth:
+
+```
+depth: shallow | medium | deep
+reversibility: reversible | irreversible
+cost_of_error: low | high
+answer_exists: yes | no
+```
+
+Derivation: `irreversible` **or** `cost_of_error: high` ⇒ at least `medium`. `answer_exists: yes` with the other two clean ⇒ `shallow` is allowed. Anything else ⇒ `medium`. A declared depth below what the facts imply is an error, and so is omitting a fact — the harness will not infer a depth, because the only inference it used to make was «shallow», which silently switched the breadth floors off.
+
+| Mode | Sources | Fetcher agents | Sub-agents total per run |
 |---|---|---|---|
 | shallow | 5–7 | 0 | 0 |
-| medium | 25–30 (из 60–100 кандидатов) | 3–4 | ≈14–17 (scout, пул кандидатов, Haiku-проходы, синтезатор, red team) |
-| deep | 35–45 (из ≥100 кандидатов) | 5–6 | ≈22–27 |
+| medium | 25–30 (out of 60–100 candidates) | 3–4 | ≈14–17 (scout, candidate pool, Haiku passes, synthesizer, red team) |
+| deep | 35–45 (out of ≥100 candidates) | 5–6 | ≈22–27 |
 
-Суб-агент не запускается на то, что главный поток закроет за несколько вызовов или что считает скрипт.
+A sub-agent is not launched for what the main thread will close in a few calls or what a script computes.
 
-## Перед стартом
+## Before the start
 
-1. Найди целевую папку и перечисли содержимое; похожий slug — спроси «это update?»; прочитай `CLAUDE.md` и `memory/MEMORY.md`: не дублируй сделанное.
-2. Вики прошлых прогонов: `uv run scripts/wiki_query.py --topic "<вопрос>"`; непогашенное противоречие идёт в `plan.md` вопросом. `wiki.md`.
-3. Папка: research-папка из CLAUDE.md или `research/`, `06_Деск-ресёрч/`, `docs/research/`; иначе `research/` (есть манифест), `06_Деск-ресёрч/` (только документы), `~/deepdive/<slug>/` (не git-репо). Slug — латиница, дефисы. Путь покажи один раз.
+1. Find the target folder and list its contents; a similar slug — ask «is this an update?»; read `CLAUDE.md` and `memory/MEMORY.md`: do not duplicate what is already done.
+2. Wiki of past runs: `uv run scripts/wiki_query.py --topic "<вопрос>"`; an unresolved contradiction goes into `plan.md` as a question. `wiki.md`.
+3. Folder: the research folder from CLAUDE.md or `research/`, `06_Деск-ресёрч/`, `docs/research/`; otherwise `research/` (there is a manifest), `06_Деск-ресёрч/` (documents only), `~/deepdive/<slug>/` (not a git repo). The slug is latin, with hyphens. Show the path once.
 
-## Workflow — <!--gen:count:phases-->13<!--/gen--> фаз
+## Workflow — <!--gen:count:phases-->13<!--/gen--> phases
 
-Состав и гейты — `phases.yaml` (шаг 6.9 не фаза гейта: проверяется артефакт `readout.md`). Детали фазы — свой файл `references/phases/`, оглавление в `workflow.md`; при входе в фазу читай только её файл. Исполнитель: `main` — главный поток, `sub` — субагент.
+The composition and the gates — `phases.yaml` (step 6.9 is not a gate phase: the artifact `readout.md` is checked). The details of a phase — its own file under `references/phases/`, table of contents in `workflow.md`; on entering a phase read only its file. Executor: `main` — the main thread, `sub` — a sub-agent.
 
-1. **Reframing** [`main`] — Decision Spec: решение, потребитель→следующий шаг, ≥1 вилка «покажет X → делаю A» (нет вилки ⇒ даунгрейд в shallow вслух); 2–4 опровергаемые гипотезы. `question_reframing.md`
-2. **Genre & blocks** [`main`] — жанр и блоки, подтвердить строкой. `genres.md`, `blocks/INDEX.md`
+1. **Reframing** [`main`] — Decision Spec: the decision, the consumer→their next step, ≥1 fork «will show X → I do A» (no fork ⇒ downgrade to shallow out loud); 2–4 falsifiable hypotheses. `question_reframing.md`
+2. **Genre & blocks** [`main`] — the genre and the blocks, confirm with one line. `genres.md`, `blocks/INDEX.md`
 3. **Plan** [`main`] — `plan.md` §0–16. `plan_template.md`
-3.5. **Capability Discovery** [`sub: explore-haiku`] (deep) — ключи, API, fallback. `capability_discovery.md`
-3.7. **Plan-review gate** [`main`] (shallow пропуск) — показать план до дорогой Фазы 4; deep ждёт «Ок», потому что это единственная точка человека, а субагент спросить не может. `plan_gate.md`
-4. **Поиск** [`main` + `sub: explore-haiku` + `sub: deepdive-fetcher`] — каналы по Source Dispatch; пул кандидатов `candidates.csv` по матрице «сфера × позиция» и ≥1 академическому API, отбор на чтение по квотам сфер, второй раунд по переменной решения (гейт `validate_phases.py`, `phases/p4_search.md` 4.1); числа сначала через registry/API; fetcher'ам непересекающиеся диапазоны id и разные оси поиска; тонкий ответ WebFetch (<500 знаков, нет цитаты) ⇒ `fetch_source.py`; `state.md` перезаписывается перед каждым раундом (≤6 КБ), иначе контекст копит транскрипт. `source_dispatch.md`, `subagents_v2.md`
-5. **Claims-ledger** [`sub: explore-haiku`] — `claims.csv`; статус и потолок уверенности считает `score_claims.py --write`, не модель (она завышает). `source_scoring.md`
-5.5. **Evidence-фильтр** [`sub: explore-haiku`] (medium/deep) — relevance×authority; `unknown` — карантин. `evidence_filter.md`
-5.7. **Сверка с вики** [`sub: explore-haiku`] (medium/deep) — до синтеза; конфликт с прошлым ресёрчем = обе позиции в отчёт. `wiki.md`
-6. **Синтез + red team** [`sub: deepdive-synthesizer` + `sub: deepdive-redteam`; shallow — `main`] — `outline.md` → отчёт по секциям → `numbers.csv` → враждебные роли → один раунд ремедиации HIGH → `memo.md`. Источники и блоки читает синтезатор, главный поток — только его сводку и `memo.md`. Finder ≠ fixer. `phases/p6_synthesis.md` «Оркестрация», `adversarial_pass.md`
-6.5. **Verify** [`sub: explore-haiku`, effort medium] (medium/deep) — четыре оси → `.verify/*.json`; чинится отчёт, не ledger. `runtime_verification.md`
-6.9. **Человеческая версия** [`main`] (medium/deep) — `readout.md`, затем `humanizer-ru`, затем `uv run scripts/build_report.py <run>`. `report_export.md`
-7. **Refresh targets + роевая постобработка** [`main`] (medium/deep) — `refresh_targets.md`, затем `collect_observations.py` → `update_priors.py` → `promote_candidates.py --track`; порядок и флаги в `swarm_postprocess.md`, читать перед первым вызовом.
-8. **Decision walkthrough** [`main`] (всегда) — пройти с пользователем по вилкам `memo.md`; на вилки за него не отвечать. Исход → `application.md`. `decision_walkthrough.md`
+3.5. **Capability Discovery** [`sub: explore-haiku`] (deep) — keys, API, fallback. `capability_discovery.md`
+3.7. **Plan-review gate** [`main`] (shallow skips) — show the plan before the expensive Phase 4; deep waits for «Ok», because this is the only human point, and a sub-agent cannot ask. `plan_gate.md`
+4. **Search** [`main` + `sub: explore-haiku` + `sub: deepdive-fetcher`] — channels per Source Dispatch; a candidate pool `candidates.csv` by the «sphere × stance» matrix and ≥1 academic API, selection for reading by sphere quotas, a second round by the decision variable (gate `validate_phases.py`, `phases/p4_search.md` 4.1); numbers first through registry/API; give fetchers non-overlapping id ranges and different search axes; a thin WebFetch answer (<500 characters, no quote) ⇒ `fetch_source.py`; `state.md` is overwritten before every round (≤6 KB), otherwise the context accumulates the transcript. `source_dispatch.md`, `subagents_v2.md`
+5. **Claims-ledger** [`sub: explore-haiku`] — `claims.csv`; status and confidence ceiling are computed by `score_claims.py --write`, not by the model (it overstates). `source_scoring.md`
+5.5. **Evidence filter** [`sub: explore-haiku`] (medium/deep) — relevance×authority; `unknown` — quarantine. `evidence_filter.md`
+5.7. **Cross-check with the wiki** [`sub: explore-haiku`] (medium/deep) — before synthesis; a conflict with past research = both positions in the report. `wiki.md`
+6. **Synthesis + red team** [`sub: deepdive-synthesizer` + `sub: deepdive-redteam`; shallow — `main`] — `outline.md` → report by sections → `numbers.csv` → hostile roles → one round of HIGH remediation → `memo.md`. The synthesizer reads the sources and the blocks, the main thread — only its summary and `memo.md`. Finder ≠ fixer. `phases/p6_synthesis.md` «Оркестрация», `adversarial_pass.md`
+6.5. **Verify** [`sub: explore-haiku`, effort medium] (medium/deep) — four axes → `.verify/*.json`; what gets fixed is the report, not the ledger. `runtime_verification.md`
+6.9. **Human version** [`main`] (medium/deep) — `readout.md`, then `humanizer-ru`, then `uv run scripts/build_report.py <run>`. `report_export.md`
+7. **Refresh targets + swarm post-processing** [`main`] (medium/deep) — `refresh_targets.md`, then `collect_observations.py` → `update_priors.py` → `promote_candidates.py --track`; the order and the flags are in `swarm_postprocess.md`, read it before the first call.
+8. **Decision walkthrough** [`main`] (always) — walk the user through the forks of `memo.md`; do not answer the forks for them. The outcome → `application.md`. `decision_walkthrough.md`
 
-## Stop-criteria — по содержанию, не по бюджету
+## Stop-criteria — by content, not by budget
 
-**Стоп**: гипотезы подтверждены или опровергнуты ≥3 разнотипными источниками либо помечены «данных мало»; разобран ≥1 поиск оппозиции («X criticism / problems with X»); 4+ типа источников; насыщение — 5 источников подряд без нового `claim_id` и нового `root:` (считать по файлам).
-**Не стоп**: источники противоречат (копай причину), все одного типа, контраргумент без разбора.
-**Бюджет**: на medium/deep red team (6), Verify (6.5), `readout.md` (6.9) и `finish.py` не пропускаются и не сливаются в одного агента. Задан лимит денег (`--max-budget-usd`) — до Фазы 4 отложи ~40% на фазы 6–Finish и урезай раунды поиска и число фетчеров, а не поздние фазы; урезание — строкой в `Урезано:` меморандума. N9 (2026-10-28) потратил бюджет на поиск и остановился до red team с `Урезано: —`.
-**Тупик**: третий поиск подряд даёт источники с `total < 8` ⇒ стоп, в Open Questions «литература слабая», предложи интервью или эксперимент.
+**Stop**: the hypotheses are confirmed or refuted by ≥3 sources of different types or are marked «data is thin»; ≥1 search for the opposition has been worked through («X criticism / problems with X»); 4+ types of sources; saturation — 5 sources in a row without a new `claim_id` and a new `root:` (count by the files).
+**Not stop**: the sources contradict each other (dig for the cause), all of one type, a counter-argument without analysis.
+**Budget**: on medium/deep the red team (6), Verify (6.5), `readout.md` (6.9) and `finish.py` are not skipped and not merged into one agent. If a money limit is set (`--max-budget-usd`) — before Phase 4 set aside ~40% for phases 6–Finish and cut the search rounds and the number of fetchers, not the late phases; the cut is a line in `Урезано:` of the memo. N9 (2026-10-28) spent the budget on search and stopped before the red team with `Урезано: —`.
+**Dead end**: the third search in a row returns sources with `total < 8` ⇒ stop, in Open Questions «the literature is weak», propose an interview or an experiment.
 
 ## Finish-up
 
-0. **Запусти `uv run scripts/finish.py --research-dir <root>/<slug>`** (`--offline` без сети): он сам строит `sources.csv`, сверяет леджер, гоняет liveness, пишет в вики и последним прогоняет `validate_phases.py --strict`. Красный ⇒ фаза пропущена: доделай, перезапусти, до зелёного не рапортуй «готово». Шаги по одному не гонять — пропуск флага и есть пропуск фазы.
-1. Человеку — одна ссылка на `<date>_<slug>.html` (desktop: `SendUserFile`), ниже PDF и папка прогона; `memo.md` и технический отчёт в чат не выносить.
-2. Резюме 5–8 строк языком `readout.md`, без кодов леджера: ответ · что поменяет решение · главный контраргумент · чего не нашли · итог walkthrough.
-3. Предложи 2–3 следующих ресёрча; есть `memory/` — 1–3 кандидата в память.
+0. **Run `python3 scripts/finish.py --research-dir <root>/<slug>`** (`--offline` without the network): it builds `sources.csv` itself, reconciles the ledger, runs liveness, writes to the wiki and runs `validate_phases.py --strict`, then `overlay/knowing_gate.py --strict` last. Red ⇒ a phase was skipped: finish it, rerun, do not report «done» until it is green. Do not run the steps one by one — skipping a flag is exactly skipping a phase.
+1. To the human — one link to `<date>_<slug>.html` (desktop: `SendUserFile`), below it the PDF and the run folder; do not bring `memo.md` and the technical report into the chat.
+2. A 5–8 line summary in the language of `readout.md`, without ledger codes: Answer · What would change the decision · the main counter-argument · what we did not find · the walkthrough outcome.
+3. Propose 2–3 next research projects; if there is `memory/` — 1–3 candidates for memory.
 
-## Что не делать
+## What not to do
 
-Полные формулировки и артефакты прогона — `phases/rules.md`.
-- Не пропускать 5.5, 5.7, red team (medium/deep) и Фазу 8; не запускать medium/deep без if-then вилки; не писать финал «it depends».
-- Не выдавать уверенность выше, чем даёт `score_claims.py`: без primary — не выше `medium`, непогашенный `dissent` от сильного источника = `contested`, `root:`/`discovery_path:` не копировать.
-- Число без производителя и `data_as_of` в `memo.md` не идёт; проценты и доли — только в `numbers.csv` с `formula`: оси 6.5 арифметику не проверяют.
-- WebFetch обходить только через `fetch_source.py`, не `curl`: он читает robots.txt и чистит страницу от prompt injection.
-- Fetch-агентов не поднимать на opus «для качества» (растёт уверенность ошибки, не качество); во второй раунд — только дыры, не находки соседей.
-- Из одного источника не цитировать дословно >25 слов; факт из памяти берётся без веб-сверки, только если шанс, что он изменился, <10%.
-- `humanizer-ru` по `readout.md` не пропускать, технический отчёт им не чистить; `memo.md` вместо страницы человеку не отдавать.
+The full statements and the run artifacts — `phases/rules.md`.
+- Do not skip 5.5, 5.7, the red team (medium/deep) and Phase 8; do not start medium/deep without an if-then fork; do not write a finale of «it depends».
+- Do not report a confidence higher than `score_claims.py` gives: without a primary — not higher than `medium`, an unresolved `dissent` from a strong source = `contested`, do not copy `root:`/`discovery_path:`.
+- A number without a producer and `data_as_of` does not go into `memo.md`; percentages and shares — only in `numbers.csv` with `formula`: the axes of 6.5 do not check arithmetic.
+- Bypass WebFetch only through `fetch_source.py`, not `curl`: it reads robots.txt and cleans the page of prompt injection.
+- Do not raise fetch agents to opus «for quality» (the confidence of error grows, not the quality); into the second round — only the holes, not the neighbours' findings.
+- Do not quote >25 words verbatim from one source; a fact from memory is taken without a web check only if the chance that it has changed is <10%.
+- Do not skip `humanizer-ru` over `readout.md`, do not clean the technical report with it; do not give `memo.md` to the human instead of the page.
 
-## Режим update
+## Update mode
 
-`update <slug>` / «обнови ресёрч X» — дельта, не replay: `diffs/<date>_delta.md`, новый отчёт только если дельта существенна (решает пользователь), после дельты `wiki_ingest.py` и `wiki_pair.py build`. `refresh_protocol.md`
+`update <slug>` / «update research X» — a delta, not a replay: `diffs/<date>_delta.md`, a new report only if the delta is substantial (the user decides), after the delta `wiki_ingest.py` and `wiki_pair.py build`. `refresh_protocol.md`
 
-## References — читать при входе в фазу, не заранее
+## References — read on entering a phase, not in advance
 
-Выше названы файлы по фазам. Базовые для medium/deep: файл текущей фазы из `phases/`, `question_reframing.md`, `plan_gate.md`, `genres.md` (<!--gen:count:genres-->6<!--/gen--> жанров), `blocks/INDEX.md` (<!--gen:count:blocks-->106<!--/gen--> блоков), `channels.md` (<!--gen:count:channels-->29<!--/gen--> каналов), `source_dispatch.md`, `model_routing.md`, `wiki.md`. По условию: `awesome_lists_registry.md` (3.5), `stat_sources/INDEX.md` и `api_sources/INDEX.md` (<!--gen:count:api-->47<!--/gen-->+ endpoints; когда подвопрос количественный, ключи — через env vars), `fetch_ladder.md` (4.2), `NOTES_dated.md` (датированные факты).
+The files are named above by phase. Base ones for medium/deep: the file of the current phase from `phases/`, `question_reframing.md`, `plan_gate.md`, `genres.md` (<!--gen:count:genres-->6<!--/gen--> genres), `blocks/INDEX.md` (<!--gen:count:blocks-->106<!--/gen--> blocks), `channels.md` (<!--gen:count:channels-->29<!--/gen--> channels), `source_dispatch.md`, `model_routing.md`, `wiki.md`. By condition: `awesome_lists_registry.md` (3.5), `stat_sources/INDEX.md` and `api_sources/INDEX.md` (<!--gen:count:api-->47<!--/gen-->+ endpoints; when the subquestion is quantitative, keys — through env vars), `fetch_ladder.md` (4.2), `NOTES_dated.md` (dated facts).

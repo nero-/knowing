@@ -1,143 +1,144 @@
-# Plan-review Gate — Фаза 3.7
+<!-- translated from upstream/references/plan_gate.md @ e233797 — see docs/TRANSLATION.md -->
+# Plan-review Gate — Phase 3.7
 
-## Содержание
+## Contents
 
-- Когда срабатывает — жёсткость по режиму
-- Шаг 1 — Clarification-триаж (наследует из Фазы 1)
-- Шаг 1.5 — Скаут-пасс (medium — опционально, deep — рекомендуется)
-- Шаг 2 — Plan-review блок (что показать)
-- Шаг 3 — Обработка ответа
-- Анти-паттерны
-- Чек-лист фазы 3.7
+- When it fires — hardness by mode
+- Step 1 — Clarification triage (inherited from Phase 1)
+- Step 1.5 — Scout pass (medium — optional, deep — recommended)
+- Step 2 — Plan-review block (what to show)
+- Step 3 — Handling the answer
+- Anti-patterns
+- Phase 3.7 checklist
 
-Единственная human-in-the-loop контрольная точка перед дорогой Фазой 4 (Поиск). Показать пользователю сжатый план и дать его утвердить или поправить — ДО того, как потрачены токены на суб-агентов.
+The only human-in-the-loop checkpoint before the expensive Phase 4 (Search). Show the user a condensed plan and let them approve or correct it — BEFORE tokens are spent on sub-agents.
 
-**Зачем.** Правка плана перед исполнением — самый дешёвый рычаг качества. У Gemini Deep Research review/edit плана назван «biggest lever over output quality»; open_deep_research (`allow_clarification`), OpenAI (two-step clarifier→research) и dzhng/deepdive делают то же самое перед стартом. Плохой ресёрч почти всегда — это правильно исполненный неправильный план. Гейт ловит расхождение «модель поняла не то» за секунды, а не за 30 минут и весь бюджет.
+**Why.** Correcting the plan before execution is the cheapest quality lever. At Gemini Deep Research the review/edit of the plan is called «biggest lever over output quality»; open_deep_research (`allow_clarification`), OpenAI (two-step clarifier→research) and dzhng/deepdive do the same thing before the start. Bad research is almost always a correctly executed wrong plan. The gate catches a «the model understood it wrong» divergence in seconds, not in 30 minutes and the whole budget.
 
-**Заодно — enforcement.** Гейт естественно проверяет, что Фазы 1–3 реально пройдены: если нечего показать (нет гипотез, нет жанра, нет каналов) — значит фаза пропущена. Не собирай блок из пустых полей — вернись и доделай фазу.
+**Also — enforcement.** The gate naturally checks that Phases 1–3 were actually gone through: if there is nothing to show (no hypotheses, no genre, no channels) — then the phase was skipped. Do not assemble the block out of empty fields — go back and finish the phase.
 
-## Когда срабатывает — жёсткость по режиму
+## When it fires — hardness by mode
 
-| Режим | Поведение гейта |
+| Mode | Gate behaviour |
 |---|---|
-| **shallow** | **Skip.** Low-stakes, тема знакома — не тормозить. Максимум одна строка «делаю shallow по X, гипотеза Y» и сразу в поиск. |
-| **medium** | **Soft.** Показать план-блок, попросить подтверждение одной строкой, но не блокироваться жёстко: если пользователь не возражает — продолжить. Не ждать бесконечно. |
-| **deep** | **Hard. Показать план-блок и ЖДАТЬ явного «Ок» (или правок).** Не запускать суб-агентов Фазы 4, пока пользователь не ответил. High-stakes/дорого — цена ошибочного плана максимальна, цена паузы ничтожна. |
+| **shallow** | **Skip.** Low-stakes, the topic is familiar — do not slow down. At most one line «doing shallow on X, hypothesis Y» and straight into the search. |
+| **medium** | **Soft.** Show the plan block, ask for a one-line confirmation, but do not block hard: if the user does not object — continue. Do not wait indefinitely. |
+| **deep** | **Hard. Show the plan block and WAIT for an explicit «Ok» (or corrections).** Do not launch Phase 4 sub-agents until the user has answered. High-stakes/expensive — the price of a wrong plan is maximal, the price of a pause is negligible. |
 
-Режим определён в Фазе 1 (shallow/medium/deep). Гейт наследует его, отдельно не спрашивает.
+The mode is set in Phase 1 (shallow/medium/deep). The gate inherits it and does not ask separately.
 
-## Шаг 1 — Clarification-триаж (наследует из Фазы 1)
+## Step 1 — Clarification triage (inherited from Phase 1)
 
-Clarification — это НЕ «всегда задать вопросы». Это решение *нужны ли они*, по явным критериям. Триаж делается в Фазе 1 (см. `question_reframing.md`), гейт лишь проверяет, что он состоялся.
+Clarification is NOT «always ask questions». It is a decision *whether they are needed*, by explicit criteria. The triage is done in Phase 1 (see `question_reframing.md`), the gate only checks that it took place.
 
-**Задать 1–3 уточняющих вопроса ТОЛЬКО если выполнено хоть одно:**
-- Не выводится решение, которое поддерживает ресёрч (что меняется от ответа — неясно).
-- Ключевой термин многозначен и меняет весь scope («агент» = ИИ-агент или юр. агент? «rust» = язык или коррозия?).
-- Не ясны рамки: временной горизонт, гео, аудитория, отрасль — и это радикально меняет поиск.
-- Пользователь просит «сравнить/выбрать», но не дал критерий выбора.
-- **Не выводится ни одна if-then вилка Decision Spec** («покажет X → делаю A») — этот критерий обязателен и независим от остальных: спроси «что ты сделаешь иначе в зависимости от ответа?» (см. `question_reframing.md` п.2, п.5).
+**Ask 1–3 clarifying questions ONLY if at least one of these holds:**
+- The decision the research supports cannot be derived (what changes depending on the answer is unclear).
+- A key term is ambiguous and changes the whole scope («agent» = AI agent or legal agent? «rust» = the language or corrosion?).
+- The frame is unclear: time horizon, geography, audience, industry — and this radically changes the search.
+- The user asks to «compare/choose» but gave no selection criterion.
+- **Not a single if-then fork of the Decision Spec can be derived** («it shows X → I do A») — this criterion is mandatory and independent of the others: ask «what would you do differently depending on the answer?» (see `question_reframing.md` item 2, item 5).
 
-**НЕ задавать вопросы (сказать «scope ясен, приступаю») если:**
-- Решение и рамки выводятся из запроса или проектного контекста (CLAUDE.md, memory).
-- Вопрос конкретен и однозначен.
-- Уже задал 3 вопроса — дальше двигайся с явным допущением.
+**Do NOT ask questions (say «scope is clear, I am starting») if:**
+- The decision and the frame are derivable from the request or the project context (CLAUDE.md, memory).
+- The question is concrete and unambiguous.
+- You have already asked 3 questions — from here move on with an explicit assumption.
 
-Формулировка, когда вопросы не нужны (по образцу open_deep_research verification-message):
-> Scope ясен: [одна строка что понял]. Уточнений не требуется — перехожу к плану.
+Wording when questions are not needed (following open_deep_research's verification message):
+> Scope is clear: [one line on what I understood]. No clarifications needed — moving on to the plan.
 
-Формулировка, когда нужны (≤3, из `question_reframing.md` push-back):
-> Перед тем как копать — [1–3 вопроса]. Если не ответишь — двинусь с допущением «…».
+Wording when they are needed (≤3, from `question_reframing.md` push-back):
+> Before I dig in — [1–3 questions]. If you do not answer — I will move on with the assumption «…».
 
-## Шаг 1.5 — Скаут-пасс (medium — опционально, deep — рекомендуется)
+## Step 1.5 — Scout pass (medium — optional, deep — recommended)
 
-**Зачем.** Фаза 4 — партиционирование: агенты ищут ровно там, куда указал план. Всё, чего в плане нет, не будет найдено вообще. Замер Anthropic Frontier Red Team на поиске уязвимостей (13.08.2026) показал цену этого: рой с общим форумом нашёл 266 находок против 21 у партиционированных агентов при пересечении всего в 12 — **около половины находок роя пришлись вне тех директорий, куда были направлены независимые агенты**. Это не «рой лучше», это разные охваты: партиционирование ищет по указанию, рой сам решает, где копать.
+**Why.** Phase 4 is partitioning: the agents search exactly where the plan pointed them. Everything that is not in the plan will not be found at all. The Anthropic Frontier Red Team measurement on vulnerability discovery (13.08.2026) showed the price of this: a swarm with a shared forum found 266 findings against 21 for partitioned agents with an overlap of only 12 — **about half of the swarm's findings fell outside the directories the independent agents were pointed at**. This is not «the swarm is better», these are different coverages: partitioning searches by instruction, the swarm decides for itself where to dig.
 
-Скаут-пасс покупает второй охват дёшево — до того, как план зафиксирован.
+The scout pass buys the second coverage cheaply — before the plan is fixed.
 
-**Как.** 3–4 суб-агента `deepdive-scout` (Haiku, веб-поиск: WebSearch/WebFetch, файлы источников не пишет), запуск в ОДНОМ сообщении, короткий бюджет.
+**How.** 3–4 `deepdive-scout` sub-agents (Haiku, web search: WebSearch/WebFetch, writes no source files), launched in ONE message, a short budget.
 
-Задача скаута — **не источники, а вопросы**:
+The scout's task is **not sources but questions**:
 
 ```
-Тема ресёрча: <главный вопрос>.
-Наш план сейчас покрывает подтемы: <список из plan.md §11>.
+Research topic: <main question>.
+Our plan currently covers the subtopics: <list from plan.md §11>.
 
-ЗАДАЧА: за 5-7 быстрых поисков найди, чего в этом списке НЕ ХВАТАЕТ.
-Верни ТОЛЬКО JSON:
+TASK: in 5-7 quick searches find what this list is MISSING.
+Return ONLY JSON:
 {
-  "missing_subquestions": [{"question": "<подвопрос>", "why": "<почему он меняет вывод>", "signal": "<что натолкнуло: источник/термин/спор>"}],
-  "wrong_framing": "<если вопрос сформулирован так, что уводит от сути — скажи; иначе null>",
-  "unexpected_channels": ["<канал/сообщество/реестр, которого нет в плане>"]
+  "missing_subquestions": [{"question": "<subquestion>", "why": "<why it changes the conclusion>", "signal": "<what prompted it: source/term/dispute>"}],
+  "wrong_framing": "<if the question is worded so that it leads away from the point — say so; otherwise null>",
+  "unexpected_channels": ["<channel/community/registry that is not in the plan>"]
 }
-НЕ сохраняй файлы. НЕ собирай источники. Ищем дыры в плане, не материал.
+Do NOT save files. Do NOT gather sources. We are looking for holes in the plan, not material.
 ```
 
-**Выход** — правки в `plan.md` (секции 11 и 12) и строка в план-блоке ниже: «скаут нашёл N непокрытых подвопросов, добавил K». Ноль записей в `sources/`.
+**Output** — edits in `plan.md` (sections 11 and 12) and a line in the plan block below: «the scout found N uncovered subquestions, added K». Zero records in `sources/`.
 
-**Анти-паттерны:**
-- ❌ Дать скауту `general-purpose` и разрешить писать `sources/NN.md` — это уже Фаза 4 не в свою очередь, номера id ещё не розданы.
-- ❌ Тащить находки скаута в claims — скаут ничего не подтверждает, он ставит вопросы.
-- ❌ Гонять скаут на shallow — 5-7 источников не окупают отдельную фазу.
+**Anti-patterns:**
+- ❌ Giving the scout `general-purpose` and allowing it to write `sources/NN.md` — that is already Phase 4 out of turn, the id numbers have not been handed out yet.
+- ❌ Dragging the scout's findings into claims — the scout confirms nothing, it raises questions.
+- ❌ Running the scout on shallow — 5-7 sources do not pay for a separate phase.
 
-## Шаг 2 — Plan-review блок (что показать)
+## Step 2 — Plan-review block (what to show)
 
-Один компактный блок. Не пересказывать весь `plan.md` — только то, что пользователь реально может поправить и что определяет исход. Формат:
+One compact block. Do not retell the whole `plan.md` — only what the user can really correct and what determines the outcome. Format:
 
 ```
-📋 План ресёрча — <slug>  [<режим>]
+📋 Research plan — <slug>  [<mode>]
 
-Вопрос (как понял): <одна строка reframing>
+Question (as understood): <one reframing line>
 
 Decision Spec:
-  Решение: <глагол + объект + срок>
-  Потребитель → следующий шаг: <кто читает и что делает после>
-  Вилки: если <X> → <A>; если <Y> → <B>
+  Decision: <verb + object + deadline>
+  Consumer → next step: <who reads it and what they do afterwards>
+  Forks: if <X> → <A>; if <Y> → <B>
 
-Жанр: <qa/explainer/decision/landscape/validation/custom — форма под процесс потребителя>, блоки: <2–4 ключевых>
+Genre: <qa/explainer/decision/landscape/validation/custom — the shape for the consumer's process>, blocks: <2–4 key ones>
 
-Гипотезы:
-  H1: <опровергаемая>
-  H2: <опровергаемая>
-  H3: <опровергаемая>   (2–4 штуки)
+Hypotheses:
+  H1: <falsifiable>
+  H2: <falsifiable>
+  H3: <falsifiable>   (2–4 of them)
 
-Персоны-перспективы (medium/deep): <практик / скептик / экономист …>
+Persona perspectives (medium/deep): <practitioner / sceptic / economist …>
 
-Каналы поиска: <3–6 primary-каналов из source_dispatch: web / arXiv / GitHub / FRED …>
-Стоп-критерий: <когда считаю ответ достаточным>
+Search channels: <3–6 primary channels from source_dispatch: web / arXiv / GitHub / FRED …>
+Stop criterion: <when I consider the answer sufficient>
 
-Routing: <фазы×модели, estimated cost> — см. model_routing
+Routing: <phases×models, estimated cost> — see model_routing
 ```
 
-Затем — явный вопрос-развилка (текст под режим):
-- **deep:** `Ок так? Или поправить — гипотезы / scope / каналы / глубину? (жду ответа перед поиском)`
-- **medium:** `Если ок — иду искать. Поправить что-то — скажи сейчас.`
+Then — an explicit fork question (text by mode):
+- **deep:** `Ok like this? Or correct something — hypotheses / scope / channels / depth? (waiting for an answer before searching)`
+- **medium:** `If it is ok — I go searching. Something to correct — say it now.`
 
-Плюс всегда предложить override-ярлыки routing: `«всё на opus» / «cheap mode» / «default»`.
+Plus always offer the routing override labels: `«everything on opus» / «cheap mode» / «default»`.
 
-## Шаг 3 — Обработка ответа
+## Step 3 — Handling the answer
 
-- **«Ок» / молчание (medium)** → Фаза 4.
-- **Правка scope/вопроса** → вернуться в Фазу 1, переписать reframing + гипотезы, перезаписать `plan.md`, показать блок снова (для deep — снова ждать).
-- **Правка гипотез** → обновить секцию гипотез в `plan.md`, не гоняя всю Фазу 1.
-- **Правка каналов/глубины** → обновить секцию 12 (sourcing strategy) и/или режим; если сменился режим — пересчитать, скипается ли гейт.
-- **Override routing** («всё на opus» / «cheap») → применить к model_routing, отразить в plan.md, продолжить.
+- **«Ok» / silence (medium)** → Phase 4.
+- **Correction of scope/question** → go back to Phase 1, rewrite the reframing + hypotheses, rewrite `plan.md`, show the block again (for deep — wait again).
+- **Correction of hypotheses** → update the hypotheses section in `plan.md` without running all of Phase 1.
+- **Correction of channels/depth** → update section 12 (sourcing strategy) and/or the mode; if the mode changed — recompute whether the gate is skipped.
+- **Override routing** («everything on opus» / «cheap») → apply to model_routing, reflect in plan.md, continue.
 
-После утверждения — записать в `plan.md` секцию 16 (changelog): `план утверждён пользователем <дата>` (или `правки: <что>`). Это фиксирует, что гейт реально сработал.
+After approval — record in `plan.md` section 16 (changelog): `plan approved by the user <date>` (or `corrections: <what>`). This records that the gate actually fired.
 
-## Анти-паттерны
+## Anti-patterns
 
-- ❌ Показать гейт и тут же, не дожидаясь ответа, запустить суб-агентов Фазы 4 (для deep). Гейт без ожидания = не гейт.
-- ❌ Вывалить весь `plan.md` (5 секций, risk register, glossary). Пользователь не будет это читать — показывай только развилочные пункты.
-- ❌ Задавать clarification-вопросы, когда scope очевиден. Лишний вопрос на однозначном запросе — трение, а не польза.
-- ❌ Блокироваться на shallow. Low-stakes ресёрч не должен ждать подтверждения.
-- ❌ Собрать план-блок из пустых полей (нет гипотез / нет каналов) и показать как есть. Пустое поле = недоделанная фаза, вернись и доделай.
+- ❌ Showing the gate and immediately, without waiting for an answer, launching Phase 4 sub-agents (for deep). A gate without waiting = not a gate.
+- ❌ Dumping the whole `plan.md` (5 sections, risk register, glossary). The user will not read it — show only the fork points.
+- ❌ Asking clarification questions when the scope is obvious. An extra question on an unambiguous request is friction, not value.
+- ❌ Blocking on shallow. Low-stakes research must not wait for confirmation.
+- ❌ Assembling the plan block out of empty fields (no hypotheses / no channels) and showing it as is. An empty field = an unfinished phase, go back and finish it.
 
-## Чек-лист фазы 3.7
+## Phase 3.7 checklist
 
-- [ ] Определил режим (наследован из Фазы 1) → shallow скипает гейт
-- [ ] Clarification-триаж состоялся (вопросы заданы ИЛИ явно сказано «scope ясен»)
-- [ ] Decision Spec заполнен (решение+срок / потребитель→шаг / ≥1 вилка) ИЛИ зафиксирован даунгрейд в shallow «любопытство»
-- [ ] Собрал компактный plan-review блок (вопрос / Decision Spec / жанр / гипотезы / каналы / стоп / routing)
-- [ ] Показал развилку под режим (deep — ждать; medium — мягко)
-- [ ] (deep) Дождался явного ответа перед запуском Фазы 4
-- [ ] Отразил утверждение/правки в plan.md секция 16
+- [ ] Mode determined (inherited from Phase 1) → shallow skips the gate
+- [ ] Clarification triage took place (questions asked OR «scope is clear» explicitly stated)
+- [ ] Decision Spec filled (decision+deadline / consumer→step / ≥1 fork) OR a downgrade to shallow «curiosity» recorded
+- [ ] Compact plan-review block assembled (question / Decision Spec / genre / hypotheses / channels / stop / routing)
+- [ ] Fork shown by mode (deep — wait; medium — soft)
+- [ ] (deep) Waited for an explicit answer before launching Phase 4
+- [ ] Approval/corrections reflected in plan.md section 16

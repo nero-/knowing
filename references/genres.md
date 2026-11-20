@@ -1,171 +1,172 @@
-# Genres — пресеты блоков
+<!-- translated from upstream/references/genres.md @ e233797 — see docs/TRANSLATION.md -->
+# Genres — block presets
 
-## Содержание
+## Contents
 
-- Как использовать
-- Каналы поиска по жанрам
-- Stat-источники по жанрам
-- Эвристика выбора жанра
-- qa — открытое исследование
-- explainer — «как устроен X»
-- decision — «что выбрать X или Y»
-- landscape — «карта области»
-- validation — «правда ли X»
-- custom — собирается под вопрос
-- Правила композиции
+- How to use
+- Search channels by genre
+- Stat sources by genre
+- Genre selection heuristics
+- qa — open-ended research
+- explainer — «how X is built»
+- decision — «what to choose, X or Y»
+- landscape — «map of the field»
+- validation — «is X true»
+- custom — assembled for the question
+- Composition rules
 
-Шесть жанров финального отчёта. Пять стандартных — пресеты блоков. Шестой — custom (собирается под вопрос).
+Six genres of the final report. Five standard ones are block presets. The sixth is custom (assembled for the question).
 
-## Как использовать
+## How to use
 
-1. После reframing (Фаза 1) скилл определяет жанр по формулировке вопроса.
-2. Скилл объявляет ОДНОЙ строкой: «Жанр: <genre>. Блоки: <list>. Ок?».
-3. Пользователь подтверждает / правит набор.
-4. Финальный `<date>_<genre>.md` строится из блоков в указанном порядке.
+1. After reframing (Phase 1) the skill determines the genre from the wording of the question.
+2. The skill announces it in ONE line: «Genre: <genre>. Blocks: <list>. OK?».
+3. The user confirms / edits the set.
+4. The final `<date>_<genre>.md` is built from the blocks in the stated order.
 
-## Каналы поиска по жанрам
+## Search channels by genre
 
-См. `channels.md` за полный каталог <!--gen:count:channels-->28<!--/gen--> каналов. Здесь — рекомендованный mix per genre.
+See `channels.md` for the full catalog of <!--gen:count:channels-->28<!--/gen--> channels. Here — the recommended mix per genre.
 
-| Жанр | Primary channels | Secondary | Use sparingly |
+| Genre | Primary channels | Secondary | Use sparingly |
 |---|---|---|---|
 | **explainer** | web-general, academic, wikipedia-references, code-github | books-literature, video-talks, expert-individual | social-twitter |
 | **decision** | web-general, forum-discussion, industry-reports, code-github (tech) | expert-individual, surveys-polls, podcasts | conference-proceedings |
 | **landscape** | competitive-signals, news-current, industry-reports, product-analytics | patents, forum-discussion, trade-associations, industry-specific | social-twitter |
 | **validation** | academic, preprint-servers, conference-proceedings | forum-discussion (opposition), expert-individual, surveys-polls, archive-historical | patents |
-| **qa** | web-general + 2-3 по подтемам | varies | — |
-| **custom** | под выбранные blocks | varies | — |
+| **qa** | web-general + 2-3 by subtopic | varies | — |
+| **custom** | for the chosen blocks | varies | — |
 
-## Stat-источники по жанрам
+## Stat sources by genre
 
-См. `stat_sources/INDEX.md`. Релевантные категории:
+See `stat_sources/INDEX.md`. Relevant categories:
 
-| Жанр | Релевантные категории stat_sources |
+| Genre | Relevant stat_sources categories |
 |---|---|
-| **explainer** | core/science.md, core/gov_macro.md (если macro), industries/<industry>.md (если industry) |
-| **decision** | core/consulting_industry.md, core/consumer_digital.md (для tech), industries/<industry>.md, core/companies_public.md (для evaluating public co) |
+| **explainer** | core/science.md, core/gov_macro.md (if macro), industries/<industry>.md (if industry) |
+| **decision** | core/consulting_industry.md, core/consumer_digital.md (for tech), industries/<industry>.md, core/companies_public.md (for evaluating a public co) |
 | **landscape** | core/companies_private.md, core/companies_public.md, core/consulting_industry.md, industries/<industry>.md |
-| **validation** | core/science.md (retractions, replications), core/health.md (если medical), core/gov_macro.md (для quantitative claims) |
+| **validation** | core/science.md (retractions, replications), core/health.md (if medical), core/gov_macro.md (for quantitative claims) |
 | **qa** | varies by subtopic |
-| **custom** | под выбранные blocks (`data-table` → numbers categories, `risk-register` → relevant industry, etc.) |
+| **custom** | for the chosen blocks (`data-table` → numbers categories, `risk-register` → relevant industry, etc.) |
 
-## Эвристика выбора жанра
+## Genre selection heuristics
 
-Скилл смотрит на формулировку вопроса. Сигналы:
+The skill looks at the wording of the question. Signals:
 
-| Сигналы в вопросе | Жанр |
+| Signals in the question | Genre |
 |---|---|
-| «как устроен», «как работает», «что такое», «расскажи про устройство», «mental model» | **explainer** |
-| «что выбрать», «X или Y», «какой лучше», «брать ли», «куда вложить», «какую купить» | **decision** |
-| «карта», «кто делает», «игроки в», «landscape», «competitive», «кто пишет про» | **landscape** |
-| «правда ли», «работает ли», «эффективен ли», «вредно ли», «действительно ли», «миф или факт» | **validation** |
-| «изучи», «разбери», «копни», открытый вопрос без явного жанра, серия связанных Q | **qa** |
-| «по показателям», «по метрикам», «по критериям», смесь жанров, нестандартное | **custom** |
+| «how it is built», «how it works», «what is», «tell me about the design of», «mental model» | **explainer** |
+| «what to choose», «X or Y», «which is better», «should I take it», «where to invest», «which one to buy» | **decision** |
+| «map», «who makes», «players in», «landscape», «competitive», «who writes about» | **landscape** |
+| «is it true», «does it work», «is it effective», «is it harmful», «really», «myth or fact» | **validation** |
+| «study it», «break it down», «dig in», an open question without an explicit genre, a series of related Qs | **qa** |
+| «by indicators», «by metrics», «by criteria», a mix of genres, non-standard | **custom** |
 
-Если эвристика даёт несколько жанров — выбери доминирующий + предложи custom как альтернативу.
+If the heuristic yields several genres — choose the dominant one and offer custom as an alternative.
 
-**Потребитель переопределяет тему.** Сигналы из формулировки — только первый фильтр; финальную форму диктует Decision Spec из Фазы 1 (`plan.md` §0): **форма = функция процесса потребителя, не типа темы**. Один и тот же вопрос «карта рынка X» для инвестора, читающего одну страницу перед встречей, — это decision-memo с compare-матрицей, а не 40-страничный landscape; для себя-в-архив — полный landscape. Проверка перед фиксацией жанра: «потребитель из Decision Spec сможет сделать свой следующий шаг, получив документ этой формы?» Если нет — жанр выбран под тему, а не под применение; поменяй.
+**The consumer overrides the topic.** Signals from the wording are only the first filter; the final form is dictated by the Decision Spec from Phase 1 (`plan.md` §0): **form = a function of the consumer's process, not of the topic type**. The same question «map of market X», for an investor reading one page before a meeting, is a decision memo with a compare matrix, not a 40-page landscape; for yourself-as-archive it is a full landscape. Check before fixing the genre: «will the consumer from the Decision Spec be able to take their next step having received a document of this form?» If not — the genre was chosen for the topic, not for the application; change it.
 
 ---
 
-## qa — открытое исследование
+## qa — open-ended research
 
-**Когда:** Серия связанных вопросов, meta-research, тема без явного жанра.
+**When:** A series of related questions, meta-research, a topic without an explicit genre.
 
-**Required blocks:** `tldr`, `qa-list`, `map-of-sources`, `metadata`. Для medium/deep — обязательно ещё: `background` [F9], `so-what-for-you` [Z12], `actionable-next-steps` [Z4], `confidence-summary` [Z7].
+**Required blocks:** `tldr`, `qa-list`, `map-of-sources`, `metadata`. For medium/deep — additionally mandatory: `background` [F9], `so-what-for-you` [Z12], `actionable-next-steps` [Z4], `confidence-summary` [Z7].
 
 **Recommended order:**
 ```
 1.  tldr                      [F1]
 2.  background                [F9]
-3.  decision-context          [F2]   (если есть decision)
-4.  qa-list                   [A3]   ← главная секция
-5.  hypotheses-outcome        [A4]   (если в plan были hypotheses)
+3.  decision-context          [F2]   (if there is a decision)
+4.  qa-list                   [A3]   ← main section
+5.  hypotheses-outcome        [A4]   (if there were hypotheses in the plan)
 6.  counter-arguments         [Z1]   (medium/deep)
 7.  open-questions            [Z2]
 8.  next-research             [Z3]
 9.  confidence-summary        [Z7]
-10. so-what-for-you           [Z12]  (перед Z4)
+10. so-what-for-you           [Z12]  (before Z4)
 11. actionable-next-steps     [Z4]
 12. map-of-sources            [Z5]
-13. findings-index            [Z6]   (если есть)
+13. findings-index            [Z6]   (if present)
 14. metadata                  [F5]
 ```
 
-**Опциональные additions:**
-- `key-finding-callout` [F6] если есть один доминирующий insight
+**Optional additions:**
+- `key-finding-callout` [F6] if there is one dominant insight
 
 ---
 
-## explainer — «как устроен X»
+## explainer — «how X is built»
 
-**Когда:** Понять устройство темы, mental model, не decision.
+**When:** To understand the structure of the topic, a mental model, not a decision.
 
-**Required blocks:** `tldr`, `mental-model`, `stepwise`, `map-of-sources`, `metadata`. Для medium/deep — обязательно ещё: `background` [F9], `so-what-for-you` [Z12], `actionable-next-steps` [Z4], `confidence-summary` [Z7].
+**Required blocks:** `tldr`, `mental-model`, `stepwise`, `map-of-sources`, `metadata`. For medium/deep — additionally mandatory: `background` [F9], `so-what-for-you` [Z12], `actionable-next-steps` [Z4], `confidence-summary` [Z7].
 
 **Recommended order:**
 ```
 1.  tldr                      [F1]
 2.  background                [F9]
-3.  prerequisites             [E8]   (если нужно читателю)
-4.  glossary-mini             [E2]   ← термины перед схемой
-5.  mental-model              [E1]   ← схема устройства
-6.  stepwise                  [E4]   ← как работает
-7.  variants                  [E5]   (если есть варианты реализации)
-8.  worked-example            [E6]   (для education-style)
+3.  prerequisites             [E8]   (if the reader needs them)
+4.  glossary-mini             [E2]   ← terms before the diagram
+5.  mental-model              [E1]   ← the structural diagram
+6.  stepwise                  [E4]   ← how it works
+7.  variants                  [E5]   (if there are implementation variants)
+8.  worked-example            [E6]   (for education-style)
 9.  common-confusions         [E7]
-10. failure-modes             [E10]  (для технических тем)
-11. edge-cases                [E11]  (опционально)
-12. design-rationale          [E12]  (для architecture explainer)
+10. failure-modes             [E10]  (for technical topics)
+11. edge-cases                [E11]  (optional)
+12. design-rationale          [E12]  (for an architecture explainer)
 13. counter-arguments         [Z1]
 14. open-questions            [Z2]
 15. next-research             [Z3]
 16. confidence-summary        [Z7]
-17. so-what-for-you           [Z12]  (перед Z4)
+17. so-what-for-you           [Z12]  (before Z4)
 18. actionable-next-steps     [Z4]
 19. map-of-sources            [Z5]
 20. metadata                  [F5]
 ```
 
-**Подмножество для глубокого technical:**
-- + `flow-diagram` [E13] или `state-machine` [E14] вместо stepwise
-- + `analogy` [E9] для совсем сложных тем
-- + `tech-stack-context` [X6] для tech foundation
+**Subset for deep technical:**
+- + `flow-diagram` [E13] or `state-machine` [E14] instead of stepwise
+- + `analogy` [E9] for very complex topics
+- + `tech-stack-context` [X6] for a tech foundation
 
-**Опциональные additions:**
-- `historical-context` [X4] если «как мы здесь оказались» важно
+**Optional additions:**
+- `historical-context` [X4] if «how we got here» matters
 
 ---
 
-## decision — «что выбрать X или Y»
+## decision — «what to choose, X or Y»
 
-**Когда:** Сравнение опций для принятия решения. С явной рекомендацией.
+**When:** Comparing options to make a decision. With an explicit recommendation.
 
-**Required blocks:** `tldr`, `decision-context`, `options-matrix`, `recommendation-conditional`, `map-of-sources`, `metadata`. Для medium/deep — обязательно ещё: `background` [F9], `so-what-for-you` [Z12], `confidence-summary` [Z7].
+**Required blocks:** `tldr`, `decision-context`, `options-matrix`, `recommendation-conditional`, `map-of-sources`, `metadata`. For medium/deep — additionally mandatory: `background` [F9], `so-what-for-you` [Z12], `confidence-summary` [Z7].
 
 **Recommended order:**
 ```
 1.  tldr                      [F1]
 2.  background                [F9]
-3.  executive-summary         [F7]   (опционально, для стейкхолдеров)
-4.  decision-context          [F2]   ← рамка решения
+3.  executive-summary         [F7]   (optional, for stakeholders)
+4.  decision-context          [F2]   ← the decision frame
 5.  options-matrix            [C1]
-6.  weighted-score            [C2]   (если критерии неравнозначны)
-7.  feature-matrix            [C10]  (для product decisions)
-8.  pros-cons-each            [C9]   (alternative to matrix для quick)
+6.  weighted-score            [C2]   (if the criteria are not equally weighted)
+7.  feature-matrix            [C10]  (for product decisions)
+8.  pros-cons-each            [C9]   (alternative to a matrix for quick)
 9.  best-fit-when             [C3]
 10. trade-offs                [C5]
 11. reversibility-stakes      [C4]
-12. cost-benefit              [C8]   (для финансовых)
-13. risk-register             [A6]   (для рискованных)
+12. cost-benefit              [C8]   (for financial ones)
+13. risk-register             [A6]   (for risky ones)
 14. pre-mortem                [C7]   (high-stakes)
-15. migration-path            [C11]  (если обратимо)
-16. decision-tree             [C12]  (для сложных мультиусловных)
+15. migration-path            [C11]  (if reversible)
+16. decision-tree             [C12]  (for complex multi-condition ones)
 17. kill-criteria             [C13]
 18. counter-arguments         [Z1]
-19. recommendation-conditional [C6]  ← финальная рекомендация
+19. recommendation-conditional [C6]  ← final recommendation
 20. confidence-summary        [Z7]
-21. so-what-for-you           [Z12]  (перед Z4)
+21. so-what-for-you           [Z12]  (before Z4)
 22. actionable-next-steps     [Z4]
 23. assumptions-log           [Z8]
 24. open-questions            [Z2]
@@ -174,26 +175,26 @@
 27. metadata                  [F5]
 ```
 
-**Подмножества:**
+**Subsets:**
 - **Quick decision (shallow):** tldr + decision-context + pros-cons-each + best-fit-when + recommendation-conditional + sources + metadata
-- **High-stakes (deep):** все блоки + pre-mortem + kill-criteria
+- **High-stakes (deep):** all blocks + pre-mortem + kill-criteria
 
 ---
 
-## landscape — «карта области»
+## landscape — «map of the field»
 
-**Когда:** Игроки/решения в области, без приоритета выбора.
+**When:** Players/solutions in a field, without a priority of choice.
 
-**Required blocks:** `tldr`, `scope`, `categories`, `profile-card`, `map-of-sources`, `metadata`. Для medium/deep — обязательно ещё: `background` [F9], `so-what-for-you` [Z12], `actionable-next-steps` [Z4], `confidence-summary` [Z7].
+**Required blocks:** `tldr`, `scope`, `categories`, `profile-card`, `map-of-sources`, `metadata`. For medium/deep — additionally mandatory: `background` [F9], `so-what-for-you` [Z12], `actionable-next-steps` [Z4], `confidence-summary` [Z7].
 
 **Recommended order:**
 ```
 1.  tldr                      [F1]
 2.  background                [F9]
-3.  scope                     [F3]   ← границы карты
-4.  categories                [M1]   ← деление области
-5.  profile-card × N          [M2]   ← карточки игроков по категориям
-6.  key-people                [P3]   (для глубоких landscape)
+3.  scope                     [F3]   ← boundaries of the map
+4.  categories                [M1]   ← division of the field
+5.  profile-card × N          [M2]   ← player cards by category
+6.  key-people                [P3]   (for deep landscapes)
 7.  positioning-map           [M3]
 8.  value-chain               [M8]   (industry analysis)
 9.  network-graph             [M9]   (relationships)
@@ -201,53 +202,53 @@
 11. geographic-distribution   [M11]  (geo-distributed)
 12. lifecycle-stage           [M12]
 13. trends                    [M4]
-14. white-spaces              [M5]   (для product strategy)
+14. white-spaces              [M5]   (for product strategy)
 15. ecosystem                 [X7]   (broader context)
 16. counter-arguments         [Z1]
 17. open-questions            [Z2]
 18. next-research             [Z3]
-19. update-triggers           [Z10]  ← landscape устаревает быстро
+19. update-triggers           [Z10]  ← a landscape goes stale fast
 20. confidence-summary        [Z7]
-21. so-what-for-you           [Z12]  (перед Z4)
+21. so-what-for-you           [Z12]  (before Z4)
 22. actionable-next-steps     [Z4]
 23. map-of-sources            [Z5]
 24. metadata                  [F5]
 ```
 
-**Подмножества:**
+**Subsets:**
 - **Minimal landscape:** tldr + scope + categories + profile-cards + trends + sources + metadata
 - **Investment-focused:** + funding-tree + key-people + lifecycle-stage + white-spaces
 
 ---
 
-## validation — «правда ли X»
+## validation — «is X true»
 
-**Когда:** Проверка claim. С verdict.
+**When:** Verifying a claim. With a verdict.
 
-**Required blocks:** `tldr`, `claim-precise`, `falsification-criteria`, `evidence-graded`, `verdict-conditional`, `map-of-sources`, `metadata`. Для medium/deep — обязательно ещё: `background` [F9], `so-what-for-you` [Z12], `confidence-summary` [Z7].
+**Required blocks:** `tldr`, `claim-precise`, `falsification-criteria`, `evidence-graded`, `verdict-conditional`, `map-of-sources`, `metadata`. For medium/deep — additionally mandatory: `background` [F9], `so-what-for-you` [Z12], `confidence-summary` [Z7].
 
 **Recommended order:**
 ```
 1.  tldr                      [F1]
 2.  background                [F9]
-3.  claim-precise             [F4]   ← точная формулировка
-4.  scope                     [F3]   ← где применимо
-5.  base-rates                [V4]   (для probabilistic claims)
-6.  falsification-criteria    [V1]   ← ДО evidence
+3.  claim-precise             [F4]   ← the precise formulation
+4.  scope                     [F3]   ← where it applies
+5.  base-rates                [V4]   (for probabilistic claims)
+6.  falsification-criteria    [V1]   ← BEFORE evidence
 7.  evidence-graded           [V2]   ← FOR/AGAINST
-8.  conflicting-evidence      [V3]   (если есть)
-9.  replication-status        [V7]   (для научных claims)
-10. sample-size-analysis      [V8]   (для quantitative)
+8.  conflicting-evidence      [V3]   (if present)
+9.  replication-status        [V7]   (for scientific claims)
+10. sample-size-analysis      [V8]   (for quantitative)
 11. methodology-critique      [V9]   (deep)
-12. expert-opinion            [P7]   (если expert-driven)
-13. bayesian-update           [V10]  (для probabilistic)
-14. verdict-conditional       [V5]   ← главный verdict
+12. expert-opinion            [P7]   (if expert-driven)
+13. bayesian-update           [V10]  (for probabilistic)
+14. verdict-conditional       [V5]   ← the main verdict
 15. what-would-change-verdict [V6]
-16. common-confusions         [E7]   (часто claim путают с X)
+16. common-confusions         [E7]   (a claim is often confused with X)
 17. counter-arguments         [Z1]
 18. confidence-summary        [Z7]
-19. so-what-for-you           [Z12]  (перед Z4)
-20. actionable-next-steps     [Z4]   (что делать с этим verdict)
+19. so-what-for-you           [Z12]  (before Z4)
+20. actionable-next-steps     [Z4]   (what to do with this verdict)
 21. assumptions-log           [Z8]
 22. open-questions            [Z2]
 23. next-research             [Z3]
@@ -255,83 +256,83 @@
 25. metadata                  [F5]
 ```
 
-**Подмножества:**
+**Subsets:**
 - **Quick validation:** tldr + claim-precise + falsification-criteria + evidence-graded + verdict-conditional + sources + metadata
-- **Научный validation:** все + methodology-critique + replication-status + sample-size
+- **Scientific validation:** all + methodology-critique + replication-status + sample-size
 
 ---
 
-## custom — собирается под вопрос
+## custom — assembled for the question
 
-**Когда:** Вопрос не подходит ни под один стандартный жанр. Гибридные вопросы. Специфические аналитические задачи.
+**When:** The question fits no standard genre. Hybrid questions. Specific analytical tasks.
 
-**Required (всегда):** `tldr`, `map-of-sources`, `metadata`. Для medium/deep — обязательно ещё: `background` [F9], `so-what-for-you` [Z12], `actionable-next-steps` [Z4], `confidence-summary` [Z7].
+**Required (always):** `tldr`, `map-of-sources`, `metadata`. For medium/deep — additionally mandatory: `background` [F9], `so-what-for-you` [Z12], `actionable-next-steps` [Z4], `confidence-summary` [Z7].
 
-**Эвристика подбора блоков:**
+**Block selection heuristics:**
 
-Скилл смотрит на сигналы в вопросе:
+The skill looks at the signals in the question:
 
-| Сигнал | Добавь блок |
+| Signal | Add block |
 |---|---|
-| «по показателям / метрикам / KPI» | `data-table` [A1], `metric-tracker` [N1] |
-| «топ N», «лучшие», «ранжируй» | `ranked-list` [M7] |
-| «как X эволюционировал», «история X» | `timeline` [A2], `historical-context` [X4], `genealogy` [M6] |
-| «риски X», «опасности» | `risk-register` [A6], `failure-modes` [E10] |
-| «SWOT X», «strengths/weaknesses» | `swot` [A5] или `swot-extended` [A11] |
-| «макро среда», «среда» | `pestle` [A12] |
-| «стоит ли инвестировать», «cost / benefit» | `cost-benefit` [C8], `unit-economics` [N4] |
-| «конкуренты + показатели» (как у меня) | `data-table` + `profile-card` + `trends` + `competitors` mix |
-| «команда», «кто работает», «структура» | `team-org` [P2], `key-people` [P3] |
-| «пользователи / клиенты» | `persona` [P1], `user-journey` [P4] |
-| «почему так / root cause» | `5-whys` [A10], `dependency-graph` [A7] |
-| «узкие места», «bottleneck» | `bottleneck-analysis` [A8] |
-| «силы за и против изменения» | `force-field` [A9] |
-| «до и после» | `before-after` [A13] |
-| «forecast / прогноз» | `forecast` [N7] + `historical-data` [N8] |
+| «by indicators / metrics / KPI» | `data-table` [A1], `metric-tracker` [N1] |
+| «top N», «the best», «rank them» | `ranked-list` [M7] |
+| «how X evolved», «the history of X» | `timeline` [A2], `historical-context` [X4], `genealogy` [M6] |
+| «risks of X», «dangers» | `risk-register` [A6], `failure-modes` [E10] |
+| «SWOT X», «strengths/weaknesses» | `swot` [A5] or `swot-extended` [A11] |
+| «macro environment», «environment» | `pestle` [A12] |
+| «is it worth investing», «cost / benefit» | `cost-benefit` [C8], `unit-economics` [N4] |
+| «competitors + indicators» (like mine) | `data-table` + `profile-card` + `trends` + `competitors` mix |
+| «team», «who works there», «structure» | `team-org` [P2], `key-people` [P3] |
+| «users / customers» | `persona` [P1], `user-journey` [P4] |
+| «why is it like this / root cause» | `5-whys` [A10], `dependency-graph` [A7] |
+| «bottlenecks», «bottleneck» | `bottleneck-analysis` [A8] |
+| «forces for and against the change» | `force-field` [A9] |
+| «before and after» | `before-after` [A13] |
+| «forecast / projection» | `forecast` [N7] + `historical-data` [N8] |
 | «market size / TAM» | `market-sizing` [N2] |
-| «regulatory / законы» | `regulatory` [X1] |
-| «culturally / по культурам» | `cultural-context` [X3] + `geo-context` [X2] |
-| «политика / sanctions / geopolitics» | `political-context` [X5] |
-| «экосистема» | `ecosystem` [X7] |
-| «mental model / устройство» (как часть гибрида) | + `mental-model` [E1] + `glossary-mini` [E2] |
-| «выбор» (как часть гибрида) | + `options-matrix` [C1] + `recommendation-conditional` [C6] |
+| «regulatory / laws» | `regulatory` [X1] |
+| «culturally / by cultures» | `cultural-context` [X3] + `geo-context` [X2] |
+| «politics / sanctions / geopolitics» | `political-context` [X5] |
+| «ecosystem» | `ecosystem` [X7] |
+| «mental model / design» (as part of a hybrid) | + `mental-model` [E1] + `glossary-mini` [E2] |
+| «choice» (as part of a hybrid) | + `options-matrix` [C1] + `recommendation-conditional` [C6] |
 
-**Базовая обвязка для custom:**
+**Base scaffolding for custom:**
 ```
 1. tldr [F1]
 2. background [F9]
-3. scope [F3] (если границы важны)
-4. <выбранные блоки по эвристике>
+3. scope [F3] (if boundaries matter)
+4. <blocks chosen by the heuristic>
 5. counter-arguments [Z1]
 6. open-questions [Z2]
 7. next-research [Z3]
 8. confidence-summary [Z7]
-9. so-what-for-you [Z12] (перед actionable-next-steps)
+9. so-what-for-you [Z12] (before actionable-next-steps)
 10. actionable-next-steps [Z4]
 11. map-of-sources [Z5]
 12. metadata [F5]
 ```
 
-**Подтверждение пользователя:** скилл выводит одной строкой:
+**User confirmation:** the skill outputs in one line:
 ```
-"Custom-отчёт. Блоки: tldr, scope, data-table, profile-card×N, trends,
-counter-args, open-q, sources. Ок? (yes / убрать X / добавить Y)"
+"Custom report. Blocks: tldr, scope, data-table, profile-card×N, trends,
+counter-args, open-q, sources. OK? (yes / remove X / add Y)"
 ```
 
-### Примеры готовых custom-наборов
+### Examples of ready-made custom sets
 
-**Конкуренты по показателям:**
+**Competitors by indicators:**
 ```
 [tldr, scope, data-table, profile-card×N, trends, counter-args, open-q, next-research, sources, metadata]
 ```
 
-**Hybrid explainer + decision (типа «как работают X и что выбрать»):**
+**Hybrid explainer + decision (something like «how X works and what to choose»):**
 ```
 [tldr, mental-model, glossary-mini, stepwise, options-matrix, best-fit-when,
 recommendation-conditional, counter-args, sources, metadata]
 ```
 
-**Risk analysis под решение:**
+**Risk analysis for a decision:**
 ```
 [tldr, decision-context, risk-register, failure-modes, force-field, pre-mortem,
 actionable-next-steps, sources, metadata]
@@ -357,32 +358,32 @@ counter-args, open-q, sources, metadata]
 
 ---
 
-## Правила композиции
+## Composition rules
 
-### Что всегда есть
-- `tldr` [F1] — первый блок (но пишется ПОСЛЕДНИМ)
-- `map-of-sources` [Z5] — обязательно
-- `metadata` [F5] — последний (footer)
-- Для medium/deep во ВСЕХ жанрах — обязательно: `background` [F9], `so-what-for-you` [Z12], `actionable-next-steps` [Z4], `confidence-summary` [Z7] (см. секции жанров выше).
+### What is always present
+- `tldr` [F1] — the first block (but written LAST)
+- `map-of-sources` [Z5] — mandatory
+- `metadata` [F5] — the last one (footer)
+- For medium/deep in ALL genres — mandatory: `background` [F9], `so-what-for-you` [Z12], `actionable-next-steps` [Z4], `confidence-summary` [Z7] (see the genre sections above).
 
-### Mutually exclusive (не использовать вместе)
-- `glossary-mini` ИЛИ `glossary-full` ИЛИ `glossary-link` — выбирай ОДИН
-- `swot` ИЛИ `swot-extended` — не оба
-- `options-matrix` без весов ИЛИ `weighted-score` — обычно один (но допустимо оба для full decision)
-- `mental-model` ИЛИ `flow-diagram` ИЛИ `state-machine` — выбирай по типу системы
+### Mutually exclusive (do not use together)
+- `glossary-mini` OR `glossary-full` OR `glossary-link` — choose ONE
+- `swot` OR `swot-extended` — not both
+- `options-matrix` without weights OR `weighted-score` — usually one (but both are acceptable for a full decision)
+- `mental-model` OR `flow-diagram` OR `state-machine` — choose by the type of system
 
-### Порядок зависимостей
-- `glossary-*` идёт ПЕРЕД `mental-model` (термины перед схемой)
-- `background` [F9] идёт СРАЗУ ПОСЛЕ `tldr`/перед `scope` — контекст «почему вопрос» перед рамкой и содержимым
-- `scope` ПЕРЕД основными блоками (рамка перед содержимым)
-- `claim-precise` ПЕРЕД `falsification-criteria` ПЕРЕД `evidence-graded`
-- `base-rates` ПЕРЕД `evidence-graded` (prior перед update)
-- `counter-arguments` ПОСЛЕ основного содержимого, ПЕРЕД closing
-- `recommendation-conditional` ПОСЛЕ всех comparison-блоков
-- `so-what-for-you` [Z12] ПОСЛЕ `confidence-summary`/`map-of-sources` секций, но ПЕРЕД `actionable-next-steps` [Z4] — сначала проекция на кейс, потом конкретные действия
+### Dependency order
+- `glossary-*` goes BEFORE `mental-model` (terms before the diagram)
+- `background` [F9] goes IMMEDIATELY AFTER `tldr`/before `scope` — the «why this question» context before the frame and the content
+- `scope` BEFORE the main blocks (frame before content)
+- `claim-precise` BEFORE `falsification-criteria` BEFORE `evidence-graded`
+- `base-rates` BEFORE `evidence-graded` (prior before update)
+- `counter-arguments` AFTER the main content, BEFORE closing
+- `recommendation-conditional` AFTER all comparison blocks
+- `so-what-for-you` [Z12] AFTER the `confidence-summary`/`map-of-sources` sections, but BEFORE `actionable-next-steps` [Z4] — first the projection onto the case, then concrete actions
 
 ### Density rules
-- Shallow отчёт: 5-9 блоков
-- Medium отчёт: 9-15 блоков
-- Deep отчёт: 15-25 блоков
-- Не плоди блоки для plumage. Только если каждый отвечает на конкретную часть вопроса.
+- Shallow report: 5-9 blocks
+- Medium report: 9-15 blocks
+- Deep report: 15-25 blocks
+- Do not multiply blocks for plumage. Only if each answers a specific part of the question.
