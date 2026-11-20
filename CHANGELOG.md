@@ -47,3 +47,17 @@ floor, patched in seven places, and given the four checks the base documented bu
 - English translation covers the floor only; backlog in `docs/TRANSLATION.md`.
 - "No method critique below `full_text`" not implemented (needs reliable prose detection).
 - `references/model_routing.md` still names Claude Code agent types; see D6.
+
+## 0.2.0 — 2026-11-20
+
+### Added
+- `overlay/tier_routing.py` + `docs/TIERS.md` — map upstream's `strong/mid/cheap` vocabulary onto
+  separate endpoints (config: `KNOWING_TIERS`, `KNOWING_TIERS_FILE`, or per-tier env vars), with a
+  `strong → mid → cheap` fallback that records which tier answered. `--provider tiers`.
+- `overlay/tests/test_tier_routing.py` — 16 tests: config precedence, fallback, one client per
+  endpoint, unknown-tier rejection, and that a missing variable is named rather than defaulted.
+- Bilingual gate literals: the source-card heading (`## Разбор` / `## Source dissection`), the verdict
+  table (`Гипотеза|Вердикт` / `Hypothesis|Verdict`), the unmeasured-default patterns and the
+  appendix-laundering patterns now accept English. Bilingual beats a migration.
+- `build_readout.py` accepts English section names while still emitting Russian; its output is an
+  artefact, not a gate, so this is the soft landing.

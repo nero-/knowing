@@ -1,22 +1,23 @@
-## Фаза 6.9. Экспорт отчёта
+<!-- translated from upstream/references/phases/p6_9_export.md @ e233797 — see docs/TRANSLATION.md -->
+## Phase 6.9. Report export
 
-**Исполнитель:** `main`, без суб-агента. Механическая сборка, содержательных решений нет.
+**Executor:** `main`, without a sub-agent. Mechanical assembly, no substantive decisions.
 
 ```bash
 uv run scripts/build_report.py <run>
 ```
 
-Собирает `<date>_<genre>.md` в HTML, PDF и DOCX из одного источника. Полностью —
-`references/report_export.md`. Здесь — что фаза обязана оставить и на чём падает.
+Assembles `<date>_<genre>.md` into HTML, PDF and DOCX from a single source. In full —
+`references/report_export.md`. Here — what the phase must leave behind and what it fails on.
 
-**Оставляет:** `<date>_<genre>.html`, `.pdf`, `.docx` в папке прогона; SVG фигур в `.build/`.
+**Leaves:** `<date>_<genre>.html`, `.pdf`, `.docx` in the run folder; SVGs of figures in `.build/`.
 
-**Падает на:**
-- ссылке `[sNN]`, которой нет в `sources.csv` — в 20 страницах битую ссылку глазами не находят;
-- фигуре, ссылающейся на `num_id` вне `numbers.csv` — график не вправе утверждать больше ledger'а;
-- расхождении «сносок N, перенесено M» — молча потерянная сноска неотличима от её отсутствия.
+**Fails on:**
+- a `[sNN]` link that is not in `sources.csv` — a broken link on 20 pages is not found by eye;
+- a figure referring to a `num_id` outside `numbers.csv` — a chart has no right to assert more than the ledger;
+- a mismatch «N footnotes, M carried over» — a silently lost footnote is indistinguishable from its absence.
 
-`--no-strict` снимает первые два отказа, но не третий.
+`--no-strict` lifts the first two refusals, but not the third.
 
-**Регистр — 15–20 страниц под одно решение.** `memo.md` остаётся отдельной страницей:
-одна страница, которую точно прочтут, не растворяется в двадцати.
+**Register — 15–20 pages for one decision.** `memo.md` stays a separate page:
+one page that will definitely be read does not dissolve into twenty.

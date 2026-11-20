@@ -106,3 +106,18 @@ The validator matches Russian string literals: `гипотез … вердик�
 without those patterns turns gates into no-ops that report nothing — indistinguishable from success.
 Hence `docs/TRANSLATION.md`'s glossary is a contract, and every translated gate needs a test that
 proves it still fires. v0.1 translates the floor; the backlog is ordered by the load profile.
+
+## D9 — Model tiers are hardware, not model names
+
+Upstream's `runner/providers.py` already asks for `strong/mid/cheap` and never names a model — that
+abstraction was the reason this base was worth patching rather than replacing. What it lacked was a
+mapping to *more than one endpoint*: `OpenAICompatProvider` pins one `base_url` per process.
+
+`overlay/tier_routing.py` adds `TierMapProvider`: one client per endpoint, a config layer
+(`KNOWING_TIERS` JSON / `KNOWING_TIERS_FILE` / per-tier env vars), and a `strong → mid → cheap`
+fallback that *records* which tier actually answered (`routed`). A run whose config silently degraded
+still finishes, but the degradation is auditable.
+
+Deliberately out of scope: rate limiting and cross-run queueing (a gateway's job), routing within a
+tier (a load balancer's job), and `search()` (upstream's is Anthropic-specific). A skill that guesses
+about load is a skill that hides a 429.

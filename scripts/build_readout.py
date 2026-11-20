@@ -208,11 +208,22 @@ def lint_structure(md: str, genre: str) -> list[str]:
     sections = h2_sections(md)
     names = [n.lower() for n in sections]
     problems = []
+    EN = {  # knowing: English headings a translated run produces
+        "ответ": "answer", "делать": "do", "не делать": "don't",
+        "что поменяет решение": "what would change the decision",
+        "чего не знаем": "what we don't know", "варианты": "options",
+        "что говорит против": "what argues against", "карта": "map",
+        "где пусто": "where it is empty", "доводы за": "arguments for",
+        "доводы против": "arguments against", "как устроено": "how it works",
+        "вопросы": "questions", "находки": "findings",
+        "что изменило бы вердикт": "what would change the verdict",
+    }
     for need in FRAME + GENRES[genre]:
-        if not any(n.startswith(need.lower()) for n in names):
+        alt = EN.get(need.lower(), "")
+        if not any(n.startswith(need.lower()) or (alt and n.startswith(alt)) for n in names):
             problems.append(f"{genre}: нет раздела «{need}»")
     answer = next((v for k, v in sections.items() if k.lower().startswith("ответ")), "")
-    if answer and not re.search(r"уверенность", answer, re.I):
+    if answer and not re.search(r"уверенность|confidence", answer, re.I):  # knowing: bilingual
         problems.append("в «Ответе» нет уверенности словами («Уверенность: средняя — …»)")
     if genre == "decision":
         body = next((v for k, v in sections.items() if k.lower().startswith("варианты")), "")

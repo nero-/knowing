@@ -98,6 +98,83 @@ PATCHES = [
         '    Step("phase_gate", REPO / "scripts/validate_phases.py", lambda d, m, w: ["--strict", *_mode(m)]),\n]',
         '    Step("phase_gate", REPO / "scripts/validate_phases.py", lambda d, m, w: ["--strict", *_mode(m)]),\n'
         '    Step("knowing", REPO / "overlay" / "knowing_gate.py", lambda d, m, w: ["--strict"]),  # knowing\n]',
+        'Step("knowing"',
+    ),
+    # 8. The gate-matched literals accept English. Translated prose says `## Source dissection`
+    #    and `| Hypothesis | Verdict |`; the Russian forms stay accepted so runs carried over from
+    #    upstream still validate. Bilingual beats migration.
+    (
+        "scripts/validate_phases.py",
+        '    no_card = [p.name for p in files if "\\n## Разбор" not in p.read_text(encoding="utf-8")]',
+        '    # knowing: English and Russian headings both count\n'
+        '    CARD_RE = re.compile(r"\\n##\\s+(?:Разбор|Source dissection)\\b")\n'
+        '    no_card = [p.name for p in files if not CARD_RE.search(p.read_text(encoding="utf-8"))]',
+        "CARD_RE = re.compile",
+    ),
+    (
+        "scripts/validate_phases.py",
+        'VERDICT_TABLE_RE = re.compile(r"^\\|[^\\n]*гипотез[^\\n]*\\|[^\\n]*вердикт", re.IGNORECASE | re.MULTILINE)',
+        'VERDICT_TABLE_RE = re.compile(  # knowing: bilingual\n'
+        '    r"^\\|[^\\n]*(?:гипотез|hypothes)[^\\n]*\\|[^\\n]*(?:вердикт|verdict)",\n'
+        '    re.IGNORECASE | re.MULTILINE)',
+        "knowing: bilingual",
+    ),
+    (
+        "scripts/validate_phases.py",
+        'DEFAULT_RE = re.compile(r"(?<![«\\w])(по умолчанию|берите|выбирайте|начинать стоит|начните с|рекомендуем)(?![»\\w])",',
+        'DEFAULT_RE = re.compile(  # knowing: bilingual defaults\n'
+        '    r"(?<![«\\w])(по умолчанию|берите|выбирайте|начинать стоит|начните с|рекомендуем"\n'
+        '    r"|by default|take|choose|start with|begin with|we recommend)(?![»\\w])",',
+        "knowing: bilingual defaults",
+    ),
+    (
+        "scripts/validate_phases.py",
+        'APPENDIX_RE = re.compile(r"приоритет над текстом|заменяется на|поправки ниже|см\\. ремедиац", re.IGNORECASE)',
+        'APPENDIX_RE = re.compile(  # knowing: bilingual appendix\n'
+        '    r"приоритет над текстом|заменяется на|поправки ниже|см\\. ремедиац"\n'
+        '    r"|takes priority over the text|is replaced by|amendments below|see remediation",\n'
+        '    re.IGNORECASE)',
+        "knowing: bilingual appendix",
+    ),
+    # 9. The readout exporter accepts English section names while still emitting Russian for
+    #    existing runs. Its output is an artefact, not a gate, so this is a soft landing.
+    (
+        "scripts/build_readout.py",
+        '    for need in FRAME + GENRES[genre]:\n        if not any(n.startswith(need.lower()) for n in names):\n            problems.append(f"{genre}: нет раздела «{need}»")',
+        '    EN = {  # knowing: English headings a translated run produces\n'
+        '        "ответ": "answer", "делать": "do", "не делать": "don\'t",\n'
+        '        "что поменяет решение": "what would change the decision",\n'
+        '        "чего не знаем": "what we don\'t know", "варианты": "options",\n'
+        '        "что говорит против": "what argues against", "карта": "map",\n'
+        '        "где пусто": "where it is empty", "доводы за": "arguments for",\n'
+        '        "доводы против": "arguments against", "как устроено": "how it works",\n'
+        '        "вопросы": "questions", "находки": "findings",\n'
+        '        "что изменило бы вердикт": "what would change the verdict",\n'
+        '    }\n'
+        '    for need in FRAME + GENRES[genre]:\n'
+        '        alt = EN.get(need.lower(), "")\n'
+        '        if not any(n.startswith(need.lower()) or (alt and n.startswith(alt)) for n in names):\n'
+        '            problems.append(f"{genre}: нет раздела «{need}»")',
+        "knowing: English headings",
+    ),
+    (
+        "scripts/build_readout.py",
+        '    if answer and not re.search(r"уверенность", answer, re.I):',
+        '    if answer and not re.search(r"уверенность|confidence", answer, re.I):  # knowing: bilingual',
+        "knowing: bilingual",
+    ),
+    # 7b. build_provider learns the tier-mapped backend, so per-tier endpoints are a config
+    #     choice rather than a fork of runner/providers.py.
+    (
+        "runner/providers.py",
+        '    if name == "dryrun":\n        return DryRunProvider()',
+        '    if name == "tiers":  # knowing: tier -> endpoint mapping, see overlay/tier_routing.py\n'
+        '        import sys as _sys\n'
+        '        from pathlib import Path as _Path\n'
+        '        _sys.path.insert(0, str(_Path(__file__).resolve().parent.parent / "overlay"))\n'
+        '        import tier_routing as _tr\n'
+        '        return _tr.TierMapProvider(_tr.load_tiers())\n'
+        '    if name == "dryrun":\n        return DryRunProvider()',
         None,
     ),
     # 7. check_quotes.py returns 0 unconditionally — it reports, it cannot fail a run.

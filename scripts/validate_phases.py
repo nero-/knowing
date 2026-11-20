@@ -446,7 +446,9 @@ BUDGET_REASON_RE = re.compile(r"бюджет|budget|\$\s?\d|деньг|доро�
 FIELD_RE = re.compile(r"^(type|caveat):\s*(.+?)\s*$", re.MULTILINE)
 
 
-VERDICT_TABLE_RE = re.compile(r"^\|[^\n]*гипотез[^\n]*\|[^\n]*вердикт", re.IGNORECASE | re.MULTILINE)
+VERDICT_TABLE_RE = re.compile(  # knowing: bilingual
+    r"^\|[^\n]*(?:гипотез|hypothes)[^\n]*\|[^\n]*(?:вердикт|verdict)",
+    re.IGNORECASE | re.MULTILINE)
 
 
 def check_verdict_table(d: Path, r: Report) -> None:
@@ -458,7 +460,9 @@ def check_verdict_table(d: Path, r: Report) -> None:
 
 
 # An unconditional pick: "по умолчанию", or an imperative with no "если" in the sentence.
-DEFAULT_RE = re.compile(r"(?<![«\w])(по умолчанию|берите|выбирайте|начинать стоит|начните с|рекомендуем)(?![»\w])",
+DEFAULT_RE = re.compile(  # knowing: bilingual defaults
+    r"(?<![«\w])(по умолчанию|берите|выбирайте|начинать стоит|начните с|рекомендуем"
+    r"|by default|take|choose|start with|begin with|we recommend)(?![»\w])",
                         re.IGNORECASE)
 SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+|\n")
 
@@ -492,7 +496,10 @@ PRE_REMEDIATION = "findings/draft_pre_remediation.md"
 HIGH_ID_RE = re.compile(r"^\W*(?:HIGH|H)-(\d+)\b", re.MULTILINE)
 REVIEW_HEADING_RE = re.compile(r"adversarial review|ремедиац|red team", re.IGNORECASE)
 # N4/N6 (2026-10-28): fixes were appended after the body, TL;DR kept the refuted claims.
-APPENDIX_RE = re.compile(r"приоритет над текстом|заменяется на|поправки ниже|см\. ремедиац", re.IGNORECASE)
+APPENDIX_RE = re.compile(  # knowing: bilingual appendix
+    r"приоритет над текстом|заменяется на|поправки ниже|см\. ремедиац"
+    r"|takes priority over the text|is replaced by|amendments below|see remediation",
+    re.IGNORECASE)
 # "- HIGH-1 → §Ответ (TL;DR), §Ветки: что изменено" — a target ends at ":", "§", "|" or ", §".
 FIX_TARGET_RE = re.compile(r"§\s*([^§|:\n]+?)\s*(?=,\s*§|[§|:\n]|$)")
 
@@ -602,7 +609,9 @@ def check_source_breadth(d: Path, mode: str, r: Report) -> None:
         gate("vendor", f"{vendor} of {len(files)} sources are vendor material — "
                        f"at most half; the rest must be vendor-independent")
 
-    no_card = [p.name for p in files if "\n## Разбор" not in p.read_text(encoding="utf-8")]
+    # knowing: English and Russian headings both count
+    CARD_RE = re.compile(r"\n##\s+(?:Разбор|Source dissection)\b")
+    no_card = [p.name for p in files if not CARD_RE.search(p.read_text(encoding="utf-8"))]
     if no_card:
         r.warn(f"{len(no_card)} of {len(files)} sources have no `## Разбор` card "
                f"(claim type, method, scope, modality) — e.g. {', '.join(no_card[:3])}")
