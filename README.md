@@ -21,6 +21,12 @@ actually fire.
 Not added, deliberately: dependency-injection, a query language, a plugin system. This is a research
 harness, not a framework.
 
+## Start here
+
+`docs/USAGE.md` — install, configure models, run a first research question, and read the gates. The
+short version: `apply_patches.py` once, `overlay/config.py check --probe` to verify endpoints, then ask
+your agent for the research and let `scripts/finish.py` tell you whether it holds up.
+
 ## Install
 
 ```bash
