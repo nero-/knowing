@@ -1,17 +1,18 @@
+<!-- translated from upstream/references/api_sources/search/exa.md @ e233797 — see docs/TRANSLATION.md -->
 # Exa.ai API (formerly Metaphor)
 
 ## Overview
 
 - **Endpoint base:** `https://api.exa.ai`
 - **Auth:** API key (header `x-api-key`)
-- **Free tier:** $10 credit на регистрацию, ~1000 searches
+- **Free tier:** $10 credit on registration, ~1000 searches
 - **Paid:** $5/1000 searches typically
 - **Docs:** https://docs.exa.ai
-- **Unique:** **semantic search** (neural), не keyword matching
+- **Unique:** **semantic search** (neural), not keyword matching
 
 ## What it returns
 
-JSON с результатами ranked by semantic similarity to query.
+JSON with results ranked by semantic similarity to the query.
 
 ```json
 {
@@ -31,28 +32,28 @@ JSON с результатами ranked by semantic similarity to query.
 
 ## When to use
 
-- Семантический поиск — «similar to this article»
-- Concept-based queries вместо keyword
-- Когда не знаешь точные термины но знаешь идею
-- Поиск «like this URL but newer» / «better version of X»
+- Semantic search — "similar to this article"
+- Concept-based queries instead of keywords
+- When you do not know the exact terms but know the idea
+- Searching for "like this URL but newer" / "a better version of X"
 
 ## When not to use
 
-- Точные lookup queries — keyword search быстрее
-- Реал-тайм news (Exa имеет lag)
-- Нужны structured data вроде Wikipedia infobox
+- Exact lookup queries — keyword search is faster
+- Real-time news (Exa has a lag)
+- You need structured data such as a Wikipedia infobox
 
 ## Auth setup
 
 1. https://exa.ai → sign up
-2. API key из dashboard
-3. В env: `export EXA_API_KEY="..."`
+2. API key from the dashboard
+3. In env: `export EXA_API_KEY="..."`
 
 ## Query patterns
 
-Прямой вызов из скилла: `python3 scripts/search_query.py --engine exa --query "..." [--n 10] [--json]`
-(читает `EXA_API_KEY` из env, exit 2 если ключа нет). Ниже — сырой HTTP-контракт,
-который скрипт реализует.
+Direct call from the skill: `python3 scripts/search_query.py --engine exa --query "..." [--n 10] [--json]`
+(reads `EXA_API_KEY` from env, exit 2 if there is no key). Below is the raw HTTP contract
+the script implements.
 
 ### Neural search
 
@@ -69,7 +70,7 @@ Content-Type: application/json
 }
 ```
 
-`useAutoprompt: true` — Exa reformulates query under the hood для лучших результатов.
+`useAutoprompt: true` — Exa reformulates the query under the hood for better results.
 
 ### Find similar
 
@@ -92,7 +93,7 @@ POST https://api.exa.ai/contents
 }
 ```
 
-## Example queries для deepdive
+## Example queries for the deep run
 
 **Phase 4 — find similar to a paper:**
 
@@ -119,7 +120,7 @@ POST /search
 
 ## Categories filter
 
-Exa умеет фильтровать по типу контента:
+Exa can filter by content type:
 - `research paper`
 - `news`
 - `tweet`
@@ -130,18 +131,18 @@ Exa умеет фильтровать по типу контента:
 
 ## Limitations
 
-- Не replacement для keyword search — для точных queries (specific names, IDs) hurt
-- Index меньше чем у Google
-- Cost при активном использовании быстро растёт
+- Not a replacement for keyword search — for exact queries (specific names, IDs) it hurts
+- The index is smaller than Google's
+- Cost grows quickly under heavy use
 
 ## Combine with
 
-- **Tavily** — для answers с sources
-- **Brave Search** — для broader coverage
-- **Semantic Scholar** — для академического но без semantic ranking
+- **Tavily** — for answers with sources
+- **Brave Search** — for broader coverage
+- **Semantic Scholar** — for academic work but without semantic ranking
 
 ## Fallback if API down or rate-limited
 
-1. Tavily с `search_depth: advanced`
-2. Brave Search с include_domains фильтром
-3. Standard WebSearch через Claude Code
+1. Tavily with `search_depth: advanced`
+2. Brave Search with an include_domains filter
+3. Standard WebSearch through the agent harness

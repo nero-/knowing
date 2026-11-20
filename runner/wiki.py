@@ -25,7 +25,7 @@ cases that need no judgement at all (a stale figure, a unit mismatch, a differen
 scope). Whatever survives that goes to an adjudicator in phase 5.7, and its verdict is
 appended to pairs.jsonl as an audit trail. `unknown` is quarantine, never a conflict.
 
-Storage lives under ~/.claude/research/wiki/ — global on purpose. Research folders land
+Storage lives under ~/.knowing/research/wiki/ — global on purpose. Research folders land
 per-project (research/, 06_Деск-ресёрч/, ~/deepdive/), and a per-project wiki would
 fragment exactly the thing that is supposed to accumulate. The precedent is already
 there: applications_ledger.csv and deepdive-state/ are both global.
@@ -47,7 +47,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit
 
 log = logging.getLogger(__name__)
 
-DEFAULT_ROOT = Path.home() / ".claude"
+DEFAULT_ROOT = Path.home() / ".knowing"  # knowing: own state directory
 WIKI_DIRNAME = "research/wiki"
 REGISTRY_DIRNAME = ".wiki"
 

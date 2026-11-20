@@ -38,35 +38,19 @@ Rules for the translator:
 6. The Russian originals stay in `upstream/` untouched, so any translation can be checked against
    its source by a reader who has both.
 
-## What is translated (v0.2)
+## Translation status: complete
 
-Done, in load order:
+Every prose file under `references/`, plus `SKILL.md` and `QUICKSTART.md`, is English. Zero files remain
+mostly Russian.
 
-1. the **floor** — `context_budget.py::ALWAYS_LOAD`: SKILL.md, workflow, phases 1–5/8, rules,
-   question_reframing, plan_gate, genres, blocks/INDEX, channels, source_dispatch, model_routing,
-   plus `plan_template.md`;
-2. the **medium/deep profile** — p6_synthesis, p6_9_export, p7_refresh, subagents_v2,
-   adversarial_pass, source_scoring, the two INDEX files, capability_discovery,
-   awesome_lists_registry, synthesis_outline.
+One token is preserved in Russian **on purpose**: `нужен ключ` ("key required") in the Access column of
+`references/registry/*.md`. It is emitted by `scripts/import_source_registry.py:155`, so translating the
+data without the generator (and eight sibling registry files) would drift the artefacts from the code
+that writes them. If you ever translate it, change the generator first.
 
-That is every file a run of any depth loads. Still Russian (40 files, ~37k words), in backlog order:
-
-| group | why it can wait |
-|---|---|
-| `references/blocks/*.md` (11 files, ~18.8k words) | read only by the synthesizer, one block at a time, and the block ids are language-neutral |
-| `references/report_export.md`, `refresh_protocol.md`, `evidence_filter.md`, `fetch_ladder` neighbours | phase-scoped, not in any load profile |
-| `references/stat_sources/**` leaf cards, `api_sources/**` leaf cards | data cards read by a script or by one lookup |
-| `docs/`, `eval/`, `evals/` | not installed into the skill directory |
-| `scripts/**` and `build_report.py` messages | code, not prose; the gates now accept both languages, so a run is not blocked |
-
-## Known coupling regressions in v0.1
-
-- Section locators inside translated files (e.g. «§ Routing for sub-agents», «§ Fourth condition»)
-  now point at English headings that live in files still in Russian — `source_scoring.md`,
-  `subagents_v2.md`, `adversarial_pass.md`. They will resolve once the backlog is done; until then a
-  reader of those files must search by meaning, not by heading. This is the exact cost the reviews
-  predicted ("56 references run out of translated files into untranslated ones"), recorded rather
-  than hidden.
+What is *not* translated: user-facing messages inside the Python (`build_report.py`, `build_readout.py`)
+still print Russian. They are code strings, not methodology, and their own tests assert the Russian text;
+that is the one remaining backlog item and it is recorded in `docs/USAGE.md`.
 
 ## How a translation is verified
 

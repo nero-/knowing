@@ -1,30 +1,30 @@
-# Постобработка прогона — сбор наблюдений байесовского роя
+<!-- translated from upstream/references/swarm_postprocess.md @ e233797 — see docs/TRANSLATION.md -->
+# Run post-processing — collecting Bayesian swarm observations
 
-Читать в конце medium/deep прогона (после Фазы 7, до Фазы 8 или сразу после неё).
+Read at the end of a medium/deep run (after Phase 7, before Phase 8 or right after it).
 
-Работает по уже готовым артефактам прогона, руками ничего писать не нужно. `run_id` = `<slug>` прогона, один и тот же во всех четырёх вызовах. Механика — `docs/specs/2026-08-18-bayesian-swarm-design.md`.
+It works on the run's ready-made artifacts, nothing needs to be written by hand. `run_id` = the run's `<slug>`, the same in all four calls. The mechanics are in `docs/specs/2026-08-18-bayesian-swarm-design.md`.
 
-**1. Наблюдения — отдельный вызов на КАЖДЫЙ подвопрос** из `plan.md` §12, с его `qclass` и реально запрошенными каналами (primary + secondary + fallback, если fallback понадобился):
+**1. Observations — a separate call for EACH subquestion** from `plan.md` §12, with its `qclass` and the channels actually requested (primary + secondary + fallback, if a fallback was needed):
 
 ```
 python3 scripts/collect_observations.py --research-dir <root>/<slug> --run-id <slug> \
   --requested academic=scientific-claim,data-statistical-gov=scientific-claim
 ```
 
-Общим списком на весь прогон — нельзя: `--requested` парсится в словарь по ключу-каналу, и один канал с разным `qclass` в одной строке молча затрёт первую пару. Раздельные вызовы аппендят независимо.
+A single shared list for the whole run is not allowed: `--requested` is parsed into a dictionary keyed by channel, and one channel with a different `qclass` in one line would silently overwrite the first pair. Separate calls append independently.
 
-Если подвопрос искался и через второй движок, добавь его канал в тот же вызов: `--requested academic=scientific-claim,search-engine-2/exa=scientific-claim`. Имя канала берётся из stderr `search_query.py` и совпадает с первым полем `discovery_path` найденных так источников. Без этой пары движок не получит наблюдения, и `--engine auto` так и будет выбирать по статичной таблице.
+If a subquestion was also searched through a second engine, add its channel to the same call: `--requested academic=scientific-claim,search-engine-2/exa=scientific-claim`. The channel name comes from the stderr of `search_query.py` and matches the first field of the `discovery_path` of the sources found that way. Without this pair the engine will not get an observation, and `--engine auto` will keep choosing from the static table.
 
-**2. Приоры:** `python3 scripts/update_priors.py`. Доли секунды, звать после каждого прогона: без этого наблюдения не попадут в `priors.json` и следующий прогон не увидит статистику.
+**2. Priors:** `python3 scripts/update_priors.py`. A fraction of a second, call it after every run: without it the observations will not land in `priors.json` and the next run will not see the statistics.
 
-**3. Ad-hoc источники** — найденные через Discovery patterns (`source_dispatch.md`), а не из каталога (`api_sources/`, `stat_sources/`, `registry/`), и ставшие `root` или непогашенным `dissent` хотя бы одного claim. `url` и первый сегмент `discovery_path` (это канал) — из `sources/NN.md`, `qclass` — из §12. Мёртвый на момент прогона — тот же вызов с `--dead`.
+**3. Ad-hoc sources** — found via Discovery patterns (`source_dispatch.md`), not from the catalog (`api_sources/`, `stat_sources/`, `registry/`), and that became the `root` or an unresolved `dissent` of at least one claim. `url` and the first segment of `discovery_path` (that is the channel) — from `sources/NN.md`, `qclass` — from §12. Dead at the time of the run — the same call with `--dead`.
 
 ```
 python3 scripts/promote_candidates.py --track https://api.example.org/v1 \
   --channel api-direct --qclass market-size --run-id <slug>
 ```
 
-**4. Раз в несколько прогонов:** `python3 scripts/promote_candidates.py --write` — печатает промоушен (≥3 улики в ≥3 разных прогонах, живой endpoint, приор канала не деградировал) и демоушен (≥3 прогона подряд мёртв). Без `--write` только печать; с `--write` пишет в `references/api_sources/promoted/` — **посмотреть `git diff`, закоммитить вручную**, скрипт не коммитит никогда.
+**4. Once every few runs:** `python3 scripts/promote_candidates.py --write` — prints the promotion (≥3 pieces of evidence in ≥3 different runs, a live endpoint, the channel prior did not degrade) and the demotion (≥3 runs in a row dead). Without `--write` it only prints; with `--write` it writes to `references/api_sources/promoted/` — **look at the `git diff`, commit by hand**, the script never commits.
 
-Аллокатор свободного бюджета сверх обязательного минимума — `update_priors.py --qclass <qclass подвопроса>` при выборе канала сверх Primary/Secondary; оговорки — `source_dispatch.md` §«Приор при выборе канала сверх обязательного минимума».
-
+The free-budget allocator beyond the mandatory minimum — `update_priors.py --qclass <qclass of the subquestion>` when choosing a channel beyond Primary/Secondary; the caveats are in `source_dispatch.md` §«Prior when choosing a channel beyond the mandatory minimum».

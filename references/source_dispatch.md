@@ -16,7 +16,7 @@
 
 **When it is used:** at the start of Phase 4 (Search). Once `plan.md` is ready and the subquestions are decomposed — for **each subquestion** you run it through this file and write the dispatch decision into plan.md section 12 «Information sourcing strategy».
 
-**What it does:** turns a subquestion («what is X's market share in the EU») into an **ordered list of channels and concrete sources**: primary → secondary → fallback. Without this, Claude guesses anew every time «where to get the data from».
+**What it does:** turns a subquestion («what is X's market share in the EU») into an **ordered list of channels and concrete sources**: primary → secondary → fallback. Without this, the model guesses anew every time «where to get the data from».
 
 ---
 

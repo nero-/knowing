@@ -122,3 +122,30 @@ Pools, failover, cooldown and the audit trail are unchanged. 59 overlay tests.
 ### Fixed
 - A `default = "..."` written after a `[models.*]` header (TOML files it inside that table) is now
   recovered rather than silently ignored, with a note saying where it belongs; two of them is an error.
+
+## 0.4.0 — 2026-11-20
+
+### Translation complete
+Every prose file under `references/` (report blocks, the remaining phase docs, and all API/source/registry
+cards) is English, as are `SKILL.md` and `QUICKSTART.md`. Zero files remain majority-Russian: ~46k words
+translated across this release. One token is preserved deliberately — `нужен ключ` in the registry Access
+column, because `scripts/import_source_registry.py` emits it and the sibling files still carry it; see
+`docs/TRANSLATION.md`. Machine-matched content (endpoint bases, auth headers, JSON field names, rate
+limits, curl blocks, count stamps) was preserved byte-identical in every card.
+
+### Removed — the other harness
+- `.claude-plugin/`, `evals/`, and upstream's design archive (`docs/plans/`, `docs/specs/`, its Pages
+  assets).
+- All prose references to Claude, Claude Code, Opus/Sonnet/Haiku as model names, `~/.claude/*` paths,
+  `CLAUDE.md`, and Claude-only companion skills.
+- `phases.yaml` now names config keys (`big` / `mid` / `small`) instead of vendor models.
+- State moves to `~/.knowing/` (`runner/wiki.py`, `runner/state.py` patched); run folders default to
+  `~/knowing/<slug>/`.
+
+### Added
+- `agents/knowing-fetcher.md` and `agents/knowing-redteam.md` — the two sub-agent definitions the skill
+  refers to, with model/effort/tool frontmatter. Install with `cp agents/*.md ~/.pi/agents/`.
+- `references/model_routing.md` rewritten: model names are `models.toml` keys, three-layer resolution,
+  per-phase reasoning, effort vs size, cost economics.
+- Local-only docs: `docs/MODELS.md`, `docs/USAGE.md`, `QUICKSTART.md`, `README.md` no longer document
+  cloud endpoints.

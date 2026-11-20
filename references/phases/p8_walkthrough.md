@@ -1,7 +1,7 @@
 <!-- translated from upstream/references/phases/p8_walkthrough.md @ e233797 — see docs/TRANSLATION.md -->
 ## Phase 8. Decision walkthrough (mandatory always, including shallow)
 
-**Model:** the main thread, `opus` / `high` — the quality of the questions is critical, as in Phase 1.
+**Model:** the main thread, `big` / `high` — the quality of the questions is critical, as in Phase 1.
 
 The report is not «discussed», it is executed: the agent shows `memo.md` and leads
 the user through the if-then forks of the Decision Spec one at a time — «the research showed X [s03][s11]
@@ -12,7 +12,7 @@ pressure). The full mechanics, the `application.md` template, the global ledger 
 — `references/decision_walkthrough.md`.
 
 **Output:** `<slug>/application.md` (any status — the gate requires the file, not an accepted
-decision) + a row in `~/.claude/research/applications_ledger.csv`.
+decision) + a row in `~/.knowing/research/applications_ledger.csv`.
 
 ## Checklist after Phase 8
 
@@ -37,5 +37,5 @@ decision) + a row in `~/.claude/research/applications_ledger.csv`.
 - [ ] **`refresh_targets.md` generated** (Phase 7, for medium/deep) — entities/numbers/hypotheses/topic markers filled in per the Z11 template
 - [ ] **`memo.md` assembled** (Phase 6, always) — a recommendation without «it depends», the forks, 3 numbers with [sNN]+as_of, the risk, next actions
 - [ ] **Decision walkthrough held** (Phase 8, always) — forks resolved (accepted/blocked/deferred), `application.md` written with status and applicability_ratio
-- [ ] A row added to `~/.claude/research/applications_ledger.csv`
+- [ ] A row added to `~/.knowing/research/applications_ledger.csv`
 - [ ] Files saved, the path shown to the user as a markdown link

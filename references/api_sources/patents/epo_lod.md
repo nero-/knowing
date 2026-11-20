@@ -1,26 +1,27 @@
+<!-- translated from upstream/references/api_sources/patents/epo_lod.md @ e233797 — see docs/TRANSLATION.md -->
 # EPO Linked Open Data
 
 ## Overview
 
 - **Endpoint base:** `https://data.epo.org/linked-data/query` (SPARQL endpoint, Apache Jena Fuseki)
 - **Auth:** None
-- **Free tier:** Unlimited (публично заявленной квоты/лимита не найдено — сервис описан EPO как открытый для occasional use через query interface, для heavy use рекомендован bulk download)
-- **Rate limit:** не задокументировано и не подтверждено на 2026-08-17 — отдельной страницы про rate limits для data.epo.org (в отличие от OPS, у которого есть fair-use charter) найти не удалось
+- **Free tier:** Unlimited (no publicly declared quota/limit was found — EPO describes the service as open for occasional use via the query interface, and recommends bulk download for heavy use)
+- **Rate limit:** not documented and not confirmed as of 2026-08-17 — a separate page about rate limits for data.epo.org (unlike OPS, which has a fair-use charter) could not be found
 - **Docs:** https://www.epo.org/en/searching-for-patents/data/linked-open-data
-- **Status page:** отдельной status-страницы для data.epo.org не найдено; см. общий https://www.epo.org/en/service-support/status-online-services
+- **Status page:** no separate status page for data.epo.org was found; see the general https://www.epo.org/en/service-support/status-online-services
 - **Verified:** 2026-08-17
 
-Live-проверка 2026-08-17 — реальный SPARQL-запрос без auth, полный успешный ответ:
+Live check 2026-08-17 — a real SPARQL query without auth, the full successful response:
 ```
 curl -G "https://data.epo.org/linked-data/query" \
   --data-urlencode "query=SELECT DISTINCT * WHERE { <http://data.epo.org/linked-data/id/application/EP/01903571> ?p ?o . } LIMIT 5" \
   -H "Accept: application/sparql-results+json"
-→ HTTP 200, вернул applicationAuthority, applicationNumber, filingDate, grantDate и т.д.
+→ HTTP 200, returned applicationAuthority, applicationNumber, filingDate, grantDate, etc.
 ```
 
 ## What it returns
 
-RDF-триплы. Через SPARQL endpoint — JSON (`application/sparql-results+json`), XML или HTML (в зависимости от `Accept`). Данные — библиографика EP-заявок и публикаций: номера, даты подачи/выдачи, applicant/inventor, классификации, связи между заявкой и публикацией и т.д., линкуемые через URI вида `http://data.epo.org/linked-data/id/...`.
+RDF triples. Through the SPARQL endpoint — JSON (`application/sparql-results+json`), XML or HTML (depending on `Accept`). The data is the bibliographic data of EP applications and publications: numbers, filing/grant dates, applicant/inventor, classifications, links between application and publication, etc., linked through URIs of the form `http://data.epo.org/linked-data/id/...`.
 
 ```json
 {
@@ -38,38 +39,38 @@ RDF-триплы. Через SPARQL endpoint — JSON (`application/sparql-resul
 
 ## When to use
 
-- Нужен произвольный граф-запрос по связям патентных данных (SPARQL) без OAuth-обвязки OPS
-- Быстрый bibliographic lookup по известному номеру заявки/публикации без регистрации
-- Связывание патентных данных с другими linked-data источниками (общий web of data подход через URI)
-- Прототипирование/исследование данных без квот и авторизации
+- You need an arbitrary graph query over patent data relations (SPARQL) without the OAuth scaffolding of OPS
+- A quick bibliographic lookup by a known application/publication number without registration
+- Linking patent data with other linked-data sources (the general web of data approach via URIs)
+- Prototyping/researching data without quotas and authorisation
 
 ## When not to use
 
-- Нужен full-text (claims/description) — LOD покрывает в первую очередь библиографику, не полный текст (для этого OPS `/fulltext` или Espacenet)
-- Не знаком со SPARQL и нет времени разбираться в синтаксисе — тогда проще OPS REST или Espacenet UI
-- Нужны гарантии по SLA/rate limit — у LOD, в отличие от OPS, нет опубликованной fair-use политики, что означает и отсутствие официальных гарантий доступности при больших нагрузках
+- You need full text (claims/description) — LOD covers primarily bibliographic data, not full text (for that, OPS `/fulltext` or Espacenet)
+- You are not familiar with SPARQL and have no time to work out the syntax — then OPS REST or the Espacenet UI is simpler
+- You need SLA/rate limit guarantees — LOD, unlike OPS, has no published fair-use policy, which also means no official availability guarantees under heavy load
 
 ## Auth setup
 
-Не требуется. Публичный SPARQL endpoint, ключ/токен не нужен.
+Not required. A public SPARQL endpoint, no key/token needed.
 
 ## Query patterns
 
-### Получить все свойства ресурса по URI
+### Get all properties of a resource by URI
 
 ```
 GET /linked-data/query?query=SELECT DISTINCT * WHERE { <{URI}> ?p ?o . } LIMIT 100
 Accept: application/sparql-results+json
 ```
 
-### Найти заявку по номеру (пример конкретного URI-паттерна)
+### Find an application by number (example of the concrete URI pattern)
 
 ```
 URI: http://data.epo.org/linked-data/id/application/{authority}/{number}
-# authority = ST.3 код ведомства, например EP
+# authority = ST.3 office code, e.g. EP
 ```
 
-### POST-запрос (для длинных SPARQL-запросов)
+### POST request (for long SPARQL queries)
 
 ```
 POST /linked-data/query
@@ -79,7 +80,7 @@ Body: query=SELECT ... (urlencoded)
 
 ## Example queries
 
-Реальный, проверенный live 2026-08-17 запрос и подтверждённый ответ:
+A real query, verified live 2026-08-17, and the confirmed response:
 
 ```bash
 curl -G "https://data.epo.org/linked-data/query" \
@@ -87,7 +88,7 @@ curl -G "https://data.epo.org/linked-data/query" \
   -H "Accept: application/sparql-results+json"
 ```
 
-Ответ (сокращённо):
+Response (abridged):
 ```json
 {"p": ".../applicationNumber", "o": {"value": "01903571"}}
 {"p": ".../filingDate", "o": {"value": "2001-01-20"}}
@@ -96,19 +97,19 @@ curl -G "https://data.epo.org/linked-data/query" \
 
 ## Limitations
 
-- URI-схема данных немного путаная в документации: старые URI шли под `http://data.epo.org/linkeddata/...` (без дефиса), актуальный endpoint — `linked-data` (с дефисом); при построении запросов сверяться с реальными URI из ответов, а не собирать их вручную по догадке
-- Нет опубликованного SLA/rate limit — при интенсивном использовании нет формальной гарантии, в отличие от OPS с явной fair-use политикой
-- Покрытие — в первую очередь EP (европейские) заявки/публикации, не замена OPS по глубине данных (legal status, family, full-text представлены слабее)
-- Формат ответа зависит от `Accept`-заголовка — если не указать, можно получить HTML вместо JSON
+- The data URI scheme is somewhat muddled in the documentation: older URIs lived under `http://data.epo.org/linkeddata/...` (without a hyphen), the current endpoint is `linked-data` (with a hyphen); when building queries, check against the real URIs from responses rather than assembling them by hand from a guess
+- No published SLA/rate limit — under intensive use there is no formal guarantee, unlike OPS with its explicit fair-use policy
+- Coverage is primarily EP (European) applications/publications, not a replacement for OPS in data depth (legal status, family, full-text are represented more weakly)
+- The response format depends on the `Accept` header — if you do not specify it, you may get HTML instead of JSON
 
 ## Combine with
 
-- **EPO OPS** (`epo_ops.md`) — для full-text, legal status, patent family — того, что LOD не покрывает
-- **USPTO ODP** (`uspto_odp.md`) — для симметричных US-данных
-- **CrossRef / OpenAlex** (`academic/`) — если патент цитирует или цитируется научной литературой, для triangulation
+- **EPO OPS** (`epo_ops.md`) — for full text, legal status, patent family — what LOD does not cover
+- **USPTO ODP** (`uspto_odp.md`) — for symmetric US data
+- **CrossRef / OpenAlex** (`academic/`) — if the patent cites or is cited by scientific literature, for triangulation
 
 ## Fallback if API down or rate-limited
 
-1. Bulk download полного датасета (упоминается на странице EPO как опция для heavy use, детали — на epo.org/en/searching-for-patents/data/linked-open-data)
-2. EPO OPS (`epo_ops.md`) — REST/XML вместо SPARQL, для тех же bibliographic данных
-3. WebFetch на Espacenet UI для ручного разового поиска
+1. Bulk download of the full dataset (mentioned on the EPO page as an option for heavy use, details at epo.org/en/searching-for-patents/data/linked-open-data)
+2. EPO OPS (`epo_ops.md`) — REST/XML instead of SPARQL, for the same bibliographic data
+3. WebFetch to the Espacenet UI for a one-off manual search

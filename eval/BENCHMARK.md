@@ -30,7 +30,7 @@ where the skill is weak.
 
 ## Run it
 
-For each question, in a Claude Code session at the repo root:
+For each question, in a the agent harness session at the repo root:
 
 ```
 /deepdive <paste the Question block>
@@ -90,7 +90,7 @@ the worst case where the judge is useless in both directions (0.411 < 0.512) —
 citation floor carries it — though the margin drops to 1.24×, so a judge that
 systematically over-scores still degrades the benchmark badly.
 
-Caveat, on the record: the fixtures were written and judged inside one Claude
+Caveat, on the record: the fixtures were written and judged inside one the model
 session, so this measures the scoring formula, not real research quality, and it
 does not validate the judge against an independent opinion. `tests/test_scorecard_
 discriminates.py` pins the ordering offline; the live-URL part is exercised only by

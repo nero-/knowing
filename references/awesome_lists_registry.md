@@ -11,7 +11,7 @@
 - Discovery workflow for the agent
 - Limitations awesome-lists
 - Future contributions
-- Notes on a specific case — the Claude ecosystem
+- Notes on a specific case — the the model ecosystem
 
 A catalog of upstream awesome-lists on GitHub that the agent turns to when my catalog has no purpose-fit source for a specific subtopic.
 
@@ -100,13 +100,13 @@ Narrowly specialised lists for specific domains.
 - **appcypher/awesome-mcp-servers** — MCP servers catalog
 - **wong2/awesome-mcp-servers** — alternative MCP list
 - **abordage/awesome-mcp** — daily-updated MCP list
-- **win4r/Awesome-Claude-MCP-Servers** — Claude-optimized MCP
+- **win4r/Awesome-the model-MCP-Servers** — the model-optimized MCP
 
-### Claude ecosystem
+### the model ecosystem
 
-- **travisvn/awesome-claude-skills** — Claude Skills (for distributing our skill!)
-- **JSONbored/awesome-claude** — Claude registry
-- **ComposioHQ/awesome-claude-plugins** — Claude Code plugins
+- **travisvn/awesome-claude-skills** — the model Skills (for distributing our skill!)
+- **JSONbored/awesome-claude** — the model registry
+- **ComposioHQ/awesome-claude-plugins** — the agent harness plugins
 - **rohitg00/awesome-claude-code-toolkit** — toolkit overview
 
 ## Tier 3 — Niche / Domain-specific
@@ -201,9 +201,9 @@ When a contributor finds a valuable source in an upstream awesome-list, their PR
 
 This gives **credit** to the original awesome-list maintainer + encourages ecosystem growth.
 
-## Notes on a specific case — the Claude ecosystem
+## Notes on a specific case — the the model ecosystem
 
-The lists in the "Claude ecosystem" category are critical for **distributing this skill**:
+The lists in the "the model ecosystem" category are critical for **distributing this skill**:
 
 - Submit deepdive to [travisvn/awesome-claude-skills](https://github.com/travisvn/awesome-claude-skills) after the first release
 - Submit to [JSONbored/awesome-claude](https://github.com/JSONbored/awesome-claude)

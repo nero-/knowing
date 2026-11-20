@@ -1,25 +1,26 @@
-# EXPLAIN blocks — объяснение устройства
+<!-- translated from upstream/references/blocks/explain.md @ e233797 — see docs/TRANSLATION.md -->
+# EXPLAIN blocks — explaining how it works
 
-Блоки для жанра explainer и любых ресёрчей где нужно объяснить как X устроен.
+Blocks for the explainer genre and any research where you need to explain how X works.
 
 ---
 
 ## E1 — `mental-model`
 
-**Когда:** Explainer всегда. Технические темы.
+**When:** Explainer always. Technical topics.
 
-**Что внутри:** ASCII-схема устройства + 3-5 ключевых сущностей с короткими определениями.
+**What's inside:** An ASCII diagram of the structure + 3-5 key entities with short definitions.
 
-**Антипаттерн:** Подробная UML/архитектурная диаграмма. Mental model — это упрощение, не полная спецификация.
+**Anti-pattern:** A detailed UML/architecture diagram. A mental model is a simplification, not a full specification.
 
-**Композиция:** После `tldr`, перед `stepwise`. Если есть `glossary-mini` — после неё (читатель сначала видит термины, потом схему).
+**Composition:** After `tldr`, before `stepwise`. If there is a `glossary-mini` — after it (the reader first sees the terms, then the diagram).
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Mental model
 
-Как устроено в одном предложении: <X состоит из A, B, C; A и B общаются через D>.
+How it works in one sentence: <X consists of A, B, C; A and B talk through D>.
 
 ```
                    ┌─────────┐
@@ -41,68 +42,68 @@
                        └─────────┘
 ```
 
-**Ключевые сущности:**
-- **USER** — потребитель API
-- **API Gateway** — единая точка входа, routing + rate limit
-- **Auth service** — выдаёт/валидирует JWT
-- **Data service** — бизнес-логика и работа с БД
-- **Postgres** — единое хранилище состояния
+**Key entities:**
+- **USER** — the consumer of the API
+- **API Gateway** — the single entry point, routing + rate limit
+- **Auth service** — issues/validates JWT
+- **Data service** — business logic and database work
+- **Postgres** — the single store of state
 ```
 
 ---
 
 ## E2 — `glossary-mini`
 
-**Когда:** Explainer всегда. Любой отчёт со специфичной лексикой.
+**When:** Explainer always. Any report with specific vocabulary.
 
-**Что внутри:** 5-10 терминов с одной фразой определения.
+**What's inside:** 5-10 terms with a one-phrase definition.
 
-**Антипаттерн:** Расширять определения до абзацев — для этого `glossary-full`. Дублировать общеизвестные термины.
+**Anti-pattern:** Expanding definitions into paragraphs — that is what `glossary-full` is for. Duplicating well-known terms.
 
-**Композиция:** Перед `mental-model` (читатель знает термины перед схемой). Исключает `glossary-full` и `glossary-link`.
+**Composition:** Before `mental-model` (the reader knows the terms before the diagram). Excludes `glossary-full` and `glossary-link`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Glossary (mini)
 
-- **<Термин 1>** — <определение в одной фразе>
-- **<Термин 2>** — <определение>
-- **<Термин 3>** — <определение>
-- **<Термин 4>** — <определение>
-- **<Термин 5>** — <определение>
+- **<Term 1>** — <definition in one phrase>
+- **<Term 2>** — <definition>
+- **<Term 3>** — <definition>
+- **<Term 4>** — <definition>
+- **<Term 5>** — <definition>
 ```
 
 ---
 
 ## E3 — `glossary-full`
 
-**Когда:** Custom для тем со сложной терминологией где определения требуют контекста.
+**When:** Custom for topics with complex terminology where the definitions require context.
 
-**Что внутри:** Развёрнутые определения с примерами и связями между терминами.
+**What's inside:** Extended definitions with examples and links between the terms.
 
-**Антипаттерн:** Использовать вместо `glossary-mini` когда хватает короткого. Это для специально терминоёмких ресёрчей.
+**Anti-pattern:** Using it instead of `glossary-mini` when a short one is enough. It is for deliberately term-heavy research.
 
-**Композиция:** Исключает `glossary-mini`. После `mental-model` (схема даёт контекст).
+**Composition:** Excludes `glossary-mini`. After `mental-model` (the diagram provides the context).
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Glossary (full)
 
-### <Термин 1>
+### <Term 1>
 
-**Определение:** <2-3 предложения>
+**Definition:** <2-3 sentences>
 
-**Пример:** <конкретный пример использования>
+**Example:** <a concrete example of use>
 
-**Не путать с:** <похожий термин> — отличие в том, что <…>
+**Not to be confused with:** <a similar term> — the difference is that <…>
 
-**Связано с:** [<Термин 2>](#термин-2), [<Термин 5>](#термин-5)
+**Related to:** [<Term 2>](#term-2), [<Term 5>](#term-5)
 
 ---
 
-### <Термин 2>
+### <Term 2>
 
 ...
 ```
@@ -111,127 +112,127 @@
 
 ## E4 — `stepwise`
 
-**Когда:** Explainer для sequential процессов. Любой механизм, разворачивающийся во времени.
+**When:** Explainer for sequential processes. Any mechanism that unfolds over time.
 
-**Что внутри:** Пронумерованные шаги работы механизма.
+**What's inside:** Numbered steps of how the mechanism works.
 
-**Антипаттерн:** Слишком общие шаги («сначала запрос, потом ответ»). Каждый шаг должен иметь субстанцию.
+**Anti-pattern:** Overly general steps («first the request, then the response»). Every step must have substance.
 
-**Композиция:** После `mental-model`. Перед `variants` или `worked-example`.
+**Composition:** After `mental-model`. Before `variants` or `worked-example`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
-## Как работает (пошагово)
+## How it works (step by step)
 
-1. **<Шаг 1>** — <что происходит, кто инициирует, какие данные передаются> [s03]
+1. **<Step 1>** — <what happens, who initiates, which data is passed> [s03]
 
-2. **<Шаг 2>** — <…> [s07]
-   - Подшаг A: <деталь>
-   - Подшаг B: <деталь>
+2. **<Step 2>** — <…> [s07]
+   - Substep A: <detail>
+   - Substep B: <detail>
 
-3. **<Шаг 3>** — <…> [s07]
+3. **<Step 3>** — <…> [s07]
 
-4. **<Шаг 4>** — <…> [s12]
+4. **<Step 4>** — <…> [s12]
 
-5. **<Шаг 5>** — <завершение>
+5. **<Step 5>** — <completion>
 
-**Latency этого пути:** <если применимо>
-**Bottleneck:** <где обычно тормозит, если применимо>
+**Latency of this path:** <if applicable>
+**Bottleneck:** <where it usually stalls, if applicable>
 ```
 
 ---
 
 ## E5 — `variants`
 
-**Когда:** Explainer когда X имеет несколько реализаций или вариантов.
+**When:** Explainer when X has several implementations or variants.
 
-**Что внутри:** Таблица вариантов с местом встречи и отличиями.
+**What's inside:** A table of variants with where they occur and how they differ.
 
-**Антипаттерн:** Включать редкие/исторические варианты не отделяя от мейнстрим. Делай явно: "common" vs "rare/historical".
+**Anti-pattern:** Including rare/historical variants without separating them from the mainstream. Make it explicit: "common" vs "rare/historical".
 
-**Композиция:** После `stepwise`. До `failure-modes` если есть.
+**Composition:** After `stepwise`. Before `failure-modes` if there is one.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
-## Варианты реализации
+## Implementation variants
 
 ### Common variants
 
-| Вариант | Где встречается | Чем отличается | Источник |
+| Variant | Where it occurs | How it differs | Source |
 |---|---|---|---|
-| A (canonical) | <products> | базовая реализация | [s01] |
+| A (canonical) | <products> | the base implementation | [s01] |
 | B | <product X> | + optimization Y | [s05] |
-| C | <product Z> | вместо A использует D | [s09] |
+| C | <product Z> | uses D instead of A | [s09] |
 
 ### Rare / historical
 
-| Вариант | Где | Почему важен сейчас |
+| Variant | Where | Why it matters now |
 |---|---|---|
-| Legacy X | старые системы | до сих пор в N% продуктов |
+| Legacy X | old systems | still in N% of products |
 ```
 
 ---
 
 ## E6 — `worked-example`
 
-**Когда:** Explainer для education-style ресёрча. Когда теория без примера не закрепляется.
+**When:** Explainer for education-style research. When theory does not stick without an example.
 
-**Что внутри:** Реальный сценарий с проходом через все шаги.
+**What's inside:** A real scenario walking through all the steps.
 
-**Антипаттерн:** Слишком абстрактный пример («foo bar baz»). Бери реальную систему/случай.
+**Anti-pattern:** An overly abstract example («foo bar baz»). Take a real system/case.
 
-**Композиция:** После `stepwise` или `variants`. Конкретизирует абстракцию.
+**Composition:** After `stepwise` or `variants`. Makes the abstraction concrete.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Worked example
 
-**Сценарий:** <конкретный реальный случай>
+**Scenario:** <a concrete real case>
 
-**Шаг 1:** <что происходит в этом примере>
-- Input: <конкретные данные>
-- Что делает система: <конкретное действие>
-- Output: <конкретный результат>
+**Step 1:** <what happens in this example>
+- Input: <concrete data>
+- What the system does: <concrete action>
+- Output: <concrete result>
 
-**Шаг 2:** ...
+**Step 2:** ...
 
-**Шаг 3:** ...
+**Step 3:** ...
 
-**Результат:** <финальный исход + что важно заметить>
+**Result:** <final outcome + what is important to notice>
 
-**Чему учит пример:** <главный takeaway> [s07]
+**What the example teaches:** <the main takeaway> [s07]
 ```
 
 ---
 
 ## E7 — `common-confusions`
 
-**Когда:** Explainer когда тему часто путают. Validation для тонких claims.
+**When:** Explainer when the topic is often confused. Validation for subtle claims.
 
-**Что внутри:** Список "X ≠ Y" с объяснением чем отличается.
+**What's inside:** A list of "X ≠ Y" with an explanation of how they differ.
 
-**Антипаттерн:** Solving тривиальных confusions ("X не значит Y когда Y вообще другое слово"). Только реальные путаницы.
+**Anti-pattern:** Solving trivial confusions ("X does not mean Y when Y is a completely different word"). Real confusions only.
 
-**Композиция:** После всех explainer-блоков, перед `closing` секцией.
+**Composition:** After all explainer blocks, before the `closing` section.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Common confusions
 
-### <Главное X не есть Y>
+### <The main X is not Y>
 
-**Часто думают:** <ошибочное представление>
-**На самом деле:** <правда> [s05]
-**Откуда путаница:** <причина — terminological overlap, marketing, etc>
+**Often thought:** <the mistaken notion>
+**In fact:** <the truth> [s05]
+**Where the confusion comes from:** <the cause — terminological overlap, marketing, etc>
 
 ### <Confusion 2>
 
-**Часто думают:** ...
-**На самом деле:** ...
+**Often thought:** ...
+**In fact:** ...
 
 ### <Confusion 3>
 
@@ -242,90 +243,90 @@
 
 ## E8 — `prerequisites`
 
-**Когда:** Технические темы со сложным background где без него ничего не понятно.
+**When:** Technical topics with a complex background where nothing is clear without it.
 
-**Что внутри:** Список того, что нужно знать перед чтением, со ссылками куда подтянуть.
+**What's inside:** A list of what you need to know before reading, with links to where to brush up.
 
-**Антипаттерн:** Длинный список prerequisite чтобы избежать собственного объяснения. Это не отговорка от explainer'а.
+**Anti-pattern:** A long list of prerequisites in order to avoid one's own explanation. It is not an excuse to skip the explainer.
 
-**Композиция:** В самом начале, до `tldr` или сразу после.
+**Composition:** At the very start, before `tldr` or right after it.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Prerequisites
 
-Прежде чем читать, желательно понимать:
+Before reading, it helps to understand:
 
-- **<Concept 1>** — что это и зачем. Если не знаешь: [reference](url).
-- **<Concept 2>** — на каком уровне нужно: достаточно знать <minimal>.
-- **<Concept 3>** — необязательно, но поможет.
+- **<Concept 1>** — what it is and why it matters. If you don't know it: [reference](url).
+- **<Concept 2>** — the level needed: knowing <minimal> is enough.
+- **<Concept 3>** — optional, but it will help.
 
-Если ты впервые в теме — начни с [start-with](url) и потом возвращайся сюда.
+If you are new to the topic — start with [start-with](url) and then come back here.
 ```
 
 ---
 
 ## E9 — `analogy`
 
-**Когда:** Сложные технические темы. Когда читателю проще через знакомое.
+**When:** Complex technical topics. When the reader finds a familiar thing easier.
 
-**Что внутри:** Аналогия из знакомой области + явные limits аналогии.
+**What's inside:** An analogy from a familiar field + the explicit limits of the analogy.
 
-**Антипаттерн:** Аналогия без указания где она ломается — читатель достроит неправильное.
+**Anti-pattern:** An analogy without saying where it breaks — the reader will fill in the wrong thing.
 
-**Композиция:** После `mental-model`. Не вместо неё.
+**Composition:** After `mental-model`. Not instead of it.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
-## Аналогия
+## Analogy
 
-**X — это как Y**, только <ключевое отличие>.
+**X is like Y**, only <the key difference>.
 
-| Аспект Y (знакомое) | Аспект X (наша тема) |
+| Aspect of Y (familiar) | Aspect of X (our topic) |
 |---|---|
 | ... | ... |
 | ... | ... |
 
-**Где аналогия ломается:**
-- Y делает A, X не делает A
-- В X есть B, чего в Y нет
+**Where the analogy breaks down:**
+- Y does A, X does not do A
+- X has B, which Y lacks
 
-**Используй аналогию для:** понимания high-level устройства.
-**НЕ используй для:** предсказания поведения в граничных случаях.
+**Use the analogy for:** understanding the high-level structure.
+**Do NOT use it for:** predicting behaviour in edge cases.
 ```
 
 ---
 
 ## E10 — `failure-modes`
 
-**Когда:** Technical explainer. Debugging. Любая система где важно понимать как она ломается.
+**When:** Technical explainer. Debugging. Any system where it is important to understand how it breaks.
 
-**Что внутри:** Типичные scenarios отказа, их признаки, как чинить.
+**What's inside:** Typical failure scenarios, their symptoms, how to fix them.
 
-**Антипаттерн:** Описывать только теоретические failures без observed evidence. Бери реальные incidents/postmortems.
+**Anti-pattern:** Describing only theoretical failures without observed evidence. Take real incidents/postmortems.
 
-**Композиция:** После `stepwise` или `worked-example`. До `closing`.
+**Composition:** After `stepwise` or `worked-example`. Before `closing`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Failure modes
 
-### FM1: <Имя сценария отказа>
+### FM1: <Name of the failure scenario>
 
-**Симптомы:** <что видит пользователь / оператор>
-**Что происходит внутри:** <root cause>
-**Частота:** rare | occasional | common
-**Как чинить:** <первое действие> [s09]
-**Как предотвратить:** <design / monitoring>
+**Symptoms:** <what the user / operator sees>
+**What happens inside:** <root cause>
+**Frequency:** rare | occasional | common
+**How to fix:** <the first action> [s09]
+**How to prevent:** <design / monitoring>
 
-### FM2: <Имя>
+### FM2: <Name>
 
 ...
 
-### FM3: <Имя>
+### FM3: <Name>
 
 ...
 ```
@@ -334,26 +335,26 @@
 
 ## E11 — `edge-cases`
 
-**Когда:** Технические explainer для систем с обширными граничными случаями.
+**When:** Technical explainer for systems with extensive edge cases.
 
-**Что внутри:** Граничные сценарии и поведение системы в них.
+**What's inside:** Edge scenarios and the system's behaviour in them.
 
-**Антипаттерн:** Сваливать failure modes и edge cases в один блок. Edge cases — это в скоупе нормальной работы, failure modes — отказы.
+**Anti-pattern:** Dumping failure modes and edge cases into one block. Edge cases are within the scope of normal operation, failure modes are outages.
 
-**Композиция:** После `stepwise`. До `failure-modes` (логичный порядок: нормальное → граничное → отказ).
+**Composition:** After `stepwise`. Before `failure-modes` (the logical order: normal → edge → failure).
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Edge cases
 
-### EC1: <Сценарий>
+### EC1: <Scenario>
 
-**Когда возникает:** <условие>
-**Что система делает:** <ожидаемое поведение> [s05]
-**Что НЕ делает (но иногда ожидают):** <разочарование>
+**When it arises:** <condition>
+**What the system does:** <expected behaviour> [s05]
+**What it does NOT do (but is sometimes expected to):** <the disappointment>
 
-### EC2: <Сценарий>
+### EC2: <Scenario>
 
 ...
 ```
@@ -362,49 +363,49 @@
 
 ## E12 — `design-rationale`
 
-**Когда:** Architecture explainer. Объяснение «почему именно так спроектировано».
+**When:** Architecture explainer. Explaining «why it is designed exactly this way».
 
-**Что внутри:** Решения дизайна + alternatives которые рассматривались + почему не выбрали.
+**What's inside:** Design decisions + the alternatives that were considered + why they were not chosen.
 
-**Антипаттерн:** Post-hoc rationalization — «выбрали X потому что лучшее». Бери реальные ADR / design docs.
+**Anti-pattern:** Post-hoc rationalization — «we chose X because it is the best». Take real ADRs / design docs.
 
-**Композиция:** После `mental-model` и `stepwise`. Глубокий анализ для тех кто хочет понять «почему».
+**Composition:** After `mental-model` and `stepwise`. A deep analysis for those who want to understand «why».
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Design rationale
 
-### Решение 1: <ключевой design choice>
+### Decision 1: <the key design choice>
 
-**Что выбрано:** A
-**Альтернативы:** B, C, D
-**Почему A:** <конкретные причины> [s07]
-**Trade-off:** <что потеряли>
-**ADR / источник решения:** <ссылка если есть>
+**What was chosen:** A
+**Alternatives:** B, C, D
+**Why A:** <concrete reasons> [s07]
+**Trade-off:** <what was lost>
+**ADR / source of the decision:** <link if any>
 
-### Решение 2: ...
+### Decision 2: ...
 ```
 
 ---
 
 ## E13 — `flow-diagram`
 
-**Когда:** Process explainer. Поток данных или процесса со многими ветвями.
+**When:** Process explainer. A flow of data or of a process with many branches.
 
-**Что внутри:** Mermaid `flowchart` — основная форма. ASCII — фолбэк, когда документ не собирается (ответ в чат, черновик без `build_report.py`).
+**What's inside:** Mermaid `flowchart` — the primary form. ASCII — the fallback when the document does not get built (an answer in chat, a draft without `build_report.py`).
 
-**Антипаттерн:** Резать схему на две «потому что много узлов» — узлы режет `mmdc`, а не автор; делить надо тогда, когда в одной схеме два разных вопроса. Схема без подписи `%% caption:` — читатель не знает, на что смотрит.
+**Anti-pattern:** Cutting a diagram in two «because there are many nodes» — the nodes are cut by `mmdc`, not the author; you must split when one diagram holds two different questions. A diagram without a `%% caption:` — the reader does not know what they are looking at.
 
-**Композиция:** Вместо `mental-model` для процессов, не статичных систем. Или дополнение.
+**Composition:** Instead of `mental-model` for processes rather than static systems. Or as a supplement.
 
-**Шаблон:**
+**Template:**
 
 ````markdown
 ## Flow
 
 ```mermaid
-%% caption: путь запроса от приёма до ответа
+%% caption: the path of a request from intake to response
 flowchart TD
   A[Request] --> B{Validate}
   B -->|ok| C[Authz]
@@ -418,38 +419,38 @@ flowchart TD
   G --> K
 ```
 
-**Описание ветвей:**
-- **Validate fail:** <что происходит>
-- **Rate limit over:** <что происходит>
+**Description of the branches:**
+- **Validate fail:** <what happens>
+- **Rate limit over:** <what happens>
 - ...
 ````
 
-**Рендер:** `scripts/build_report.py` вырезает fence до pandoc, отдаёт `mmdc`, вклеивает SVG как «Схема N» в HTML/PDF/DOCX. Схема, которую рендер не взял, роняет сборку — дырой в документ не уедет. Установка рендерера — `references/report_export.md`.
+**Rendering:** `scripts/build_report.py` strips the fence before pandoc, hands it to `mmdc`, and pastes the SVG back in as «Diagram N» into HTML/PDF/DOCX. A diagram the renderer did not take fails the build — it will not go through into the document as a hole. Installing the renderer — `references/report_export.md`.
 
 ---
 
 ## E14 — `state-machine`
 
-**Когда:** Технические системы со state. Где важно понимать transitions.
+**When:** Technical systems with state. Where understanding the transitions matters.
 
-**Что внутри:** States + transitions + triggers + invariants.
+**What's inside:** States + transitions + triggers + invariants.
 
-**Антипаттерн:** Граф без triggers — непонятно когда что happens. Каждый переход должен иметь trigger.
+**Anti-pattern:** A graph without triggers — it is unclear when what happens. Every transition must have a trigger.
 
-**Композиция:** После `mental-model`. Альтернатива `stepwise` для stateful систем.
+**Composition:** After `mental-model`. An alternative to `stepwise` for stateful systems.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## State machine
 
 **States:**
-- `INIT` — начальное
-- `PENDING` — ожидание X
-- `ACTIVE` — нормальная работа
-- `PAUSED` — приостановлено
-- `FAILED` — ошибка, требует ручного вмешательства
-- `DONE` — финальное
+- `INIT` — initial
+- `PENDING` — waiting for X
+- `ACTIVE` — normal operation
+- `PAUSED` — suspended
+- `FAILED` — error, requires manual intervention
+- `DONE` — final
 
 **Transitions:**
 
@@ -464,7 +465,7 @@ flowchart TD
 | ACTIVE | FAILED | exception | unrecoverable |
 
 **Invariants:**
-- В `ACTIVE` всегда есть active connection
-- `FAILED` — только manual recovery
-- `DONE` — terminal state, нет transitions out
+- In `ACTIVE` there is always an active connection
+- `FAILED` — manual recovery only
+- `DONE` — a terminal state, no transitions out
 ```

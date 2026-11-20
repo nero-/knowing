@@ -1,60 +1,61 @@
-# Refresh Protocol — как делать дельта-ресёрч
+<!-- translated from upstream/references/refresh_protocol.md @ e233797 — see docs/TRANSLATION.md -->
+# Refresh Protocol — how to do delta research
 
-## Содержание
+## Contents
 
-- Принципы
-- Когда запускать update
+- Principles
+- When to run an update
 - Pre-flight check
-- 4 категории дельты (что искать)
-- Verified-no-change (что НЕ изменилось)
-- Output: структура delta-файла
-- Что **НЕ** делать
-- Model routing для update
-- Что должно быть в `refresh_targets.md` (отдельный файл рядом с plan.md)
+- The 4 categories of delta (what to look for)
+- Verified-no-change (what has NOT changed)
+- Output: the structure of the delta file
+- What **NOT** to do
+- Model routing for an update
+- What must be in `refresh_targets.md` (a separate file next to plan.md)
 
-**Когда используется:** пользователь вызывает `update <slug>` или «обнови ресёрч про X». Скилл **не повторяет весь ресёрч** — он находит **только что изменилось** с последнего раза и пишет diff-файл.
+**When it is used:** the user calls `update <slug>` or «update the research on X». The skill **does not repeat the whole research** — it finds **only what has changed** since last time and writes a diff file.
 
-**Зачем:** полный re-research дорогой, медленный и теряет историю. Дельта-подход:
-- Новые игроки в индустрии → добавить в landscape (M2)
-- Свежие данные по фактам/цифрам → перепроверить N-блоки
-- Новые публикации → проверить не опровергают ли H1-H3
-- Старые тезисы что **не изменились** → сохранить как `verified: still valid`
-
----
-
-## Принципы
-
-1. **Дельта, не replay.** Не запускать Phase 4 с нуля. Только targeted поиск с date filters от `last_research_date`.
-2. **Источник истины — `refresh_targets.md`.** Этот файл генерируется в Phase 7 предыдущего ресёрча. Он говорит «вот что важно отслеживать в этом домене».
-3. **Output — diff-файл, не новый отчёт.** Старый отчёт остаётся. `diffs/<YYYY-MM-DD>_delta.md` — компактный список изменений.
-4. **Verified-как-найденное.** Если перепроверили факт и он не изменился — это **результат**, а не пустота. Зафиксировать «still valid».
-5. **Adversarial trigger.** Новая публикация которая опровергает гипотезу — это сигнал «нужно перезапустить Phase 6 на обновлённом контексте», не молчаливо проигнорировать.
+**Why:** a full re-research is expensive, slow and loses history. The delta approach:
+- New players in the industry → add to the landscape (M2)
+- Fresh data on facts/numbers → re-check the N blocks
+- New publications → check whether they refute H1-H3
+- Old theses that **have not changed** → keep as `verified: still valid`
 
 ---
 
-## Когда запускать update
+## Principles
 
-**Триггеры:**
-- Пользователь явно сказал «обнови ресёрч про X»
-- Прошло >3 месяцев с `last_research_date` и пользователь снова интересуется темой → предложить
-- В чате упомянуто событие из домена ресёрча («Polymarket подняла раунд» — а ресёрч про prediction markets) → предложить
+1. **Delta, not replay.** Do not run Phase 4 from scratch. Only targeted search with date filters from `last_research_date`.
+2. **The source of truth is `refresh_targets.md`.** This file is generated in Phase 7 of the previous research. It says «here is what is worth tracking in this domain».
+3. **Output — a diff file, not a new report.** The old report stays. `diffs/<YYYY-MM-DD>_delta.md` — a compact list of changes.
+4. **Verified as a finding.** If a fact was re-checked and did not change — that is **a result**, not emptiness. Record «still valid».
+5. **Adversarial trigger.** A new publication that refutes a hypothesis is a signal «Phase 6 must be re-run on the updated context», not something to silently ignore.
 
-**НЕ запускать update:**
-- Без явного запроса пользователя или подтверждения предложения
-- Если `last_research_date` < 30 дней (вряд ли что-то существенное изменилось)
-- На shallow-ресёрче (там нечего обновлять — старый дешевле перезапустить полностью)
+---
+
+## When to run an update
+
+**Triggers:**
+- The user explicitly said «update the research on X»
+- More than 3 months have passed since `last_research_date` and the user is interested in the topic again → offer it
+- An event from the research domain is mentioned in the chat («Polymarket raised a round» — while the research is about prediction markets) → offer it
+
+**Do NOT run an update:**
+- Without an explicit user request or confirmation of an offer
+- If `last_research_date` < 30 days (little substantive is likely to have changed)
+- On a shallow research (there is nothing to update there — restarting the old one in full is cheaper)
 
 ---
 
 ## Pre-flight check
 
-Перед началом update:
+Before starting an update:
 
 ```
 1. Read research/<slug>/plan.md
-   ├── last_research_date (из секции 0 HEADER)
-   ├── гипотезы H1-H4 (секция 9)
-   └── подвопросы/подтемы (секция 11)
+   ├── last_research_date (from section 0 HEADER)
+   ├── hypotheses H1-H4 (section 9)
+   └── subquestions/subtopics (section 11)
 
 2. Read research/<slug>/refresh_targets.md
    ├── companies/entities to re-check
@@ -63,27 +64,27 @@
    └── new-entrant search patterns
 
 3. Read research/<slug>/<last>_<genre>.md final report
-   └── Понять что было сказано — чтобы видеть что изменилось
+   └── Understand what was said — so as to see what has changed
 ```
 
-Если `refresh_targets.md` нет (старый ресёрч до этого протокола) — **сгенерируй его в процессе** на основе чтения final report + plan.md. Это первый шаг update.
+If there is no `refresh_targets.md` (an old research predating this protocol) — **generate it in the process** on the basis of reading the final report + plan.md. That is the first step of the update.
 
 ---
 
-## 4 категории дельты (что искать)
+## The 4 categories of delta (what to look for)
 
-### 1. Новые игроки (new entrants)
+### 1. New entrants
 
-**Триггер:** ресёрч имеет landscape-блок (M2 profiles, M5 market map) или хоть один subquestion вида «кто игроки в X».
+**Trigger:** the research has a landscape block (M2 profiles, M5 market map) or at least one subquestion of the form «who are the players in X».
 
-**Что искать:**
-- **Crunchbase** (если есть `CRUNCHBASE_API_KEY`): запросы по category-tags из refresh_targets с `founded_after: <last_research_date>` и `total_funding > $1M` (фильтр от шума)
-- **GitHub topics** (из `topic:<keyword>` в refresh_targets): репозитории `created:>YYYY-MM-DD` с `stars>50`
-- **HuggingFace datasets/models** (если ML-тема): `sort=Recent` с фильтром даты
-- **News** через GDELT или NewsAPI: запросы «launched», «out of stealth», «raised seed», в комбо с industry keyword
-- **Industry-specific** registries из refresh_targets (например, BloombergNEF для energy)
+**What to look for:**
+- **Crunchbase** (if `CRUNCHBASE_API_KEY` is present): queries by the category-tags from refresh_targets with `founded_after: <last_research_date>` and `total_funding > $1M` (a filter against noise)
+- **GitHub topics** (from `topic:<keyword>` in refresh_targets): repositories `created:>YYYY-MM-DD` with `stars>50`
+- **HuggingFace datasets/models** (if the topic is ML): `sort=Recent` with a date filter
+- **News** via GDELT or NewsAPI: queries «launched», «out of stealth», «raised seed», in a combo with an industry keyword
+- **Industry-specific** registries from refresh_targets (e.g. BloombergNEF for energy)
 
-**Output формат:**
+**Output format:**
 ```markdown
 ## New entrants since 2026-05-22
 
@@ -99,25 +100,25 @@
 - Update target: profile + reconsider H2 in adversarial
 ```
 
-### 2. Изменения у конкретных компаний (entity diff)
+### 2. Changes at specific companies (entity diff)
 
-**Триггер:** в refresh_targets перечислены конкретные компании которые надо отслеживать.
+**Trigger:** refresh_targets lists specific companies that have to be tracked.
 
-**Что отслеживать:**
-- **Pricing page** — сравнить с тем что было (если есть archive в `sources/`)
-- **Job postings** — `/careers` страница, рост хедкаунта = сигнал направления
-- **Leadership** — Crunchbase или LinkedIn (если доступ есть) на смену CEO/CTO
-- **Product pages** — новые фичи появились?
-- **Funding** — Crunchbase api: новый раунд?
-- **Press releases** — компания blog + Google News с `site:<company>.com`
+**What to track:**
+- **Pricing page** — compare with what it was (if there is an archive in `sources/`)
+- **Job postings** — the `/careers` page, headcount growth = a signal of direction
+- **Leadership** — Crunchbase or LinkedIn (if access is available) for a change of CEO/CTO
+- **Product pages** — have new features appeared?
+- **Funding** — Crunchbase api: a new round?
+- **Press releases** — the company blog + Google News with `site:<company>.com`
 
-**Тактика fingerprinting:**
-1. **WebFetch** на page → hash content (markdown-only, без CSS/JS)
-2. Сравнить hash с тем что было в `sources/SN_<company>_<page>.md` (если есть)
-3. Если изменился → сохранить новую версию рядом, написать diff в delta файл
-4. Если не изменился → пометить `verified-no-change: <today>` в old source
+**Fingerprinting tactic:**
+1. **WebFetch** on the page → hash the content (markdown-only, no CSS/JS)
+2. Compare the hash with what was in `sources/SN_<company>_<page>.md` (if present)
+3. If it changed → save the new version alongside, write a diff into the delta file
+4. If it did not change → mark `verified-no-change: <today>` in the old source
 
-**Output формат:**
+**Output format:**
 ```markdown
 ## Entity diff: Company X
 
@@ -131,19 +132,19 @@
 - Verified-no-change confirms hiring pace stable
 ```
 
-### 3. Свежесть фактов и цифр (numbers refresh)
+### 3. Freshness of facts and numbers (numbers refresh)
 
-**Триггер:** ресёрч содержит numerical claims из N-блоков (N1 metrics, N3 market sizing, N5 forecasts).
+**Trigger:** the research contains numerical claims from N blocks (N1 metrics, N3 market sizing, N5 forecasts).
 
-**Что перепроверять:**
-- **FRED series IDs** из refresh_targets — пересчитать `latest_value`, `YoY change`, отметить если изменилась тенденция
-- **World Bank indicators** по country codes — то же самое
-- **Industry estimates** (если фиксировался диапазон с named источниками) — Statista alt, IBISWorld:
-  - Поиск той же фразы что в orig source
-  - Сравнить число; если разошлось на >20% — высокий interest delta
-- **Pricing / unit economics** компаний — см. категорию 2
+**What to re-check:**
+- **FRED series IDs** from refresh_targets — recompute `latest_value`, `YoY change`, note if the trend has changed
+- **World Bank indicators** by country codes — the same thing
+- **Industry estimates** (if a range with named sources was recorded) — Statista alt, IBISWorld:
+  - Search for the same phrase as in the original source
+  - Compare the number; if it diverged by >20% — a high-interest delta
+- **Pricing / unit economics** of companies — see category 2
 
-**Output формат:**
+**Output format:**
 ```markdown
 ## Numbers refresh
 
@@ -160,18 +161,18 @@
 - Implication: revise N5 forecast in Phase 7 synthesis update
 ```
 
-### 4. Новые публикации / opposition (adversarial trigger)
+### 4. New publications / opposition (adversarial trigger)
 
-**Триггер:** есть гипотеза H1-H4 и периодически появляются новые статьи/посты по теме.
+**Trigger:** there is a hypothesis H1-H4 and new articles/posts on the topic keep appearing.
 
-**Что искать:**
-- **OpenAlex / Semantic Scholar** — поиск по `concepts.id:<concept>` с `publication_year:<YYYY>` (после last_research_date)
-- **arXiv / bioRxiv / SSRN** — фильтр по дате, ключевые слова из refresh_targets
-- **Retraction Watch** — проверить не отозвали ли цитированные источники
-- **News-current** — события которые могли опровергнуть факты в ресёрче
-- **Forum-discussion** — пост-мортемы, фейлы, баги в подходах которые описывал ресёрч
+**What to look for:**
+- **OpenAlex / Semantic Scholar** — search by `concepts.id:<concept>` with `publication_year:<YYYY>` (after last_research_date)
+- **arXiv / bioRxiv / SSRN** — a date filter, keywords from refresh_targets
+- **Retraction Watch** — check whether the cited sources have been retracted
+- **News-current** — events that could have refuted the facts in the research
+- **Forum-discussion** — post-mortems, failures, bugs in the approaches the research described
 
-**Если найдено опровержение → adversarial trigger:**
+**If a refutation is found → adversarial trigger:**
 ```markdown
 ## Adversarial trigger
 
@@ -195,9 +196,9 @@
 
 ---
 
-## Verified-no-change (что НЕ изменилось)
+## Verified-no-change (what has NOT changed)
 
-Это **тоже результат**. После прогона всех 4 категорий — финальная секция:
+This is **a result too**. After running all 4 categories — a final section:
 
 ```markdown
 ## Verified (still valid, no change)
@@ -214,11 +215,11 @@
 - Top 5 players still same; market shares roughly stable per Statista 2026-Q3
 ```
 
-Без этого секции пользователь думает «может пропустили?» — а тут явное «нет, проверено, всё то же».
+Without this section the user thinks «maybe they skipped something?» — and here there is an explicit «no, checked, all the same».
 
 ---
 
-## Output: структура delta-файла
+## Output: the structure of the delta file
 
 `research/<slug>/diffs/<YYYY-MM-DD>_delta.md`:
 
@@ -241,16 +242,16 @@ severity: <HIGH | MEDIUM | LOW>  # max severity among findings
 - ...
 
 ## 1. New entrants since <date>
-<либо список найденных, либо «None found in <X> sources checked»>
+<either the list of what was found, or «None found in <X> sources checked»>
 
 ## 2. Entity diff
-<per-company changes, или «No changes detected in <N> tracked entities»>
+<per-company changes, or «No changes detected in <N> tracked entities»>
 
 ## 3. Numbers refresh
 <per-metric changes>
 
 ## 4. Adversarial trigger
-<new opposition, retractions, или «No opposing publications found»>
+<new opposition, retractions, or «No opposing publications found»>
 
 ## 5. Verified (still valid)
 <what was re-checked and stayed the same>
@@ -265,53 +266,53 @@ severity: <HIGH | MEDIUM | LOW>  # max severity among findings
 - <list of new sources/SN_*.md files added with this update>
 
 ## Cost
-- Model routing: Haiku/Sonnet for fetch, Opus only if Phase 6 re-run triggered
+- Model routing: the configured model for fetch, the strongest one only if a Phase 6 re-run is triggered
 - Estimated: ~$0.40 (vs full re-research ~$2.00)
 ```
 
 ---
 
-## Что **НЕ** делать
+## What **NOT** to do
 
-**❌ Не делать полный Phase 4 заново.** Это update, не replay.
+**❌ Do not do a full Phase 4 again.** This is an update, not a replay.
 
-**❌ Не игнорировать adversarial trigger.** Если нашёл опровержение — fix в Phase 6 update, не оставляй в delta-файле как notice.
+**❌ Do not ignore an adversarial trigger.** If you found a refutation — fix it in the Phase 6 update, do not leave it in the delta file as a notice.
 
-**❌ Не пропускать «verified» секцию.** Что не изменилось — это тоже сигнал, его надо явно зафиксировать.
+**❌ Do not skip the «verified» section.** What has not changed is a signal too, it has to be recorded explicitly.
 
-**❌ Не перезаписывать старый отчёт.** Старый `<YYYY-MM-DD>_<genre>.md` остаётся. Delta — отдельный файл. Если изменения существенны → может появиться **новый** `<YYYY-MM-DD>_<genre>.md` рядом (update-режим из SKILL.md) — но это решение пользователя после прочтения delta.
+**❌ Do not overwrite the old report.** The old `<YYYY-MM-DD>_<genre>.md` stays. The delta is a separate file. If the changes are substantive → a **new** `<YYYY-MM-DD>_<genre>.md` may appear alongside (the update mode from SKILL.md) — but that is the user's decision after reading the delta.
 
-**❌ Не запускать update без refresh_targets.md.** Если файла нет (старый ресёрч до протокола) — сначала сгенерируй его, потом действуй.
+**❌ Do not run an update without refresh_targets.md.** If the file is missing (an old research predating the protocol) — generate it first, then act.
 
-**❌ Не делать update на shallow.** Shallow ресёрч — это <8 источников, дешевле повторить полностью. Update имеет смысл от medium и выше.
+**❌ Do not do an update on shallow.** A shallow research is <8 sources; repeating it in full is cheaper. An update makes sense from medium and up.
 
 ---
 
-## Model routing для update
+## Model routing for an update
 
-| Шаг update | Модель | Effort |
+| Update step | Model | Effort |
 |---|---|---|
-| Pre-flight (чтение plan.md + refresh_targets.md + last report) | `sonnet` | low |
-| Generate refresh_targets.md (если отсутствует) | `sonnet` | medium |
-| 1. New entrants search (sub-agents) | `deepdive-fetcher` (haiku) | medium из frontmatter (web/news/Crunchbase; на low Haiku 5.5 пропускает поиски) |
-| 2. Entity diff (fetch + compare) | `deepdive-fetcher` (haiku) | medium из frontmatter (fingerprinting механический) |
-| 3. Numbers refresh (api-direct) | `deepdive-fetcher` (haiku) | medium из frontmatter (FRED/WB/etc) |
-| 4. Adversarial trigger search | `sonnet` | low (academic) |
-| Synthesis delta file | `sonnet` | medium |
-| **If adversarial trigger HIGH → re-run Phase 6 partial** | `opus` | high (только эта часть) |
+| Pre-flight (reading plan.md + refresh_targets.md + last report) | the configured model | low |
+| Generate refresh_targets.md (if missing) | the configured model | medium |
+| 1. New entrants search (sub-agents) | the fetch subagent | medium from the frontmatter (web/news/Crunchbase; on low effort it skips searches) |
+| 2. Entity diff (fetch + compare) | the fetch subagent | medium from the frontmatter (fingerprinting is mechanical) |
+| 3. Numbers refresh (api-direct) | the fetch subagent | medium from the frontmatter (FRED/WB/etc) |
+| 4. Adversarial trigger search | the configured model | low (academic) |
+| Synthesis delta file | the configured model | medium |
+| **If adversarial trigger HIGH → re-run Phase 6 partial** | the strongest configured model | high (only this part) |
 
-**Total estimated cost для типового update без adversarial re-run: ~$0.40** (vs ~$2 за полный medium ресёрч).
+**Total estimated cost for a typical update without an adversarial re-run: ~$0.40** (vs ~$2 for a full medium research).
 
 ---
 
-## Что должно быть в `refresh_targets.md` (отдельный файл рядом с plan.md)
+## What must be in `refresh_targets.md` (a separate file next to plan.md)
 
-Этот файл генерируется автоматически в Phase 7 первоначального ресёрча. Шаблон — в `blocks/close.md` (блок Z11). Содержит:
+This file is generated automatically in Phase 7 of the initial research. The template is in `blocks/close.md` (block Z11). It contains:
 
-1. **Entities to track** — конкретные компании/продукты/проекты (с URL `/pricing`, `/careers`, `/blog`)
-2. **Numbers to refresh** — конкретные FRED series IDs, WB indicators, industry estimate references
-3. **Topic markers** — `topic:<keyword>` для GitHub, академические концепты OpenAlex, news keywords
-4. **Hypotheses to re-test** — H1-H4 из оригинального ресёрча, как формулировки для поиска опровержений
+1. **Entities to track** — specific companies/products/projects (with `/pricing`, `/careers`, `/blog` URLs)
+2. **Numbers to refresh** — specific FRED series IDs, WB indicators, industry estimate references
+3. **Topic markers** — `topic:<keyword>` for GitHub, academic concepts for OpenAlex, news keywords
+4. **Hypotheses to re-test** — H1-H4 from the original research, as formulations for searching refutations
 5. **Update cadence suggestion** — «monthly / quarterly / event-driven»
 
-Без этого файла update не работает оптимально — приходится re-discover targets каждый раз.
+Without this file an update does not work optimally — the targets have to be re-discovered every time.

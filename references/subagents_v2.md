@@ -14,7 +14,7 @@
 
 Applies in **medium** (2–3 sub-agents) and **deep** (4–5) modes.
 
-`<SKILL_DIR>` = the absolute path to the skill, usually `$HOME/.claude/skills/deepdive` (the main thread expands `$HOME` and substitutes it at call time). Paths to skill files in agent briefs are written as `<SKILL_DIR>/…`.
+`<SKILL_DIR>` = the absolute path to this skill's own directory (the one holding `SKILL.md`); the main thread expands it at call time. Paths to skill files in agent briefs are written as `<SKILL_DIR>/…`.
 
 ## Architecture
 
@@ -29,7 +29,7 @@ Main thread (assistant):
   - fills claims.csv from the index rows + declared claims
   - triangulates over claims.csv, synthesizes
 
-Sub-agent (subagent_type=deepdive-fetcher, its own range NN):
+Sub-agent (subagent_type=knowing-fetcher, its own range NN):
   - reads its prompt (including the pinned range of numbers)
   - does WebSearch + WebFetch
   - scores each source itself (no separate scoring pass — H7)
@@ -43,10 +43,16 @@ This way the main thread is not bloated by raw source texts (only compact index 
 
 ## Which subagent_type
 
-- **`deepdive-fetcher`** — the default for fetch+save (Phase 4.1; Haiku, tools WebSearch/WebFetch/Read/Write/Bash/Glob/Grep, maxTurns 40). `Write` is needed so that the agent saves `sources/NN.md` itself within its range of numbers, instead of passing full texts back into the main thread. Every agent gets an explicit range: agent #1 → `s01-s09`, #2 → `s10-s19`, etc. (see the prompt template below, field `SOURCE ID RANGE`).
-- **`explore-haiku`** (read-only, Haiku) — only for pure discovery reconnaissance WITHOUT saving files (for example, Phase 3.5 capability discovery or a preliminary reconnaissance «how much material is there at all» before deciding to split into subtopics). `Explore`/`explore-haiku` does not write files; as soon as an agent needs to write `sources/NN.md` — that is `deepdive-fetcher`.
-- **`deepdive-scout`** (Haiku) and **`deepdive-redteam`** (Opus, high, read-only) — specialised deepdive agents; launch the red team only as `subagent_type: deepdive-redteam`.
-- **`Plan`** — NOT for search. Do not use it in deepdive.
+- **`knowing-fetcher`** — the default for fetch + save (Phase 4.1). Writes each source to
+  `sources/NN.md` itself, inside its assigned id range, so full texts never travel back into the main
+  thread. Default model `small`, medium effort, `maxTurns 40`. Ships in this repo at
+  `agents/knowing-fetcher.md` — install it with `cp agents/*.md ~/.pi/agents/`.
+- **`Explore`** (built in) — read-only reconnaissance with no files written: Phase 3.5 capability
+  discovery, or a quick «is there enough material here at all» before splitting into subtopics. The
+  moment an agent needs to write `sources/NN.md`, that is `knowing-fetcher`.
+- **`knowing-redteam`** — the adversarial pass. Read-only, `big` model, high effort; ships at
+  `agents/knowing-redteam.md`. Launch it only after synthesis, on the assembled claims.
+
 
 ## Which model to choose (model routing)
 
@@ -56,20 +62,20 @@ A short excerpt for Phase 4.1 (launch sub-agents):
 
 | Subtask type of the sub-agent | Executor | Model / Effort |
 |---|---|---|
-| Web search + metadata (web-general/news/forum) | `deepdive-fetcher` | haiku / medium (frontmatter) |
-| Read long source + extract quotes | `deepdive-fetcher` | haiku / medium (1M window) |
-| Academic / preprint-servers | `deepdive-fetcher` | haiku / medium |
-| API-direct (curl + jq) | `deepdive-fetcher` | haiku / medium |
-| Code analysis (clone + grep) | `deepdive-fetcher` gathers facts and paths, conclusions — `main` | haiku / medium |
+| Web search + metadata (web-general/news/forum) | `knowing-fetcher` | `small` / medium |
+| Read long source + extract quotes | `knowing-fetcher` | `small` / medium |
+| Academic / preprint-servers | `knowing-fetcher` | `small` / medium |
+| API-direct (curl + jq) | `knowing-fetcher` | `small` / medium |
+| Code analysis (clone + grep) | `knowing-fetcher` gathers facts and paths; conclusions stay on the main thread | `small` / medium |
 | Heavy reasoning subtask | `main` | — |
 
-**Default if unsure** → `deepdive-fetcher`.
+**Default if unsure** → `knowing-fetcher`.
 
-The model and effort of `deepdive-fetcher` are recorded in its frontmatter; the call does not pass them, so that the setting lives in one place. Escalation after a refusal or a Haiku failure — `general-purpose` with explicit `model: "sonnet"`, `effort: "high"`, see `model_routing.md` «How to pass the model into the `Agent` tool».
+The model and effort of `knowing-fetcher` are recorded in its frontmatter; the call does not pass them, so that the setting lives in one place. Escalation after a refusal or a thin result — `general-purpose` with explicit `model: "big"`, `thinking: "high"`, see `model_routing.md` «How to pass the model into the `Agent` tool».
 
 ```
 Agent({
-  subagent_type: "deepdive-fetcher",   // fetch+save needs Write, see above
+  subagent_type: "knowing-fetcher",   // fetch+save needs Write, see above
   description: "...",
   prompt: "..."
 })
@@ -517,7 +523,7 @@ claim_candidates / систем), три главных gaps, оппозиция
 - ❌ Giving too generic a prompt «search about X» — a watery digest comes back. The subtopic must be NARROW.
 - ❌ Launching sub-agents sequentially (Agent call → wait → the next one). Only in parallel in one message.
 - ❌ Accepting a sub-agent's digest as final without checking. Dedup the URLs and check the scoring.
-- ❌ Using `Explore`/`explore-haiku` when the agent needs to write `sources/NN.md` — they are read-only, they will not save the file. For fetch+save always `deepdive-fetcher`.
+- ❌ Using `Explore` when the agent needs to write `sources/NN.md` — it is read-only and will not save the file. For fetch + save always use `knowing-fetcher`.
 - ❌ Not assigning an agent a range of numbers BEFORE launch — without it the parallel writing risks an id collision.
 - ❌ Asking a sub-agent to return full source texts/quotes in the JSON reply — bloats the main thread's context. The full text lives in the file, only the index row goes into the main thread.
 - ❌ Leaving in the agent's prompt the «strict JSON in the reply» format without a limit on the reply size: 4 agents without a limit returned 19–24k chars each (~41k tokens of the main thread). JSON — into a file, into the chat ≤15 lines.

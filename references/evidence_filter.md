@@ -1,127 +1,128 @@
-# Evidence Filter — Фаза 5.5
+<!-- translated from upstream/references/evidence_filter.md @ e233797 — see docs/TRANSLATION.md -->
+# Evidence Filter — Phase 5.5
 
-## Содержание
+## Contents
 
-- Что это НЕ трогает
-- Когда срабатывает — depth_gate
-- Механика — CRAG evaluator + relevant-only extraction
-- Ось 2 — authority: вправе ли источник это утверждать
-- Выход — слой `evidence/`
-- Отношение к `findings/` (deep)
-- Анти-паттерны
-- Чек-лист фазы 5.5
+- What this does NOT touch
+- When it fires — depth_gate
+- Mechanics — CRAG evaluator + relevant-only extraction
+- Axis 2 — authority: is the source entitled to assert this
+- Output — the `evidence/` layer
+- Relation to `findings/` (deep)
+- Anti-patterns
+- Phase 5.5 checklist
 
-Фильтр на **входе** синтеза, по двум осям. Между Фазой 5 (claims-ledger готов) и Фазой 6 (синтез) по каждой паре (claim, source) решается:
+A filter on the **input** of synthesis, along two axes. Between Phase 5 (claims ledger ready) and Phase 6 (synthesis), for every (claim, source) pair it is decided:
 
-1. **relevance** — *относится ли фрагмент именно к этому claim* (весь пул пар);
-2. **authority** — *вправе ли этот источник такое утверждать* (только несущие пары, см. ниже).
+1. **relevance** — *does the fragment concern exactly this claim* (the whole pool of pairs);
+2. **authority** — *is this source entitled to assert such a thing* (only load-bearing pairs, see below).
 
-Релевантные цитаты выносятся в отдельный слой `evidence/`, вердикты авторитетности — в `.verify/authority.json`; в синтез не подаётся ни весь пул источников целиком, ни источник, который не вправе нести claim в одиночку.
+Relevant quotes are carried out into a separate `evidence/` layer, authority verdicts into `.verify/authority.json`; synthesis is fed neither the whole pool of sources at once, nor a source that is not entitled to carry a claim on its own.
 
-**Зачем.** Наивная подача всего найденного в синтез *снижает* качество, а не повышает: Search-o1 показал падение 33%→24% на LiveCodeBench, когда нерелевантный retrieved-контекст шёл в цепочку рассуждения без фильтра. CRAG (retrieval evaluator + decompose-then-recompose) стабильно бьёт наивный RAG на 4 датасетах (напр. Biography FActScore 59.2→74.1). Механика: лёгкий классификатор релевантности отбрасывает шум ДО того, как он размывает синтез.
+**Why.** Feeding everything found into synthesis naively *lowers* quality instead of raising it: Search-o1 showed a drop of 33%→24% on LiveCodeBench when irrelevant retrieved context went into the reasoning chain without a filter. CRAG (retrieval evaluator + decompose-then-recompose) consistently beats naive RAG on 4 datasets (e.g. Biography FActScore 59.2→74.1). The mechanics: a lightweight relevance classifier discards noise BEFORE it blurs the synthesis.
 
-**Симметрия с 6.5.** Фаза 6.5 (Verify) проверяет **выход** синтеза — реально ли источник подтверждает написанный тезис (faithfulness). Фаза 5.5 фильтрует **вход** — какие фрагменты вообще стоит нести в синтез (relevance). Вместе они закрывают обе стороны: не тащить лишнее внутрь и не выпустить неподтверждённое наружу.
+**Symmetry with 6.5.** Phase 6.5 (Verify) checks the **output** of synthesis — whether the source really supports the written thesis (faithfulness). Phase 5.5 filters the **input** — which fragments are worth carrying into synthesis at all (relevance). Together they close both sides: not dragging the superfluous in, and not letting the unconfirmed out.
 
-## Что это НЕ трогает
+## What this does NOT touch
 
-- **`sources/NN.md` неприкосновенны.** Это архивная память для переиспользования между ресёрчами (`source_scoring.md` прямо запрещает их сжимать/переписывать). Фаза 5.5 их только читает.
-- **Не дублирует scoring (Фаза 5).** `total` (credibility/recency/bias) — качество источника *целиком*. 5.5 — релевантность *фрагмента к конкретному claim*. Разные оси: авторитетный источник может содержать цитату, не относящуюся к этому claim; и наоборот.
-- **Не дублирует `hypothesis_evidence`.** Тот классифицирует отношение к гипотезе (supports/contradicts/partial/neutral). 5.5 даёт бинарный keep/drop под claim и режет объём текста.
+- **`sources/NN.md` are untouchable.** They are archival memory for reuse between researches (`source_scoring.md` explicitly forbids compressing/rewriting them). Phase 5.5 only reads them.
+- **It does not duplicate scoring (Phase 5).** `total` (credibility/recency/bias) is the quality of the source *as a whole*. 5.5 is the relevance of *a fragment to a specific claim*. Different axes: an authoritative source may contain a quote unrelated to this claim; and vice versa.
+- **It does not duplicate `hypothesis_evidence`.** That one classifies the relation to a hypothesis (supports/contradicts/partial/neutral). 5.5 gives a binary keep/drop under a claim and cuts the volume of text.
 
-## Когда срабатывает — depth_gate
+## When it fires — depth_gate
 
-| Режим | Поведение |
+| Mode | Behaviour |
 |---|---|
-| **shallow** | **Skip.** 5–7 источников — фильтровать нечего, перегруза контекста нет. |
-| **medium** | **Обязательна.** 25–30 источников — шум уже размывает синтез. |
-| **deep** | **Обязательна.** 25–35+ — без фильтра синтез тонет; здесь эффект максимален. |
+| **shallow** | **Skip.** 5–7 sources — there is nothing to filter, there is no context overload. |
+| **medium** | **Mandatory.** 25–30 sources — noise already blurs the synthesis. |
+| **deep** | **Mandatory.** 25–35+ — without the filter the synthesis drowns; here the effect is maximal. |
 
-## Механика — CRAG evaluator + relevant-only extraction
+## Mechanics — CRAG evaluator + relevant-only extraction
 
-Исполнитель: `sub: explore-haiku` (haiku / medium из frontmatter, как в матрице `model_routing.md`): две парные классификации по дословным цитатам, на low Haiku 5.5 пропускает проверки.
+Executor: the subagent (medium effort from the frontmatter, as in the `model_routing.md` matrix): two paired classifications over verbatim quotes; on low effort it skips the checks.
 
-**Вход:** готовый `claims.csv` (Фаза 5) + `sources/NN.md` с `used: Y`.
+**Input:** the finished `claims.csv` (Phase 5) + `sources/NN.md` with `used: Y`.
 
-Для каждой строки `claims.csv` (claim) и каждого её источника из колонки `sources`:
+For every row of `claims.csv` (a claim) and each of its sources from the `sources` column:
 
-1. **Relevance-классификатор (CRAG evaluator).** Прочитать `Key quotes` источника и спросить: «поддерживает ли хоть одна цитата этого источника именно этот claim?» Три исхода с явным порогом:
-   - **Correct (relevant)** — есть ≥1 цитата, прямо относящаяся к claim → keep, извлечь эти цитаты.
-   - **Ambiguous** — цитаты касаются темы, но не подтверждают/не опровергают claim напрямую → keep с пометкой `weak`, извлечь как контекст, не как evidence.
-   - **Incorrect (irrelevant)** — ни одна цитата не относится к claim → **drop** эту пару (claim, source). Источник остаётся в `sources/`, но не идёт в синтез *под этот claim*.
+1. **Relevance classifier (CRAG evaluator).** Read the source's `Key quotes` and ask: «does at least one quote from this source support exactly this claim?» Three outcomes with an explicit threshold:
+   - **Correct (relevant)** — there is ≥1 quote directly concerning the claim → keep, extract those quotes.
+   - **Ambiguous** — the quotes touch the topic but do not confirm/refute the claim directly → keep with the mark `weak`, extract as context, not as evidence.
+   - **Incorrect (irrelevant)** — no quote concerns the claim → **drop** this (claim, source) pair. The source stays in `sources/` but does not go into synthesis *under this claim*.
 
-2. **Relevant-only extraction (Search-o1 Reason-in-Documents / CRAG recompose).** Для keep-пар — вынести в `evidence/` только релевантные цитаты, не весь файл. «Decompose-then-recompose»: из всех `Key quotes` источника оставить подмножество, реально работающее на claim.
+2. **Relevant-only extraction (Search-o1 Reason-in-Documents / CRAG recompose).** For keep pairs — carry into `evidence/` only the relevant quotes, not the whole file. «Decompose-then-recompose»: out of all the source's `Key quotes`, keep the subset that actually works for the claim.
 
-3. **Correction-триггер (опционально, если бюджет позволяет).** Если у claim после фильтра **не осталось ни одного relevant-источника** (все drop) — это сигнал, что claim держался на шуме. Действие: пометить claim `status: data-insufficient` в `claims.csv` ИЛИ (если ещё не исчерпан gap-бюджет Фазы 5) один targeted до-поиск. Не молча оставлять claim без опоры.
+3. **Correction trigger (optional, if the budget allows).** If after the filter a claim has **not a single relevant source left** (all dropped) — that is a signal that the claim rested on noise. Action: mark the claim `status: data-insufficient` in `claims.csv` OR (if the Phase 5 gap budget is not yet exhausted) one targeted follow-up search. Do not silently leave a claim without support.
 
-**Калибровка (важно — ограничение метода).** LLM-as-evaluator в промпт-режиме систематически *завышает* релевантность (self-grading bias, признано в CRAG). Контрмеры: (а) классификатор судит по дословным `Key quotes`, не по summary; (б) при сомнении — `Ambiguous`, не `Correct`; (в) drop требует явного «ни одна цитата не относится», а не «слабо относится».
+**Calibration (important — a limitation of the method).** An LLM-as-evaluator in prompt mode systematically *overstates* relevance (self-grading bias, acknowledged in CRAG). Countermeasures: (a) the classifier judges by the verbatim `Key quotes`, not by the summary; (b) in doubt — `Ambiguous`, not `Correct`; (c) drop requires an explicit «no quote concerns it», not «it relates weakly».
 
-## Ось 2 — authority: вправе ли источник это утверждать
+## Axis 2 — authority: is the source entitled to assert this
 
-Relevance спрашивает «этот фрагмент про этот claim?». Authority спрашивает **«вправе
-ли этот источник такое утверждать?»**. Это разные вопросы, и второго в скилле не было
-нигде: три верификационных слоя (6.5 liveness / faithfulness / qualifiers) проверяют,
-что источник **сказал** процитированное, и ни один не проверяет, **кто он и откуда
-взял**. Content-farm с дословной цитатой проходит faithfulness идеально.
+Relevance asks «is this fragment about this claim?». Authority asks **«is this source entitled
+to assert such a thing?»**. These are different questions, and the second was nowhere
+in the skill: three verification layers (6.5 liveness / faithfulness / qualifiers) check
+that the source **said** what is quoted, and none checks **who it is and where it
+got it from**. A content farm with a verbatim quote passes faithfulness perfectly.
 
-Единственная защита до сих пор — шкала `credibility`, и её ставит тот самый агент,
-который источник нашёл и уже потратил на него работу (H7). Вкусовая шкала плюс
-конфликт интересов плюс отсутствие перепроверки. Классификатор 5.5 источник не искал —
-независимость здесь достаётся бесплатно.
+The only defence so far is the `credibility` scale, and it is set by the very agent
+that found the source and has already spent work on it (H7). A taste-based scale plus
+a conflict of interest plus the absence of a re-check. The 5.5 classifier did not look for the source —
+independence here comes for free.
 
-**Вердикт выносится ОТНОСИТЕЛЬНО claim, не абсолютно.** Форум вправе утверждать
-«практики жалуются на X» и не вправе — «доля рынка 34%». Один и тот же источник
-получает разные вердикты под разные claim.
+**The verdict is issued RELATIVE to the claim, not absolutely.** A forum is entitled to assert
+«practitioners complain about X» and not entitled to «market share 34%». One and the same source
+gets different verdicts under different claims.
 
-### Периметр — только несущие пары (иначе слой выключат)
+### Perimeter — only load-bearing pairs (otherwise the layer gets switched off)
 
-Прогонять authority на всех парах дорого и вредно: слой утонет в срабатываниях, и
-его отключат — ровно как предупреждает калибровка Layer 3 в `runtime_verification.md`.
-Гоняй **только** пары, где источник реально несёт вес:
+Running authority on all pairs is expensive and harmful: the layer would drown in firings and
+would be switched off — exactly as the Layer 3 calibration in `runtime_verification.md` warns.
+Run **only** pairs where the source actually carries weight:
 
-- claim идёт в `memo.md`, F1 (TL;DR) или F9; **или**
-- claim содержит число; **или**
-- источник — единственный корень claim'а (`roots` без второго значения); **или**
-- у источника уже стоит `caveat` ≠ `-`.
+- the claim goes into `memo.md`, F1 (TL;DR) or F9; **or**
+- the claim contains a number; **or**
+- the source is the claim's only root (`roots` without a second value); **or**
+- the source already has a `caveat` ≠ `-`.
 
-Для medium это обычно 3–8 источников. Модель — `sonnet`/low.
+For medium this is usually 3–8 sources. Model — the configured model, low effort.
 
-### Чек-лист (проверяемые признаки, НЕ шкала)
+### Checklist (checkable signs, NOT a scale)
 
-Судить по признакам, которые можно предъявить, а не по впечатлению — вкусовая шкала
-и есть причина завышения:
+Judge by signs that can be put on the table, not by impression — the taste-based scale
+is the very cause of the inflation:
 
-1. Назван автор и его аффилиация проверяема?
-2. Для количественного утверждения — описана методология/выборка?
-3. Есть ссылка на первичку, и она жива? (переиспользуй `eval/check_citations.py`, не проверяй руками)
-4. Нет признаков спонсорского материала / partner content / affiliate?
-5. Для академического — не отозвана ли работа? (Crossref / Retraction Watch — бесплатно)
-6. Нет признаков content-farm / машинной генерации: нет автора, нет даты, шаблонная структура, поток однотипных страниц?
-7. Заявленный `origin_kind` соответствует тому, что видно в тексте (пересказ отчёта не может быть `measurement`)?
+1. Is the author named and is their affiliation checkable?
+2. For a quantitative assertion — are the methodology/sample described?
+3. Is there a link to a primary source, and is it live? (reuse `eval/check_citations.py`, do not check by hand)
+4. No signs of sponsored material / partner content / affiliate?
+5. For an academic one — has the work been retracted? (Crossref / Retraction Watch — free)
+6. No signs of a content farm / machine generation: no author, no date, template structure, a stream of identical pages?
+7. Does the declared `origin_kind` match what is visible in the text (a retelling of a report cannot be `measurement`)?
 
-### Вердикты и fail-closed
+### Verdicts and fail-closed
 
-| Вердикт | Когда | Следствие |
+| Verdict | When | Consequence |
 |---|---|---|
-| `qualified` | признаки на месте, источник вправе это утверждать | идёт в синтез как полноценная опора |
-| `unqualified-for-this-claim` | по этому claim источник не компетентен (форум про долю рынка, vendor про свою же величину) | не может быть **единственной** опорой claim; в `evidence/` попадает как контекст, не как evidence |
-| `unknown` | признаков не хватает, чтобы решить | **карантин, а не пропуск** |
+| `qualified` | the signs are in place, the source is entitled to assert it | goes into synthesis as full support |
+| `unqualified-for-this-claim` | for this claim the source is not competent (a forum on market share, a vendor on its own figure) | cannot be the **only** support of the claim; it lands in `evidence/` as context, not as evidence |
+| `unknown` | there are not enough signs to decide | **quarantine, not a pass** |
 
-**`unknown` — это карантин.** Источник остаётся в `sources/`, но не может быть
-единственной опорой claim и не даёт `confidence: high`. Защита, которая при
-несовпадении «тихо пропускает», — не защита; ровно так уже умирали проверки в этом
-скилле. Симметрично правилу primary-first.
+**`unknown` is quarantine.** The source stays in `sources/` but cannot be the only
+support of the claim and does not give `confidence: high`. A defence that on a mismatch
+«quietly passes» is not a defence; that is exactly how checks have already died in this
+skill. Symmetric to the primary-first rule.
 
-**Асимметрия калибровки — как в relevance, но зеркально.** Там сомнение → `Ambiguous`
-(не дропать). Здесь сомнение → `unknown` (не выдавать `qualified`). Общее правило:
-**сомнение никогда не даёт источнику больше прав, чем он доказал, и никогда не
-отбирает больше, чем доказано против него.** Право отбросить опаснее права оставить —
-и тем опаснее, чем способнее модель: рост способности даёт более уверенное действие,
-а не более верное суждение (Anthropic Frontier Red Team, 13.08.2026).
+**The calibration asymmetry — as in relevance, but mirrored.** There doubt → `Ambiguous`
+(do not drop). Here doubt → `unknown` (do not issue `qualified`). The general rule:
+**doubt never gives a source more rights than it has proved, and never takes away more than
+has been proved against it.** The right to discard is more dangerous than the right to keep —
+and the more dangerous the more capable the model: a rise in capability yields more confident action,
+not sounder judgement (Anthropic Frontier Red Team, 13.08.2026).
 
-### Выход — `.verify/authority.json`
+### Output — `.verify/authority.json`
 
-Тот же I/O-контракт, что у 6.5: один файл — единый источник истины, его читают
-F10-header и phase-gate, никто не пересчитывает.
+The same I/O contract as 6.5: one file is the single source of truth, it is read by
+the F10 header and the phase gate, and no one recomputes it.
 
 ```json
 {
@@ -143,72 +144,72 @@ F10-header и phase-gate, никто не пересчитывает.
 }
 ```
 
-## Выход — слой `evidence/`
+## Output — the `evidence/` layer
 
-Новая папка `<slug>/evidence/`. Один файл на claim (не на источник — claim здесь ось группировки):
+A new folder `<slug>/evidence/`. One file per claim (not per source — the claim here is the axis of grouping):
 
 ```
 evidence/
-├── C1.md        # relevant-only цитаты под claim C1, сгруппированы по источнику
+├── C1.md        # relevant-only quotes under claim C1, grouped by source
 ├── C2.md
 └── ...
 ```
 
-Шаблон `evidence/CN.md`:
+Template `evidence/CN.md`:
 
 ```markdown
 ---
 claim_id: C1
-claim: "<текст claim из claims.csv>"
-kept_sources: [03, 07, 12]      # id источников, прошедших фильтр
-dropped_sources: [05, 09]        # отфильтрованы как irrelevant под этот claim
+claim: "<claim text from claims.csv>"
+kept_sources: [03, 07, 12]      # ids of the sources that passed the filter
+dropped_sources: [05, 09]        # filtered out as irrelevant under this claim
 status: relevant | weak | data-insufficient
 ---
 
-## C1 — <короткий claim>
+## C1 — <short claim>
 
 ### s03 (relevance: Correct · authority: qualified)
-> «<дословная релевантная цитата>» — [source](../sources/03_slug.md)
+> «<verbatim relevant quote>» — [source](../sources/03_slug.md)
 
-### s07 (relevance: Ambiguous · authority: unknown → карантин)
-> «<контекстная цитата>» — [source](../sources/07_slug.md)
+### s07 (relevance: Ambiguous · authority: unknown → quarantine)
+> «<contextual quote>» — [source](../sources/07_slug.md)
 ```
 
-Ось authority проставляется только у пар, попавших в периметр (несущие); у остальных
-поле опускается — отсутствие метки означает «не проверялось», а не «qualified».
+The authority axis is filled only for pairs that fell inside the perimeter (load-bearing); for the rest
+the field is omitted — a missing mark means «not checked», not «qualified».
 
-**Синтез (Фаза 6) читает `evidence/CN.md`, а не весь пул `sources/`** — для medium/deep. Для shallow (5.5 пропущена) синтез читает `sources/NN.md` как раньше. Точечная сверка с `sources/NN.md` по спорным местам остаётся (это уже требует Фаза 6 шаг 1).
+**Synthesis (Phase 6) reads `evidence/CN.md`, not the whole pool of `sources/`** — for medium/deep. For shallow (5.5 is skipped) synthesis reads `sources/NN.md` as before. Spot-checking against `sources/NN.md` on contested places remains (Phase 6 step 1 already requires it).
 
-**`evidence/CN.md` — ещё и вход для Фазы 6.5 Layer 2 (faithfulness).** Связка claim↔цитата, которую делает 5.5, — это ровно те пары, что нужны faithfulness-проверке («реально ли источник подтверждает тезис»). Фаза 6.5 читает `evidence/CN.md`, а не пересканирует `sources/`, решая какая цитата к какому claim (это была бы дублирующая работа 5.5). `claim_id` — общий join-ключ. Так один артефакт 5.5 обслуживает и синтез (вход), и верификацию (6.5). См. `references/runtime_verification.md` → Layer 2.
+**`evidence/CN.md` is also the input for Phase 6.5 Layer 2 (faithfulness).** The claim↔quote linkage that 5.5 makes is exactly the pairs the faithfulness check needs («does the source really support the thesis»). Phase 6.5 reads `evidence/CN.md` instead of rescanning `sources/` to decide which quote belongs to which claim (that would be duplicating 5.5's work). `claim_id` is the shared join key. Thus one artifact of 5.5 serves both synthesis (input) and verification (6.5). See `references/runtime_verification.md` → Layer 2.
 
-## Отношение к `findings/` (deep)
+## Relation to `findings/` (deep)
 
-Существующий `findings/` слой (deep, Фаза 6) — агрегация *выводов* (атомарные тезисы). `evidence/` — отфильтрованное *сырьё* (relevant-only цитаты) под claim. Порядок для deep: `sources/` → **5.5 evidence/** → синтез → `findings/`. Для medium: `sources/` → **5.5 evidence/** → синтез (без findings/). `evidence/` делает findings-синтез чище, не заменяет его.
+The existing `findings/` layer (deep, Phase 6) is an aggregation of *conclusions* (atomic theses). `evidence/` is filtered *raw material* (relevant-only quotes) under a claim. The order for deep: `sources/` → **5.5 evidence/** → synthesis → `findings/`. For medium: `sources/` → **5.5 evidence/** → synthesis (without findings/). `evidence/` makes the findings synthesis cleaner; it does not replace it.
 
-## Анти-паттерны
+## Anti-patterns
 
-- ❌ Переписывать/обрезать `sources/NN.md`. Это архив. Фильтр пишет в `evidence/`, источник не трогает.
-- ❌ Фильтровать по credibility/`total` вместо релевантности. Авторитетный источник ≠ релевантный этому claim.
-- ❌ Дропать пару на «слабо относится». Drop только на «ни одна цитата не относится к claim»; сомнение → Ambiguous/keep.
-- ❌ Молча оставлять claim, у которого все источники отфильтрованы. → `data-insufficient` или до-поиск.
-- ❌ Гонять 5.5 на shallow. Мало источников — фильтровать нечего, только трение.
-- ❌ Классифицировать по summary. Судить по дословным `Key quotes` (self-grading по пересказу ещё сильнее завышает).
-- ❌ **Трактовать `unknown` в authority как «сойдёт».** Это карантин: не единственная опора, не `high`. Проверка, которая при нехватке признаков молча пропускает, эквивалентна её отсутствию.
-- ❌ **Гонять authority на всех парах.** Периметр — несущие пары. Слой с высоким ложным срабатыванием выключают целиком, и тогда не работает ни он, ни то, ради чего его ставили.
-- ❌ Выносить authority-вердикт «вообще», без привязки к claim. Источник бывает годен под один тезис и негоден под соседний.
-- ❌ Пересчитывать вердикты в F10 или rubric. Единый источник — `.verify/authority.json`, как `citations.json`/`faithfulness.json` для 6.5.
-- ❌ Чинить `unqualified` понижением требований к claim вместо поиска нормального источника.
+- ❌ Rewriting/trimming `sources/NN.md`. It is an archive. The filter writes into `evidence/`, it does not touch the source.
+- ❌ Filtering by credibility/`total` instead of relevance. An authoritative source ≠ relevant to this claim.
+- ❌ Dropping a pair on «relates weakly». Drop only on «no quote concerns the claim»; doubt → Ambiguous/keep.
+- ❌ Silently leaving a claim whose sources were all filtered out. → `data-insufficient` or a follow-up search.
+- ❌ Running 5.5 on shallow. Few sources — nothing to filter, only friction.
+- ❌ Classifying by the summary. Judge by the verbatim `Key quotes` (self-grading on a retelling inflates even more).
+- ❌ **Treating `unknown` in authority as «good enough».** It is quarantine: not the only support, not `high`. A check that silently passes when the signs are missing is equivalent to its absence.
+- ❌ **Running authority on all pairs.** The perimeter is load-bearing pairs. A layer with a high false-firing rate gets switched off entirely, and then neither it nor the thing it was installed for works.
+- ❌ Issuing an authority verdict «in general», with no tie to a claim. A source is sometimes fit under one thesis and unfit under the neighbouring one.
+- ❌ Recomputing the verdicts in F10 or the rubric. The single source is `.verify/authority.json`, as `citations.json`/`faithfulness.json` for 6.5.
+- ❌ Fixing `unqualified` by lowering the requirements on the claim instead of finding a proper source.
 
-## Чек-лист фазы 5.5
+## Phase 5.5 checklist
 
-- [ ] Режим medium/deep (shallow → skip)
-- [ ] Для каждой пары (claim, source) — relevance-классификатор Correct/Ambiguous/Incorrect по дословным цитатам
-- [ ] Irrelevant пары дропнуты под этот claim (источник в `sources/` остался)
-- [ ] Relevant-only цитаты вынесены в `evidence/CN.md` (по claim)
-- [ ] Claim без единого relevant-источника → `data-insufficient` или targeted до-поиск
-- [ ] Определён периметр несущих пар (memo/F1/F9, числа, единственный корень, `caveat` ≠ `-`)
-- [ ] По каждой несущей паре — authority-вердикт по чек-листу признаков (не по впечатлению)
-- [ ] Вердикты записаны в `.verify/authority.json`, карантины перечислены в `quarantined`
-- [ ] Ни один claim не держится в одиночку на источнике с `unknown`/`unqualified-for-this-claim`
-- [ ] `sources/NN.md` не изменены
-- [ ] Синтез (Фаза 6) направлен читать `evidence/`, а не весь пул источников
+- [ ] Mode medium/deep (shallow → skip)
+- [ ] For every (claim, source) pair — the relevance classifier Correct/Ambiguous/Incorrect over verbatim quotes
+- [ ] Irrelevant pairs dropped under this claim (the source stayed in `sources/`)
+- [ ] Relevant-only quotes carried into `evidence/CN.md` (per claim)
+- [ ] A claim with not a single relevant source → `data-insufficient` or a targeted follow-up search
+- [ ] The perimeter of load-bearing pairs defined (memo/F1/F9, numbers, sole root, `caveat` ≠ `-`)
+- [ ] For every load-bearing pair — an authority verdict by the signs checklist (not by impression)
+- [ ] Verdicts written to `.verify/authority.json`, quarantines listed in `quarantined`
+- [ ] No claim rests alone on a source with `unknown`/`unqualified-for-this-claim`
+- [ ] `sources/NN.md` not modified
+- [ ] Synthesis (Phase 6) directed to read `evidence/`, not the whole pool of sources

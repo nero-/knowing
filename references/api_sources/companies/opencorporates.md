@@ -1,18 +1,19 @@
+<!-- translated from upstream/references/api_sources/companies/opencorporates.md @ e233797 — see docs/TRANSLATION.md -->
 # OpenCorporates API
 
 ## Overview
 
 - **Endpoint base:** `https://api.opencorporates.com/v0.4/`
-- **Auth:** ⚠️ Токен обязателен — анонимного доступа больше нет. Live-проверено 2026-08-17: `GET /companies/search?...` и `GET /companies/{jurisdiction}/{number}` без токена → HTTP 401, тело `{"error":{"message":"Invalid Api Token. Please check your OpenCorporates account"}}`
-- **Free tier:** Self-serve бесплатного тарифа нет. Официальная pricing-страница (opencorporates.com/pricing/, проверена 2026-08-17) начинается с платного плана. Отдельно есть безвозмездная программа для investigative journalists, NGO, университетов и anti-corruption research groups — но по заявке вручную, не self-serve и не автоматическая
-- **Paid:** Essentials £2 250/год (£225/мес, до 500 вызовов/мес, 200/день), Starter £6 600/год (2 500/мес, 500/день), Basic £12 000/год (5 000/мес, 1 000/день), Enterprise — custom price
+- **Auth:** ⚠️ A token is mandatory — anonymous access no longer exists. Live-verified 2026-08-17: `GET /companies/search?...` and `GET /companies/{jurisdiction}/{number}` without a token → HTTP 401, body `{"error":{"message":"Invalid Api Token. Please check your OpenCorporates account"}}`
+- **Free tier:** There is no self-serve free tier. The official pricing page (opencorporates.com/pricing/, checked 2026-08-17) starts with a paid plan. Separately there is a no-charge programme for investigative journalists, NGOs, universities and anti-corruption research groups — but by manual application, not self-serve and not automatic
+- **Paid:** Essentials £2 250/year (£225/mo, up to 500 calls/mo, 200/day), Starter £6 600/year (2 500/mo, 500/day), Basic £12 000/year (5 000/mo, 1 000/day), Enterprise — custom price
 - **Docs:** https://api.opencorporates.com
-- **Coverage:** 200M+ companies из company registries 130+ countries
+- **Coverage:** 200M+ companies from company registries in 130+ countries
 - **Verified:** 2026-08-17
 
 ## What it returns
 
-JSON с данные из официальных company registries — incorporation date, officers, addresses, filings.
+JSON with data from official company registries — incorporation date, officers, addresses, filings.
 
 ```json
 {
@@ -31,9 +32,9 @@ JSON с данные из официальных company registries — incorpor
 
 ## Auth setup
 
-1. https://opencorporates.com/pricing/ → платный план (Essentials — от £2250/год) ИЛИ заявка на бесплатный доступ для journalists/NGO/researchers/anti-corruption groups через контакты OpenCorporates (рассматривается вручную, не мгновенно)
+1. https://opencorporates.com/pricing/ → a paid plan (Essentials — from £2250/year) OR an application for free access for journalists/NGOs/researchers/anti-corruption groups through OpenCorporates contacts (reviewed manually, not instantly)
 2. `export OPENCORPORATES_API_KEY="..."`
-3. Передавать как `api_token={key}` query-параметр (актуальный формат не перепроверялся live — тестового токена нет; сверяться с текущей докой на api.opencorporates.com)
+3. Pass it as the `api_token={key}` query parameter (the current format was not re-verified live — there is no test token; check against the current docs at api.opencorporates.com)
 
 ## Query patterns
 
@@ -65,18 +66,18 @@ GET /officers/search?q={name}&per_page=20
 
 ## Limitations
 
-- ⚠️ Больше не бесплатный API (live-подтверждено 2026-08-17) — платный тариф от £2250/год, либо заявка на грант для journalists/NGO/anti-corruption groups. Не использовать как "бесплатный fallback" по умолчанию
-- Не финансовые данные — только registry facts
+- ⚠️ No longer a free API (live-confirmed 2026-08-17) — a paid tier from £2250/year, or a grant application for journalists/NGOs/anti-corruption groups. Do not use it as the default "free fallback"
+- Not financial data — registry facts only
 - Coverage uneven — UK/EU strong, US weaker (state-level)
 - Some jurisdictions lag
 
 ## Combine with
 
-- **Crunchbase** — для funding history
-- **Companies House** (UK) — больше деталей для UK
-- **SEC EDGAR** — для US public companies
+- **Crunchbase** — for funding history
+- **Companies House** (UK) — more detail for the UK
+- **SEC EDGAR** — for US public companies
 
 ## Fallback
 
 - Direct national registries (Companies House, Bundesanzeiger, etc.)
-- HTML scraping company official pages
+- HTML scraping of company official pages

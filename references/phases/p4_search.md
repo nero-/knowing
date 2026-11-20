@@ -1,7 +1,7 @@
 <!-- translated from upstream/references/phases/p4_search.md @ e233797 — see docs/TRANSLATION.md -->
 ## Phase 4. Search
 
-**Model:** main thread `sonnet` / `medium`. Sub-agents — **different models** by subtask type (see `model_routing.md`, section «Routing for sub-agents»): web/news/api-direct → `haiku`, academic/long-source → `sonnet`, heavy reasoning subtask → `opus`.
+**Model:** main thread `mid` / `medium`. Sub-agents — **different models** by subtask type (see `model_routing.md`, section «Routing for sub-agents»): web/news/api-direct → `small`, academic/long-source → `mid`, heavy reasoning subtask → `big`.
 
 **Phase 4 is an orchestrator-driven loop, not a single salvo.** Round 1 executes the
 approved plan (Phase 4.0 dispatch). After *every* round the orchestrator evaluates the
@@ -26,7 +26,7 @@ plan stays authoritative as the starting point; deviations are bounded and recor
 We select wide and cheap, read narrow and deep. Benchmark 2026-10-28: 6 of 6 runs read 16–19 sources from their first queries, Academic 0, 3–4 types.
 
 1. **Query matrix** before searching: rows — spheres (academic, primary, media, expert, practice), columns — stance toward the leading hypothesis (for / against / neutral). Queries in EN and in the user's market language. One cell — 1–2 queries.
-2. **Candidate pool** — `explore-haiku`, WebSearch and API only, no WebFetch: 60–100 rows (deep ≥100) in `candidates.csv`, columns `url,title,snippet,channel,sphere,stance,vendor,round,target,selected`. At least 1 academic API call is mandatory (`api_sources/academic/`: openalex, semantic_scholar, arxiv, crossref; `channel` = the API name). Snowball goes here too: links and "cited by" of the 2–3 best candidates via OpenAlex/Semantic Scholar.
+2. **Candidate pool** — `explore-`small``, WebSearch and API only, no WebFetch: 60–100 rows (deep ≥100) in `candidates.csv`, columns `url,title,snippet,channel,sphere,stance,vendor,round,target,selected`. At least 1 academic API call is mandatory (`api_sources/academic/`: openalex, semantic_scholar, arxiv, crossref; `channel` = the API name). Snowball goes here too: links and "cited by" of the 2–3 best candidates via OpenAlex/Semantic Scholar.
 3. **Selection for reading** — the main thread, by the table, not by the texts: medium 25–30, deep 35–45, `selected=Y`. Read quotas (gate `validate_phases.py`):
 
    | Sphere | source `type` | Minimum |
@@ -41,7 +41,7 @@ We select wide and cheap, read narrow and deep. Benchmark 2026-10-28: 6 of 6 run
 
    Retellings of a single `root:` count as one source for quotas. If a quota cannot be met honestly (the topic has no science) — a `quota_waiver: <key> — <why>` in `plan.md`, written **after** selection: the reason refers to something that is not in `candidates.csv`. Budget is not a reason. `count`, `candidates`, `round2` are never waived at all; the validator prints the remaining keys. The gate then warns instead of blocking, and the caveat goes into «What we don't know».
 
-4. **Reading** — `deepdive-fetcher` (haiku) receives the list of selected URLs and an id range, not the topic: it searches only to replace a dead URL. Then `sonnet`/low, in batches of 5–8 files, appends into each `## Source dissection` (`source_scoring.md`, file template); without the card the validator warns.
+4. **Reading** — `knowing-fetcher` (`small`) receives the list of selected URLs and an id range, not the topic: it searches only to replace a dead URL. Then `mid` / low, in batches of 5–8 files, appends into each `## Source dissection` (`source_scoring.md`, file template); without the card the validator warns.
 5. **A second round is mandatory**: after the first reading, name the variable the decision depends on (from the Decision Spec forks: price at our volume, latency, headcount), and gather ≥5 more candidates with `round=2`, `target=<variable>`. If a measurement surfaced, read it outside the quotas.
 
 Shallow: the main thread does WebSearch+WebFetch itself and writes `sources/NN.md`, without `candidates.csv` and quotas.
@@ -92,7 +92,7 @@ in `references/fetch_ladder.md`. Read it when WebFetch actually failed to return
    Sub-agents signal **generously** (high recall). They report observations; they do
    NOT decide to deviate.
 
-3. **Cheap goal-check (after every round, `haiku` / low — before the Opus pass):** a
+3. **Cheap goal-check (after every round, `small` model / low effort — before the expensive pass):** a
    non-thinking evaluator scores each subquestion against its *goal*, not its sources.
    For every `subquestion_id` it emits a one-line `goal_status`:
 
@@ -102,19 +102,19 @@ in `references/fetch_ladder.md`. Read it when WebFetch actually failed to return
    ```
 
    `goal_status ∈ {met, partial, unmet}`; `missing` is a concrete gap phrase when not
-   `met`. This is deer-flow's non-thinking evaluator: a Haiku pass that *names the gap*
-   so the expensive Opus evaluation below works from a diagnosis instead of deriving one
+   `met`. This is deer-flow's non-thinking evaluator: a the small model pass that *names the gap*
+   so the expensive evaluation below works from a diagnosis instead of deriving one
    from scratch, and so the next round's dispatch targets the named gap rather than
-   re-searching the whole subquestion. It decides nothing — it only labels. The Opus
+   re-searching the whole subquestion. It decides nothing — it only labels. The the strong model
    pass and the circuit breaker read these labels; a round where every subquestion is
    `met` and no trigger is justified ends the loop.
 
-4. **Orchestrator evaluation (after every round, `strong` tier / Opus):**
+4. **Orchestrator evaluation (after every round, `strong` tier / the strong model):**
    - Aggregate all sub-agent JSON for the round.
    - **Cross-agent contradiction scan** (cheap tier): scan the whole pool for sources
      that conflict — this catches contradictions no single sub-agent can see (each
      sees only its own subquestion).
-   - Opus reviews flags + scan + aggregated output and selects which triggers are
+   - the strong model reviews flags + scan + aggregated output and selects which triggers are
      *justified* (strict precision — a sub-agent's `unexpected_finding` is a candidate,
      not an automatic spend).
    - **Trajectory sanity-check (cheap tier):** before pursuing an `unexpected_finding`

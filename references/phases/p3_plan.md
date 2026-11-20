@@ -1,7 +1,7 @@
 <!-- translated from upstream/references/phases/p3_plan.md @ e233797 — see docs/TRANSLATION.md -->
 ## Phase 3. Plan
 
-**Model:** `opus` / `medium`. An architectural decision, it documents all future choices.
+**Model:** `big` / `medium`. An architectural decision, it documents all future choices.
 
 Write to the file `<root>/<slug>/plan.md`. The plan is a document, not a conversation. If it is in the chat — it will be lost later.
 

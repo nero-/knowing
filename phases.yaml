@@ -6,29 +6,30 @@
 #   shallow -> always mandatory.  medium -> mandatory for medium+deep.
 #   deep    -> mandatory only for deep.
 # model/effort = the MAIN-THREAD model. Phase 4/5 sub-agents use per-task routing.
+# `model:` values are keys in ~/.config/knowing/models.toml — rename them freely.
 phases:
   - id: "1"
     name_ru: "Reframing"
     name_en: "Reframing"
-    model: opus
+    model: big
     effort: high
     depth_gate: shallow
   - id: "2"
     name_ru: "Genre & block selection"
     name_en: "Genre & block selection"
-    model: sonnet
+    model: mid
     effort: medium
     depth_gate: shallow
   - id: "3"
     name_ru: "Plan"
     name_en: "Plan"
-    model: opus
+    model: big
     effort: medium
     depth_gate: shallow
   - id: "3.5"
     name_ru: "Capability Discovery"
     name_en: "Capability Discovery"
-    model: sonnet
+    model: mid
     effort: low
     depth_gate: medium
   # Phase 3.7 is the plan-review GATE: a single human-in-the-loop checkpoint
@@ -39,7 +40,7 @@ phases:
   - id: "3.7"
     name_ru: "Plan-review gate"
     name_en: "Plan-review gate"
-    model: sonnet
+    model: mid
     effort: low
     depth_gate: medium
   # Phase 4 is an orchestrator-driven LOOP (round -> Opus eval -> optional
@@ -50,7 +51,7 @@ phases:
   - id: "4"
     name_ru: "Поиск"
     name_en: "Search"
-    model: sonnet
+    model: mid
     effort: medium
     depth_gate: shallow
     loop: "true"
@@ -61,7 +62,7 @@ phases:
   - id: "5"
     name_ru: "Claims-ledger + триангуляция"
     name_en: "Claims-ledger + triangulation"
-    model: haiku
+    model: small
     effort: low
     depth_gate: shallow
     loop: "true"
@@ -74,7 +75,7 @@ phases:
   - id: "5.5"
     name_ru: "Evidence-фильтр"
     name_en: "Evidence filter"
-    model: sonnet
+    model: mid
     effort: low
     depth_gate: medium
   # Phase 5.7 confronts this run's claims with the cross-run wiki BEFORE synthesis, not
@@ -88,26 +89,26 @@ phases:
   - id: "5.7"
     name_ru: "Сверка с вики"
     name_en: "Wiki reconcile"
-    model: sonnet
+    model: mid
     effort: low
     depth_gate: medium
   - id: "6"
     name_ru: "Синтез + multi-angle red team"
     name_en: "Synthesis + multi-angle red team"
-    model: sonnet
+    model: mid
     model_deep: opus
     effort: high
     depth_gate: shallow
   - id: "6.5"
     name_ru: "Verify"
     name_en: "Verify"
-    model: haiku
+    model: small
     effort: low
     depth_gate: medium
   - id: "7"
     name_ru: "Refresh targets"
     name_en: "Refresh targets"
-    model: sonnet
+    model: mid
     effort: medium
     depth_gate: medium
   # Phase 8 is the Decision walkthrough: the report is not "discussed", it is
@@ -120,6 +121,6 @@ phases:
   - id: "8"
     name_ru: "Decision walkthrough"
     name_en: "Decision walkthrough"
-    model: opus
+    model: big
     effort: high
     depth_gate: shallow

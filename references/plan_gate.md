@@ -39,7 +39,7 @@ Clarification is NOT «always ask questions». It is a decision *whether they ar
 - **Not a single if-then fork of the Decision Spec can be derived** («it shows X → I do A») — this criterion is mandatory and independent of the others: ask «what would you do differently depending on the answer?» (see `question_reframing.md` item 2, item 5).
 
 **Do NOT ask questions (say «scope is clear, I am starting») if:**
-- The decision and the frame are derivable from the request or the project context (CLAUDE.md, memory).
+- The decision and the frame are derivable from the request or the project context (AGENTS.md, memory).
 - The question is concrete and unambiguous.
 - You have already asked 3 questions — from here move on with an explicit assumption.
 
@@ -55,7 +55,7 @@ Wording when they are needed (≤3, from `question_reframing.md` push-back):
 
 The scout pass buys the second coverage cheaply — before the plan is fixed.
 
-**How.** 3–4 `deepdive-scout` sub-agents (Haiku, web search: WebSearch/WebFetch, writes no source files), launched in ONE message, a short budget.
+**How.** 3–4 `deepdive-scout` sub-agents (the small model, web search: WebSearch/WebFetch, writes no source files), launched in ONE message, a short budget.
 
 The scout's task is **not sources but questions**:
 
@@ -113,7 +113,7 @@ Then — an explicit fork question (text by mode):
 - **deep:** `Ok like this? Or correct something — hypotheses / scope / channels / depth? (waiting for an answer before searching)`
 - **medium:** `If it is ok — I go searching. Something to correct — say it now.`
 
-Plus always offer the routing override labels: `«everything on opus» / «cheap mode» / «default»`.
+Plus always offer the routing override labels: `«everything on `big`» / «cheap mode» / «default»`.
 
 ## Step 3 — Handling the answer
 
@@ -121,7 +121,7 @@ Plus always offer the routing override labels: `«everything on opus» / «cheap
 - **Correction of scope/question** → go back to Phase 1, rewrite the reframing + hypotheses, rewrite `plan.md`, show the block again (for deep — wait again).
 - **Correction of hypotheses** → update the hypotheses section in `plan.md` without running all of Phase 1.
 - **Correction of channels/depth** → update section 12 (sourcing strategy) and/or the mode; if the mode changed — recompute whether the gate is skipped.
-- **Override routing** («everything on opus» / «cheap») → apply to model_routing, reflect in plan.md, continue.
+- **Override routing** («everything on `big`» / «cheap») → apply to model_routing, reflect in plan.md, continue.
 
 After approval — record in `plan.md` section 16 (changelog): `plan approved by the user <date>` (or `corrections: <what>`). This records that the gate actually fired.
 

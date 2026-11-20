@@ -1,22 +1,23 @@
+<!-- translated from upstream/references/api_sources/patents/uspto_odp.md @ e233797 — see docs/TRANSLATION.md -->
 # USPTO Open Data Portal (ODP)
 
 ## Overview
 
 - **Endpoint base:** `https://api.uspto.gov/api/v1/`
-- **Auth:** API key (`X-API-KEY` header) — требует зарегистрированный USPTO.gov аккаунт с привязанным и верифицированным ID.me аккаунтом (identity verification, не просто email-регистрация)
-- **Free tier:** бесплатно, но с недельными квотами (см. Rate limit) и заметным onboarding-порогом из-за ID.me
-- **Rate limit:** burst = 1 (без параллельных запросов на один ключ), rate 4–15 req/sec в зависимости от типа вызова; отдельно — недельные квоты: 5,000,000 calls/week на все metadata-retrieval API суммарно, 1,200,000 calls/week на Patent File Wrapper Documents API, 20 downloads/год на файл через Bulk Datasets Downloads API (кроме XML — там лимит выше), не более 5 файлов за 10 сек с одного IP. Квота сбрасывается в воскресенье в полночь UTC
+- **Auth:** API key (`X-API-KEY` header) — requires a registered USPTO.gov account linked to a verified ID.me account (identity verification, not just email registration)
+- **Free tier:** free, but with weekly quotas (see Rate limit) and a noticeable onboarding threshold because of ID.me
+- **Rate limit:** burst = 1 (no parallel requests on one key), rate 4–15 req/sec depending on the call type; separately — weekly quotas: 5,000,000 calls/week across all metadata-retrieval APIs in total, 1,200,000 calls/week for the Patent File Wrapper Documents API, 20 downloads/year per file via the Bulk Datasets Downloads API (except XML — the limit there is higher), no more than 5 files per 10 sec from one IP. The quota resets on Sunday at midnight UTC
 - **Docs:** https://data.uspto.gov/apis/getting-started , https://data.uspto.gov/apis/api-rate-limits , https://data.uspto.gov/apis/api-syntax-examples
-- **Status page:** не найдена отдельная status-страница; см. https://data.uspto.gov/support (FAQ/support)
+- **Status page:** no separate status page found; see https://data.uspto.gov/support (FAQ/support)
 - **Verified:** 2026-08-17
 
-⚠️ Внешняя разведка перед этим ресёрчем предполагала лимит «45 req/min» — это не подтвердилось. Реальная модель лимитов другая: burst=1 + per-endpoint rate 4–15 req/sec + отдельные недельные квоты на три категории API (см. выше). Не используй цифру 45 req/min.
+⚠️ External reconnaissance before this research assumed a limit of "45 req/min" — that was not confirmed. The real limit model is different: burst=1 + per-endpoint rate 4–15 req/sec + separate weekly quotas on three API categories (see above). Do not use the figure 45 req/min.
 
-Live-проверка 2026-08-17: `curl https://api.uspto.gov/api/v1/patent/applications/search?q=Utility` без ключа → `HTTP 401` (endpoint живой, требует auth).
+Live check 2026-08-17: `curl https://api.uspto.gov/api/v1/patent/applications/search?q=Utility` without a key → `HTTP 401` (endpoint is live, requires auth).
 
 ## What it returns
 
-JSON. Патентные заявки и данные Patent File Wrapper — метаданные заявки, continuity data, transactions, patent term adjustment, foreign priority, assignments, документы (PDF/XML/DOC), а также Bulk Datasets, PTAB Trials/Appeals/Interferences, Office Action тексты и citations.
+JSON. Patent applications and Patent File Wrapper data — application metadata, continuity data, transactions, patent term adjustment, foreign priority, assignments, documents (PDF/XML/DOC), plus Bulk Datasets, PTAB Trials/Appeals/Interferences, Office Action texts and citations.
 
 ```json
 {
@@ -36,27 +37,27 @@ JSON. Патентные заявки и данные Patent File Wrapper — м
 
 ## When to use
 
-- Поиск и метаданные патентных заявок США (включая pre-grant publications) по заголовку, дате подачи, статусу, заявителю
-- Continuity data — связи между родительскими/дочерними заявками
-- Office Action тексты и citations (основания отказа, цитируемый prior art)
+- Search and metadata for US patent applications (including pre-grant publications) by title, filing date, status, applicant
+- Continuity data — links between parent/child applications
+- Office Action texts and citations (grounds for refusal, cited prior art)
 - PTAB proceedings (trials, appeals, interferences)
-- Bulk-скачивание документов Patent File Wrapper (PDF/XML/Word)
+- Bulk download of Patent File Wrapper documents (PDF/XML/Word)
 
 ## When not to use
 
-- Быстрый разовый lookup без готовности проходить регистрацию USPTO.gov + ID.me verification (процесс минимум на несколько минут, для non-US пользователей — видеозвонок с ID.me)
-- Полнотекстовый поиск по выданным патентам с текстом claims/description как основная задача — для этого больше подходит Google Patents / Espacenet (см. Combine with), ODP фокусируется на file wrapper и метаданных
-- Когда не готов частично раскрыть личность через ID.me — для организации это может быть блокером
+- A quick one-off lookup without willingness to go through USPTO.gov registration + ID.me verification (a process of at least several minutes, for non-US users a video call with ID.me)
+- Full-text search over granted patents with claims/description text as the main task — Google Patents / Espacenet is a better fit for that (see Combine with), ODP focuses on the file wrapper and metadata
+- When you are not prepared to partially disclose your identity through ID.me — for an organization this may be a blocker
 
 ## Auth setup
 
-1. Завести USPTO.gov аккаунт: https://account.uspto.gov (email + подтверждение по коду, код истекает за 48 часов)
-2. Завести ID.me аккаунт и пройти identity verification (self-service или live video call; для пользователей вне США — обязательно video call + документы на английском)
-3. Связать USPTO.gov и ID.me аккаунты через "Manage API Key" в ODP, получить API key
-4. В env: `export USPTO_ODP_API_KEY="..."`
-5. Ключ не истекает, если используется минимум раз в год; при неиспользовании 90 дней — удаляется автоматически
+1. Create a USPTO.gov account: https://account.uspto.gov (email + code confirmation, the code expires in 48 hours)
+2. Create an ID.me account and pass identity verification (self-service or live video call; for users outside the US — a video call plus documents in English is mandatory)
+3. Link the USPTO.gov and ID.me accounts through "Manage API Key" in ODP, get the API key
+4. In env: `export USPTO_ODP_API_KEY="..."`
+5. The key does not expire if used at least once a year; after 90 days of non-use it is deleted automatically
 
-Запрос: `-H 'X-API-KEY: <USPTO_ODP_API_KEY>'`
+Request: `-H 'X-API-KEY: <USPTO_ODP_API_KEY>'`
 
 ## Query patterns
 
@@ -93,13 +94,13 @@ GET /api/v1/download/applications/{applicationNumber}/{documentId}.pdf
 
 ## Example queries
 
-Реальный, официально документированный (не проверялся live с ключом — нужен API key):
+A real, officially documented one (not verified live with a key — an API key is needed):
 
 ```
 GET https://api.uspto.gov/api/v1/patent/applications/search?q=applicationMetaData.inventionTitle:Apple*%20AND%20applicationMetaData.filingDate:[2021-01-01%20TO%202022-12-01]&offset=0&limit=25
 ```
 
-Live без ключа подтверждает, что endpoint отвечает (401, не 404/timeout):
+Live without a key confirms that the endpoint responds (401, not 404/timeout):
 
 ```
 curl "https://api.uspto.gov/api/v1/patent/applications/search?q=Utility"
@@ -108,21 +109,21 @@ curl "https://api.uspto.gov/api/v1/patent/applications/search?q=Utility"
 
 ## Limitations
 
-- Только US-заявки/патенты (USPTO), нет международного покрытия (для этого EPO/WIPO)
-- Onboarding тяжёлый: ID.me verification — это не просто «получить ключ», а полноценная проверка личности
-- Bulk document downloads жёстко квотированы (20/год на файл) — для больших объёмов используй Bulk Datasets Downloads API отдельно, а не Documents API
-- Крупные файлы (>100 МБ) стримятся с задержкой до 60 сек, файлы >250 МБ иногда таймаутятся даже за 10 минут
-- API key привязан к одному аккаунту, шарить нельзя, параллельные запросы одним ключом блокируются
+- US applications/patents only (USPTO), no international coverage (for that, EPO/WIPO)
+- Heavy onboarding: ID.me verification is not just "get a key" but a full identity check
+- Bulk document downloads are tightly quota'd (20/year per file) — for large volumes use the Bulk Datasets Downloads API separately, not the Documents API
+- Large files (>100 MB) stream with a delay of up to 60 sec, files >250 MB sometimes time out even after 10 minutes
+- The API key is bound to one account, it cannot be shared, parallel requests with one key are blocked
 
 ## Combine with
 
-- **EPO OPS** (`epo_ops.md`) — для европейских эквивалентов и patent family
-- **EPO Linked Open Data** (`epo_lod.md`) — для SPARQL-запросов по связям европейских патентов
-- **Google Patents / Espacenet** (через WebFetch) — для полнотекстового поиска claims/description по выданным патентам, если ODP file-wrapper фокус не подходит
+- **EPO OPS** (`epo_ops.md`) — for European equivalents and the patent family
+- **EPO Linked Open Data** (`epo_lod.md`) — for SPARQL queries over European patent relations
+- **Google Patents / Espacenet** (via WebFetch) — for full-text search of claims/description over granted patents, if the ODP file-wrapper focus does not fit
 
 ## Fallback if API down or rate-limited
 
-1. Подождать `Retry-After`/до сброса недельной квоты (сброс — воскресенье 00:00 UTC)
-2. Данные без ключа: https://data.uspto.gov предоставляет прямое скачивание bulk data products без API key (медленнее, без программного поиска)
-3. ⚠️ **PatentsView (`search.patentsview.org`) мёртв** — домен не резолвится (DNS failure, проверено 2026-08-17), а не просто 410. PatentsView официально закрылся 20 марта 2026 и мигрировал данные в USPTO ODP bulk datasets. Не пытайся использовать PatentsView как fallback или альтернативу — это тот же ODP, только под старым URL.
-4. WebFetch на https://ppubs.uspto.gov/pubwebapp/ (Patent Public Search UI) как последний вариант для ручного поиска
+1. Wait for `Retry-After`/until the weekly quota resets (reset — Sunday 00:00 UTC)
+2. Data without a key: https://data.uspto.gov offers direct download of bulk data products without an API key (slower, no programmatic search)
+3. ⚠️ **PatentsView (`search.patentsview.org`) is dead** — the domain does not resolve (DNS failure, verified 2026-08-17), not merely a 410. PatentsView officially shut down on 20 March 2026 and migrated its data into USPTO ODP bulk datasets. Do not try to use PatentsView as a fallback or alternative — it is the same ODP, just under the old URL.
+4. WebFetch to https://ppubs.uspto.gov/pubwebapp/ (Patent Public Search UI) as the last option for manual search

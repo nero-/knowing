@@ -177,6 +177,32 @@ PATCHES = [
         '    if name == "dryrun":\n        return DryRunProvider()',
         None,
     ),
+    # 10/11. State lives in ~/.knowing, not in another harness's directory.
+    (
+        "runner/wiki.py",
+        'DEFAULT_ROOT = Path.home() / ".claude"',
+        'DEFAULT_ROOT = Path.home() / ".knowing"  # knowing: own state directory',
+        None,
+    ),
+    (
+        "runner/state.py",
+        'DEFAULT_ROOT = Path.home() / ".claude"',
+        'DEFAULT_ROOT = Path.home() / ".knowing"  # knowing: own state directory',
+        None,
+    ),
+    (
+        "runner/wiki.py",
+        "Storage lives under ~/.claude/research/wiki/ — global on purpose. Research folders land",
+        "Storage lives under ~/.knowing/research/wiki/ — global on purpose. Research folders land",
+        "~/.knowing/research/wiki/",
+    ),
+    # 12. help strings that named the old directory
+    (
+        "scripts/finish.py",
+        'help="override ~/.claude (tests)"',
+        'help="override ~/.knowing (tests)"',
+        'override ~/.knowing',
+    ),
     # 7. check_quotes.py returns 0 unconditionally — it reports, it cannot fail a run.
     (
         "eval/check_quotes.py",

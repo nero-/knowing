@@ -1,8 +1,9 @@
+<!-- translated from upstream/references/api_sources/README.md @ e233797 — see docs/TRANSLATION.md -->
 # API sources — README
 
-Как пользоваться API каталогом.
+How to use the API catalog.
 
-## Шаблон файла API (для каждой записи)
+## API file template (for each entry)
 
 ```markdown
 # <API Name>
@@ -18,7 +19,7 @@
 
 ## What it returns
 
-Структурированный JSON. Пример response для типового запроса.
+Structured JSON. An example response for a typical request.
 
 ## When to use
 
@@ -31,7 +32,7 @@
 
 ## Auth setup
 
-Если нужен ключ — где взять, какие пермишены.
+If a key is needed — where to get it, which permissions.
 
 ## Query patterns
 
@@ -48,7 +49,7 @@ Body: { "ids": [...] }
 
 ## Example queries
 
-Конкретные queries с примерами JSON response (truncated).
+Concrete queries with example JSON responses (truncated).
 
 ## Limitations
 
@@ -69,74 +70,74 @@ Body: { "ids": [...] }
 3. HTML source from `stat_sources/`
 ```
 
-## Auth strategy для агента
+## Auth strategy for an agent
 
-Скилл **не хранит ключи**. Когда агенту нужен API с ключом:
+The skill **does not store keys**. When an agent needs an API with a key:
 
-1. **Сначала** проверить переменные окружения:
+1. **First** check the environment variables:
    - `FRED_API_KEY`, `GITHUB_TOKEN`, `NEWSAPI_KEY`, `BRAVE_API_KEY`, etc.
-2. Если ключа нет → fallback на free версию (без auth) или на HTML source
-3. **Никогда** не запрашивать у пользователя ключ inline — попросить добавить в env и перезапустить
+2. If there is no key → fall back to the free version (no auth) or to an HTML source
+3. **Never** ask the user for a key inline — ask them to add it to env and restart
 
-Пример agent prompt:
+Example agent prompt:
 
 ```
-Я попробую использовать FRED API. Проверяю $FRED_API_KEY...
-Не найден → fallback на HTML парсинг fred.stlouisfed.org через WebFetch.
+I will try to use the FRED API. Checking $FRED_API_KEY...
+Not found → fall back to HTML parsing of fred.stlouisfed.org via WebFetch.
 
-Чтобы ускорить будущие ресёрчи с FRED:
-1. Получи бесплатный ключ: https://fred.stlouisfed.org/docs/api/api_key.html
-2. Добавь в ~/.zshrc или ~/.bashrc:
+To speed up future research with FRED:
+1. Get a free key: https://fred.stlouisfed.org/docs/api/api_key.html
+2. Add to ~/.zshrc or ~/.bashrc:
    export FRED_API_KEY="your-key-here"
-3. Перезапусти shell и Claude Code
+3. Restart the shell and the agent harness
 ```
 
 ## Free tier dispatch logic
 
 ```
-если нужен API X:
-  если есть API key в env:
-    → используй API
-  иначе если есть free tier без key:
-    → используй free tier
-  иначе:
-    → fallback на HTML версию из stat_sources/<category>.md
-    → отметь в sources/NN.md: access: html-fallback (api blocked)
+if API X is needed:
+  if there is an API key in env:
+    → use the API
+  else if there is a free tier without a key:
+    → use the free tier
+  else:
+    → fall back to the HTML version from stat_sources/<category>.md
+    → mark in sources/NN.md: access: html-fallback (api blocked)
 ```
 
 ## Rate limit handling
 
-При попадании на 429 (rate limit):
+On hitting a 429 (rate limit):
 
-1. Подожди время указанное в `Retry-After` header
-2. Если ждать > 30 сек → fallback на HTML или альтернативный API
-3. Отметь в `sources/NN.md` notes: `rate-limited at <timestamp>, fell back to <source>`
+1. Wait the time specified in the `Retry-After` header
+2. If the wait is > 30 sec → fall back to HTML or an alternative API
+3. Mark in `sources/NN.md` notes: `rate-limited at <timestamp>, fell back to <source>`
 
 ## API quality grading
 
-В `sources/NN.md` для API-полученных источников:
+In `sources/NN.md` for API-obtained sources:
 
 - `channel: api-direct`
-- `access:` одно из:
-  - `api-free-no-key` — лучший вариант
-  - `api-free-with-key` — потребует setup но free
-  - `api-paid` — платный, использовали потому что free не покрыл
-  - `api-fallback-html` — API не работал, fall back на HTML
+- `access:` one of:
+  - `api-free-no-key` — the best option
+  - `api-free-with-key` — requires setup but free
+  - `api-paid` — paid, used because free did not cover it
+  - `api-fallback-html` — the API did not work, fell back to HTML
 
-## Когда добавлять новый API в каталог
+## When to add a new API to the catalog
 
-Критерии для PR:
+Criteria for a PR:
 
-- API стабильно работает >1 года
-- Имеет официальную документацию
-- Имеет free tier ИЛИ закрывает unique gap (нет free альтернативы)
-- Возвращает структурированный JSON/XML
-- Не deprecated и не "beta" с агрессивными breaking changes
+- The API has been working stably for >1 year
+- It has official documentation
+- It has a free tier OR fills a unique gap (no free alternative)
+- It returns structured JSON/XML
+- It is not deprecated and not "beta" with aggressive breaking changes
 
-## Антипаттерны
+## Antipatterns
 
-- ❌ Документировать API без проверки что он работает
-- ❌ Игнорировать rate limits — нужно знать пределы
-- ❌ Хардкодить ключи в шаблонах queries — всегда через env
-- ❌ Дублировать stat_sources/ — API запись должна давать качественное другое (программный access), не просто другой URL
-- ❌ Добавлять API без fallback стратегии
+- ❌ Documenting an API without checking that it works
+- ❌ Ignoring rate limits — you need to know the limits
+- ❌ Hardcoding keys in query templates — always through env
+- ❌ Duplicating stat_sources/ — an API entry must offer something qualitatively different (programmatic access), not just another URL
+- ❌ Adding an API without a fallback strategy

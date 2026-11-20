@@ -1,41 +1,42 @@
-## Фаза 3.5. Capability Discovery
+<!-- translated from upstream/references/phases/p3_5_capability.md @ e233797 — see docs/TRANSLATION.md -->
+## Phase 3.5. Capability Discovery
 
-**Model:** `sonnet` / `low`. Механический проход по env vars и таблицам.
+**Model:** `mid` / `low`. A mechanical pass over env vars and tables.
 
-**Опциональна** для shallow. **Рекомендуется** для medium. **Обязательна** для deep.
+**Optional** for shallow. **Recommended** for medium. **Mandatory** for deep.
 
-Между планированием и запуском поиска — sanity check: что у нас реально доступно?
+Between planning and launching the search — a sanity check: what do we actually have available?
 
-См. `capability_discovery.md` для детального workflow. Краткая version:
+See `capability_discovery.md` for the detailed workflow. The short version:
 
 ### Step 1: Audit env vars
 
-Проверь существование env vars для API ключей запланированных в plan.md секции 12:
+Check for the existence of env vars for the API keys planned in the plan.md section 12:
 
 ```
 $FRED_API_KEY, $GITHUB_TOKEN, $NEWSAPI_KEY, ...
 ```
 
-Полный список — `capability_discovery.md` секция "Step 1".
+The full list — `capability_discovery.md` section "Step 1".
 
 ### Step 2: Map subtopics to capabilities
 
-Для каждой подтемы → таблица: planned source × status (`authenticated` / `open-no-auth` / `fallback` / `unavailable`).
+For each subtopic → a table: planned source × status (`authenticated` / `open-no-auth` / `fallback` / `unavailable`).
 
 ### Step 3: Discover unknown gaps
 
-Если планы покрывают не всю тему — fall back на `awesome_lists_registry.md` для discovery:
+If the plans do not cover the whole topic — fall back to `awesome_lists_registry.md` for discovery:
 
 ```
-для подтемы X:
-  если не нашёл в моём каталоге → найти upstream awesome-list
-  → WebFetch его README
-  → identify 1-3 candidates → add as ad-hoc в plan.md
+for subtopic X:
+  if not found in my catalog → find an upstream awesome-list
+  → WebFetch its README
+  → identify 1-3 candidates → add as ad-hoc to plan.md
 ```
 
 ### Step 4: Report to user
 
-Сводный отчёт:
+A summary report:
 - ✅ Available: [list]
 - ⚠ Fallback: [list]
 - ❌ Unavailable: [list]
@@ -46,7 +47,7 @@ User confirms continue.
 
 ### Step 5: Update plan.md
 
-Дополнить `plan.md` секцию 12 (Information sourcing strategy) per-subtopic блоком "Capabilities check":
+Extend `plan.md` section 12 (Information sourcing strategy) per subtopic with a "Capabilities check" block:
 
 ```markdown
 **Capabilities check (Phase 3.5):**

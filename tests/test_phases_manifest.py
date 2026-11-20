@@ -29,9 +29,12 @@ def test_ids_are_unique():
 
 
 def test_models_and_efforts_are_valid():
+    """knowing: model names are keys in models.toml, so they are free-form — but they must be
+    non-empty, lowercase identifiers, and effort/depth must stay in their enums."""
     phases = phases_manifest.load_phases(REPO / "phases.yaml")
     for p in phases:
-        assert p["model"] in {"opus", "sonnet", "haiku"}
+        assert isinstance(p["model"], str) and p["model"], p["id"]
+        assert p["model"] == p["model"].lower().strip(), p["id"]
         assert p["effort"] in {"high", "medium", "low"}
         assert p["depth_gate"] in {"shallow", "medium", "deep"}
 

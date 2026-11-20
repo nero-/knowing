@@ -66,26 +66,21 @@ This answers "where does that name live", with failover behind it.
 [providers.sparks]
 base_url = "http://100.120.4.113:8015/v1"
 
-[providers.openrouter]                 # cloud, OpenAI-compatible
-base_url = "https://openrouter.ai/api/v1"
-api_key_cmd = "pass show openrouter/key"
+[providers.tp2]                        # second local box
+base_url = "http://100.97.112.71:8000/v1"
 
-[providers.anthropic]                  # cloud, different dialect
-kind = "anthropic"
-base_url = "https://api.anthropic.com"
-api_key_env = "ANTHROPIC_API_KEY"
-
-[models.opus]
-endpoints = ["sparks/DeepSeek-V4.1-Flash", "anthropic/claude-opus-5"]
+[models.big]
+endpoints = ["sparks/DeepSeek-V4.1-Flash"]
 rotate = "sticky"                      # one model per process: prompt cache survives
+fallback = ["small"]
 
-[models.haiku]
-endpoints = ["sparks/DeepSeek-V4.1-Flash", "openrouter/deepseek/deepseek-v4"]
+[models.small]
+endpoints = ["tp2/Qwen3.8-Flash-Next", "sparks/DeepSeek-V4.1-Flash"]
 
-default = "haiku"                      # when neither the agent nor the phase names one
+default = "small"                      # when neither the agent nor the phase names one
 
 [phases."6"]                           # optional: pin a phases.yaml id
-model = "opus"
+model = "big"
 ```
 
 Resolution order: **the agent's explicit name → the phase pin → `default` → an error listing the names
@@ -98,20 +93,19 @@ python3 overlay/config.py check --probe       # models, keys, and what each serv
 python3 overlay/config.py from-pi ~/.pi/agent/models.json > ~/.config/knowing/models.toml
 ```
 
-Both dialects covered: `openai` (vLLM, Ollama, llama.cpp, LM Studio, TGI, OpenRouter, Together, Groq,
-OpenAI) and `anthropic`. Guide and the reasoning: `docs/MODELS.md`.
+Local endpoints only: anything speaking OpenAI's `/v1` — vLLM, llama.cpp, Ollama, LM Studio, TGI.
+Guide, pools, failover and the reasoning: `docs/MODELS.md`.
 
 ## Status
 
-- v0.1: English translation covers the **floor** — the files a run loads unconditionally
-  (`context_budget.py::ALWAYS_LOAD`) plus `plan_template.md`. `docs/TRANSLATION.md` lists the
-  backlog in load order. Russian originals live in `vendor/deepdive/` so any translation can be
-  diffed against its source.
+- **Translation complete**: every prose file under `references/`, plus `SKILL.md` and `QUICKSTART.md`,
+  is English. Russian originals stay in `vendor/deepdive/` for diffing. The one deliberate exception is
+  documented in `docs/TRANSLATION.md` (an enum token the registry generator emits).
 - The base's own `docs/`, `eval/`, `tests/` are kept upstream-faithful. `eval/` and `tests/` are not
   installed into the skill directory; they are for development only.
-- Known open item: `references/model_routing.md` names Claude Code agent types
-  (`deepdive-fetcher`, `deepdive-redteam`, `deepdive-synthesizer`). On pi these map to Agent types;
-  the mapping is recorded in `docs/DECISIONS.md` (D6) and not yet rewritten in prose.
+- Local-only: no cloud endpoints, no vendor SDK requirement, no other harness's directories. State lives
+  in `~/.knowing/`, config in `~/.config/knowing/models.toml`, and two agent definitions ship in
+  `agents/` (`knowing-fetcher`, `knowing-redteam`).
 
 ## Provenance and licence
 

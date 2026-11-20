@@ -3,19 +3,19 @@
 
 ### Orchestration (the main thread reads only this section)
 
-Medium/deep: the synthesis runs in the `deepdive-synthesizer` sub-agent, so that sources, `evidence/` and `blocks/*.md` do not settle in the main thread's window. Shallow: the main thread performs the «Order» below itself.
+Medium/deep: the synthesis runs in the the synthesis subagent sub-agent, so that sources, `evidence/` and `blocks/*.md` do not settle in the main thread's window. Shallow: the main thread performs the «Order» below itself.
 
-1. `deepdive-synthesizer`, mode `draft`; brief: run path, depth, date. The main thread does not open `sources/`, `evidence/` and `blocks/` itself.
+1. the synthesis subagent, mode `draft`; brief: run path, depth, date. The main thread does not open `sources/`, `evidence/` and `blocks/` itself.
 2. Run the verification command from the synthesizer's answer. Red ⇒ another `draft` with the error text in the brief.
-3. Red team per `adversarial_pass.md`: roles — `deepdive-redteam` with the path to the draft. Findings are triaged by the main thread, which writes the log `findings/redteam_<date>.md` (lines `HIGH-1 …`, `MED-2 …`), then a snapshot `cp <date>_<genre>.md findings/draft_pre_remediation.md`.
-4. `deepdive-synthesizer`, mode `remediate`, with the path to the log: one remediation of HIGH in the body of the report (not as a postscript) and `memo.md`. The verification command again: it checks each HIGH against the changed section.
+3. Red team per `adversarial_pass.md`: roles — `knowing-redteam` with the path to the draft. Findings are triaged by the main thread, which writes the log `findings/redteam_<date>.md` (lines `HIGH-1 …`, `MED-2 …`), then a snapshot `cp <date>_<genre>.md findings/draft_pre_remediation.md`.
+4. the synthesis subagent, mode `remediate`, with the path to the log: one remediation of HIGH in the body of the report (not as a postscript) and `memo.md`. The verification command again: it checks each HIGH against the changed section.
 5. Of the Phase 6 artifacts the main thread reads only `memo.md`: it is needed for 6.9 and Phase 8.
 
 Steps 1–5 and 7 of the «Order» below are an instruction to the synthesizer, step 6 — to the main thread.
 
 **Input from 5.7:** `same-claim-conflict` verdicts are a divergence from a PREVIOUS research, and it must reach the report: both positions with their `as_of` and roots, `confidence` no higher than `medium`, without an arbiter — `contested`. The mechanics are the same as for `dissent` in Phase 5, only the opposing side lies in the wiki, not in this run. A triggered cut by `MAX_ADJUDICATED` — as a line in the memo's `Урезано:`. See `wiki.md`.
 
-**Model:** red-team sub-agents — `opus` / `high` **(mandatory for deep)**, `sonnet` / `high` for medium. Synthesis assembly — `sub: deepdive-synthesizer` (`opus` / `high`, its own context). Do not economise on the red team — this is where Haiku/Sonnet do soft pushback without a real attack on the hypotheses.
+**Model:** red-team sub-agents — `big` / `high` **(mandatory for deep)**, `mid` / `high` for medium. Synthesis assembly — `sub: the synthesis subagent` (`big` / `high`, its own context). Do not economise on the red team — a small or mid model does soft pushback here instead of a real attack on the hypotheses.
 
 **Order:**
 1. Re-read ALL `sources/NN.md` with `used: Y`. Do not synthesise from memory. For **deep**: the `findings/` layer is mandatory — the synthesis goes from `findings/` + `claims.csv`, with `sources/NN.md` spot-checked only at contested places. For shallow/medium — as before, re-read the used sources in full.
@@ -44,5 +44,5 @@ Steps 1–5 and 7 of the «Order» below are an instruction to the synthesizer, 
    Nothing was cut — write exactly that, `Урезано: —`. A metric that can be improved by stopping doing the work is not a metric: the share of `triangulated` grows if hard claims are dumped into Open Questions, so it is read only paired with coverage, and the narrowing is announced out loud.
 
    Numbers in the memo obey the fail-closed provenance rule: a number with `origin_kind: unknown`, `chain_len ≥ 2` or without `data_as_of` does not get in here (see `source_scoring.md` «Provenance of a number»); `check_number_provenance.py` checks this by machine. It is written AFTER the red team (HIGH remediation already accounted for). Always mandatory; in shallow — tiny (5–10 lines). A Phase 6 artifact, checked by the phase-gate.
-8. If the system has `anthropic-skills:humanizer-ru` — run the final report through it.
+8. If the system has `anthropic-skills:a humanising pass` — run the final report through it.
 9. Save the final report.

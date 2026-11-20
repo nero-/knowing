@@ -418,7 +418,7 @@ def main() -> int:
     )
     ap.add_argument("--research-dir", required=True, type=Path)
     ap.add_argument(
-        "--wiki-root", type=Path, default=None, help="override ~/.claude (tests)"
+        "--wiki-root", type=Path, default=None, help="override ~/.knowing (tests)"
     )
     ap.add_argument(
         "--dry-run", action="store_true", help="считать и напечатать, не писать"

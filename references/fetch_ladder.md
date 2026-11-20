@@ -1,29 +1,30 @@
-# Fetch ladder — когда WebFetch не достаёт
+<!-- translated from upstream/references/fetch_ladder.md @ e233797 — see docs/TRANSLATION.md -->
+# Fetch ladder — when WebFetch does not reach it
 
-Дополнение к `phases/p4_search.md` §4.2. Читать, когда WebFetch реально вернул
-«unable to fetch» или пустоту — не заранее.
+A supplement to `phases/p4_search.md` §4.2. Read it when WebFetch actually returned
+"unable to fetch" or nothing — not in advance.
 
 ```bash
 uv run scripts/fetch_source.py <URL> -o <run>/.fetch/NN.md --meta <run>/.fetch/NN.json
 ```
 
-Два тира, останавливается на первом, который отдал реальный контент:
+Two tiers, stopping at the first one that returned real content:
 
-| Тир | Что это | Когда берёт |
+| Tier | What it is | When it takes over |
 |---|---|---|
-| `http` | HTTP-запрос с Chrome TLS и заголовками | robots-исключение для AI, простой UA-фильтр |
-| `browser` | headless Chromium, исполняет JS страницы | контент рисуется клиентским JS |
+| `http` | HTTP request with Chrome TLS and headers | an AI robots exception, a simple UA filter |
+| `browser` | headless Chromium, executes the page's JS | the content is drawn by client-side JS |
 
-Коды выхода: `0` контент · `3` robots.txt закрывает путь всем клиентам · `4` auth-волл или анти-бот · `5` сетевая ошибка.
+Exit codes: `0` content · `3` robots.txt closes the path to all clients · `4` auth wall or anti-bot · `5` network error.
 
-- **Лестница — второй заход, не первый.** WebFetch дешевле, быстрее и сразу отдаёт markdown. `fetch_source.py` на втором тире поднимает браузер: это секунды и память на каждый URL.
-- **Exit 4 — терминально для HTML, но не для источника.** `auth-wall` (401/402, «sign in to read», «developer token») и `antibot` (403, Cloudflare) значат, что дверь закрыта и ломать её не надо. Скрипт сам печатает открытые двери того же сайта: маршруты из `references/fallback_routes.yaml` (официальный API, фид, архивный снимок) плюс живой пробой well-known-путей фида для доменов вне карты. Идти по ним сверху вниз; ничего не сработало — `channels.md`, потом `access: closed`.
-- **Фид часто жив, когда HTML мёртв.** Пример: stackoverflow HTML отдаёт 403 Cloudflare, а его Atom-фид — 200 (цифры замера — `NOTES_dated.md`). Фид генерится отдельным пайплайном и обычно не прикрыт анти-бот-слоем. То же у WSJ, FT и Economist: статьи за paywall, фид открыт — заголовков и аннотаций хватает на триаж и на список кандидатов.
-- **Фид не заменяет статью.** Из него берутся заголовок, дата, аннотация и URL — но не полный текст. Цитату из аннотации помечать как таковую, не выдавать за цитату из статьи.
-- **PDF не markdown-ится, а сохраняется как есть.** Скрипт определяет тип по `Content-Type` и магии `%PDF-`, кладёт файл с расширением `.pdf` и ставит `content_kind: pdf` в источник. Дальше — штатный `Read` с диапазоном `pages`; он читает PDF нативно. Для академического канала это основной путь: препринты и рабочие бумаги приезжают PDF-ами, а не страницами. Фид так же сохраняется дословно в `.xml` — markdownify уничтожает структуру, ради которой фид и брали.
-- **Exit 3 — стоп по умолчанию.** Это `Disallow` для всех клиентов, а не AI-специфичное исключение. Флаг `--ignore-robots` существует, но это решение пользователя: суб-агент его не ставит — пишет в `gaps` и идёт дальше.
-- **robots.txt недоступен — тоже exit 3, не «разрешено».** По RFC 9309: 404/410 значит «правил нет», это `allowed`. А 5xx, таймаут или сетевая ошибка — «не смогли узнать», и это fail-closed, не fail-open. Frontmatter получает `robots: unreachable`; `--ignore-robots` снимает и этот блок так же, как обычный `Disallow`.
-- **Код 200 ≠ успех.** Скрипт классифицирует по паре (статус, содержимое): заглушка под 200 это `antibot`, а не источник. Не подменять эту проверку на «файл записался» — scrapling пишет файл и выходит нулём даже на 401.
-- **Что уезжает в источник.** Из `--meta` в frontmatter `sources/NN.md` идут `access:`, `fetched:`, `fetch_tier:`, `content_sha256:`, `snapshot:` и `fetch_note:`, если он есть. Тир — часть провенанса: страница, взятая браузером поверх AI-исключения, не равна отданной добровольно.
-- **`content_sha256` и `snapshot` — на случай, если сайт молча переписал страницу.** `content_sha256` — хэш извлечённого текста; `snapshot` — путь к сырой копии тела ответа рядом с `--out` (`<имя>.snapshot.html` для HTML, `.snapshot.bin` для остального). Без `-o` или с `--no-snapshot` копии нет, `snapshot: -`.
-- Извлечение всегда идёт в режиме `main_content_only` — он же санитайзер prompt injection (режет скрытые и `aria-hidden` элементы, `<template>`, HTML-комментарии, zero-width). Веб-страница это недоверенный ввод, а читает её суб-агент.
+- **The ladder is the second attempt, not the first.** WebFetch is cheaper, faster and returns markdown straight away. `fetch_source.py` spins up a browser on the second tier: that is seconds and memory per URL.
+- **Exit 4 is terminal for HTML, but not for the source.** `auth-wall` (401/402, "sign in to read", "developer token") and `antibot` (403, Cloudflare) mean the door is closed and there is no need to break it. The script itself prints the open doors of the same site: routes from `references/fallback_routes.yaml` (official API, feed, archived snapshot) plus a live probe of well-known feed paths for domains outside the map. Walk them from top to bottom; if nothing works — `channels.md`, then `access: closed`.
+- **A feed is often alive when the HTML is dead.** Example: stackoverflow HTML returns a Cloudflare 403, while its Atom feed returns 200 (the measurement figures are in `NOTES_dated.md`). A feed is generated by a separate pipeline and usually is not covered by the anti-bot layer. The same for WSJ, FT and the Economist: the articles are behind a paywall, the feed is open — headlines and summaries are enough for triage and for a list of candidates.
+- **A feed does not replace the article.** Headline, date, summary and URL come from it — but not the full text. A quote from the summary is marked as such, not passed off as a quote from the article.
+- **A PDF is not markdownified but saved as is.** The script determines the type by `Content-Type` and the `%PDF-` magic, writes the file with a `.pdf` extension and sets `content_kind: pdf` on the source. After that — the standard `Read` with a `pages` range; it reads PDF natively. For the academic channel this is the main path: preprints and working papers arrive as PDFs, not as pages. A feed is likewise saved verbatim into `.xml` — markdownify destroys the structure the feed was taken for.
+- **Exit 3 is a stop by default.** This is a `Disallow` for all clients, not an AI-specific exception. The `--ignore-robots` flag exists, but that is the user's decision: the subagent does not set it — it writes to `gaps` and moves on.
+- **robots.txt unreachable is also exit 3, not "allowed".** Per RFC 9309: 404/410 means "no rules", which is `allowed`. But 5xx, a timeout or a network error means "could not find out", and that is fail-closed, not fail-open. The frontmatter gets `robots: unreachable`; `--ignore-robots` lifts this block the same way as a normal `Disallow`.
+- **Code 200 ≠ success.** The script classifies by the pair (status, content): a stub under 200 is `antibot`, not a source. Do not substitute this check with "the file was written" — scrapling writes a file and exits zero even on a 401.
+- **What goes into the source.** From `--meta` into the frontmatter of `sources/NN.md` go `access:`, `fetched:`, `fetch_tier:`, `content_sha256:`, `snapshot:` and `fetch_note:`, if present. The tier is part of the provenance: a page taken by a browser over an AI exception is not equal to one handed over voluntarily.
+- **`content_sha256` and `snapshot` — in case the site silently rewrote the page.** `content_sha256` is the hash of the extracted text; `snapshot` is the path to the raw copy of the response body next to `--out` (`<name>.snapshot.html` for HTML, `.snapshot.bin` for the rest). Without `-o` or with `--no-snapshot` there is no copy, `snapshot: -`.
+- Extraction always runs in `main_content_only` mode — it is also the prompt injection sanitizer (it cuts hidden and `aria-hidden` elements, `<template>`, HTML comments, zero-width). A web page is untrusted input, and it is read by a subagent.

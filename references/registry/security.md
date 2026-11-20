@@ -1,18 +1,19 @@
-# Реестр источников — Безопасность и надёжность
+<!-- translated from upstream/references/registry/security.md @ e233797 — see docs/TRANSLATION.md -->
+# Source registry — Security and reliability
 
-Advisory-фиды, threat intel, состояние инфраструктуры.
+Advisory feeds, threat intel, infrastructure state.
 
-**Проверено:** 2026-08-05 — каждый адрес отвечал живым запросом на момент разведки. Отобраны только источники ценности 5 из 5.
-**Адреса конечные, после редиректов** — исходная проверка шла без `curl -L`, иначе мёртвый адрес красится зелёным ответом с редиректа.
-**Записей:** 19, из них 1 требуют ключ или регистрацию.
+**Verified:** 2026-08-05 — every address answered a live request at the time of reconnaissance. Only sources of value 5 out of 5 were selected.
+**The addresses are final, after redirects** — the original check ran without `curl -L`, otherwise a dead address is painted green by a response from a redirect.
+**Entries:** 19, of them 1 require a key or registration.
 
-Реестр отвечает на «где смотреть по этому сигналу», а не «насколько источник надёжен»: колонка достоверности — оценка разведки, а не результат Фазы 5. Провенанс числа всё равно проверяется по `source_scoring.md`. Срок годности такого списка — месяцы; мёртвый адрес не баг реестра, а сигнал перепроверить.
+The registry answers "where to look for this signal", not "how reliable the source is": the credibility column is a reconnaissance estimate, not a Phase 5 result. The provenance of a number is still checked via `source_scoring.md`. The shelf life of such a list is months; a dead address is not a registry bug but a signal to re-check.
 
-| Источник | Адрес | Сигнал | Доступ | Достоверность |
+| Source | Address | Signal | Access | Credibility |
 |---|---|---|---|---|
 | Ookla Speedtest Open Data — Global Fixed & Mobile Network Performance (AWS Open Data / S3 bulk parquet) | <https://ookla-open-data.s3.amazonaws.com/?list-type=2&prefix=parquet/performance/type=mobile/year=2026/quarter=1/> | infra-reliability-signal | free | high |
 | RIPE NCC RIPEstat — Routing Status API (BGP/RIS data) | <https://stat.ripe.net/data/routing-status/data.json?resource=AS3333> | infra-reliability-signal | free | high |
-| Submarine Cable Map (TeleGeography) — GeoJSON карта подводных кабелей | <https://www.submarinecablemap.com/api/v3/cable/cable-geo.json> | infra-reliability-signal | free | high |
+| Submarine Cable Map (TeleGeography) — GeoJSON map of submarine cables | <https://www.submarinecablemap.com/api/v3/cable/cable-geo.json> | infra-reliability-signal | free | high |
 | npm Status Incident History RSS | <https://status.npmjs.org/history.rss> | infra-reliability-signal | free | high |
 | AWS Security Bulletins — RSS | <https://aws.amazon.com/security/security-bulletins/rss/feed/> | security-advisory-signal | free | high |
 | CISA — All Cybersecurity Advisories RSS Feed | <https://www.cisa.gov/cybersecurity-advisories/all.xml> | security-advisory-signal | free | high |

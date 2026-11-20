@@ -21,7 +21,7 @@ According to which doc/section (link if possible).
 
 ## Environment
 
-- Claude version: (Claude Code CLI / Desktop)
+- the model version: (the agent harness CLI / Desktop)
 - OS:
 - Skill version: (commit hash if known)
 

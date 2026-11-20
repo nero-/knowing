@@ -1,19 +1,20 @@
+<!-- translated from upstream/references/api_sources/grants/grants_gov.md @ e233797 — see docs/TRANSLATION.md -->
 # Grants.gov Search2 API
 
 ## Overview
 
 - **Endpoint base:** `https://api.grants.gov/v1/api/`
-- **Auth:** None для `search2` и `fetchOpportunity`. Отдельные endpoints (submission, applicant-only) требуют API key через Help Desk ticket — не относится к поиску
-- **Free tier:** Unlimited, без регистрации
-- **Rate limit:** Не задокументирован для `search2`/`fetchOpportunity` (10 запросов подряд без паузы в ходе проверки прошли без 429). **Не путать** с отдельным, более новым бета-API `api.simpler.grants.gov` — там официально заявлено 60 req/min / 10 000 req/day на ключ, но это другой сервис с другим auth (`X-API-Key`), не search2
+- **Auth:** None for `search2` and `fetchOpportunity`. Separate endpoints (submission, applicant-only) require an API key via a Help Desk ticket — not relevant to search
+- **Free tier:** Unlimited, without registration
+- **Rate limit:** Not documented for `search2`/`fetchOpportunity` (10 requests in a row without a pause passed without a 429 during verification). **Do not confuse** with the separate, newer beta API `api.simpler.grants.gov` — that one officially declares 60 req/min / 10 000 req/day per key, but it is a different service with different auth (`X-API-Key`), not search2
 - **Docs:** https://grants.gov/api/api-guide, https://grants.gov/api/common/search2
-- **Status page:** Выделенной status page нет. Анонсы плановых работ — https://grants-gov.blogspot.com
-- **Coverage:** Текущие/будущие федеральные US funding opportunities (posted, forecasted) + closed/archived. Archived-статус подтверждён вглубь минимум до 2004 года (72 887 hits по пустому запросу с фильтром archived, старейшие найденные — 2004)
+- **Status page:** No dedicated status page. Scheduled maintenance announcements — https://grants-gov.blogspot.com
+- **Coverage:** Current/future federal US funding opportunities (posted, forecasted) + closed/archived. The archived status is confirmed at least as far back as 2004 (72 887 hits on an empty query with the archived filter, the oldest found — 2004)
 - **Verified:** 2026-08-17
 
 ## What it returns
 
-JSON со списком funding opportunities (не выданных грантов — это конкурсы/объявления).
+JSON with a list of funding opportunities (not awarded grants — these are competitions/announcements).
 
 ```json
 {
@@ -39,20 +40,20 @@ JSON со списком funding opportunities (не выданных грант
 
 ## When to use
 
-- Найти открытые/предстоящие конкурсы на федеральные US гранты по теме, агентству, eligibility
-- Мониторинг новых funding opportunities для конкретной организации/области
-- Проверить статус конкретного opportunity number
-- В отличие от NSF Awards / NIH RePORTER — это **будущие возможности**, а не история выданных денег
+- Find open/upcoming federal US grant competitions by topic, agency, eligibility
+- Monitor new funding opportunities for a specific organization/field
+- Check the status of a specific opportunity number
+- Unlike NSF Awards / NIH RePORTER — these are **future opportunities**, not the history of money awarded
 
 ## When not to use
 
-- Нужны уже выданные гранты (кто получил, сколько) — это Grants.gov НЕ даёт, используй `grants/nsf_awards.md` или `grants/nih_reporter.md`
-- Нужен высокий throughput с гарантированным SLA/лимитами — рассмотри бета `api.simpler.grants.gov` с ключом (в разработке на 2026-08-17, схема может измениться)
-- EU/non-US гранты — не покрывает, см. `grants/cordis.md`
+- You need grants already awarded (who got how much) — Grants.gov does NOT provide that, use `grants/nsf_awards.md` or `grants/nih_reporter.md`
+- You need high throughput with a guaranteed SLA/limits — consider the beta `api.simpler.grants.gov` with a key (in development as of 2026-08-17, the schema may change)
+- EU/non-US grants — not covered, see `grants/cordis.md`
 
 ## Auth setup
 
-Не нужен для `search2`. Ключ не требуется, env var не нужен.
+Not needed for `search2`. No key required, no env var needed.
 
 ## Query patterns
 
@@ -65,25 +66,25 @@ Content-Type: application/json
 {"keyword": "climate", "rows": 25}
 ```
 
-### Фильтр по статусу конкурса
+### Filter by competition status
 
 ```json
 {"keyword": "", "oppStatuses": "forecasted|posted", "rows": 25}
 ```
 
-### Фильтр по агентству и категории финансирования
+### Filter by agency and funding category
 
 ```json
 {"keyword": "research", "agencies": "NSF", "fundingCategories": "ST", "rows": 25}
 ```
 
-### Пагинация
+### Pagination
 
 ```json
 {"keyword": "climate", "rows": 25, "startRecordNum": 25}
 ```
 
-### Получить конкретный opportunity (fetchOpportunity)
+### Get a specific opportunity (fetchOpportunity)
 
 ```
 POST /v1/api/fetchOpportunity
@@ -92,14 +93,14 @@ POST /v1/api/fetchOpportunity
 
 ## Example queries
 
-**Проверено 2026-08-17, ответ 200, hitCount 67:**
+**Verified 2026-08-17, response 200, hitCount 67:**
 
 ```
 POST https://api.grants.gov/v1/api/search2
 {"keyword": "climate", "rows": 2}
 ```
 
-**Проверено 2026-08-17, ответ 200, hitCount 72887 (archived-фильтр без keyword):**
+**Verified 2026-08-17, response 200, hitCount 72887 (archived filter without a keyword):**
 
 ```
 POST https://api.grants.gov/v1/api/search2
@@ -108,20 +109,20 @@ POST https://api.grants.gov/v1/api/search2
 
 ## Limitations
 
-- Только US federal opportunities — не покрывает state/local/private гранты
-- Даёт объявления о конкурсах, НЕ данные о выданных грантах — для этого нужны NSF/NIH-специфичные API
-- Официального rate limit нет — риск неожиданного throttling при агрессивном использовании; для serious production integration Grants.gov рекомендует отдельный ключевой gateway
-- Схема ответа местами напоминает legacy SOAP-обёртку в JSON (`errorcode`/`msg`/`token`) — не чистый REST-дизайн
+- US federal opportunities only — does not cover state/local/private grants
+- Returns competition announcements, NOT data about awarded grants — for that you need the NSF/NIH-specific APIs
+- No official rate limit — risk of unexpected throttling under aggressive use; for serious production integration Grants.gov recommends a separate keyed gateway
+- The response schema in places resembles a legacy SOAP wrapper in JSON (`errorcode`/`msg`/`token`) — not a clean REST design
 
 ## Combine with
 
-- **NSF Awards API** (`grants/nsf_awards.md`) — после того как конкурс закрылся и гранты выданы, ищи их здесь
-- **NIH RePORTER** (`grants/nih_reporter.md`) — то же для NIH funding opportunities → выданных грантов
-- **CORDIS** (`grants/cordis.md`) — EU-эквивалент для розыска уже профинансированных проектов после конкурса
-- **SEC EDGAR** (`financial/sec_edgar.md`) — если получатель гранта public company, для financial context
+- **NSF Awards API** (`grants/nsf_awards.md`) — once a competition has closed and the grants have been awarded, look for them here
+- **NIH RePORTER** (`grants/nih_reporter.md`) — the same for NIH funding opportunities → awarded grants
+- **CORDIS** (`grants/cordis.md`) — the EU equivalent for tracing already-funded projects after a call
+- **SEC EDGAR** (`financial/sec_edgar.md`) — if the grant recipient is a public company, for financial context
 
 ## Fallback if API down or rate-limited
 
-1. Retry с паузой — публичного Retry-After не обнаружено, ждать вручную
-2. HTML-поиск через https://grants.gov/search-grants (тот же датасет UI)
-3. RSS/email alerts через https://grants.gov (подписка на конкретные категории — не для агента, но пригодится пользователю)
+1. Retry with a pause — no public Retry-After was discovered, wait manually
+2. HTML search via https://grants.gov/search-grants (the same dataset, UI)
+3. RSS/email alerts via https://grants.gov (subscription to specific categories — not for an agent, but useful for the user)

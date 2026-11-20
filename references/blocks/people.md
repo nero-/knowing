@@ -1,57 +1,58 @@
-# PEOPLE blocks — люди, команды, поведение
+<!-- translated from upstream/references/blocks/people.md @ e233797 — see docs/TRANSLATION.md -->
+# PEOPLE blocks — people, teams, behaviour
 
-Блоки про человеческое измерение темы: personas, organizations, individuals, behaviors, incentives.
+Blocks about the human dimension of a topic: personas, organizations, individuals, behaviors, incentives.
 
 ---
 
 ## P1 — `persona`
 
-**Когда:** UX research, product analysis, customer-centric ресёрчи.
+**When:** UX research, product analysis, customer-centric research.
 
-**Что внутри:** Профили пользователей с needs, behaviors, pain points.
+**What's inside:** User profiles with needs, behaviors, pain points.
 
-**Антипаттерн:** Демографические profiles без needs ("33 years old female") — не работают для design decisions. Бери jobs-to-be-done framing.
+**Anti-pattern:** Demographic profiles without needs ("33 years old female") — they do not work for design decisions. Take a jobs-to-be-done framing.
 
-**Композиция:** Перед `user-journey` если есть. Custom для UX-ресёрчей.
+**Composition:** Before `user-journey` if present. Custom for UX research.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Personas
 
 ### Persona 1: <name/role>
-**Кто:** <короткое описание — роль, контекст>
-**Goals:** что хочет достичь
+**Who:** <short description — role, context>
+**Goals:** what they want to achieve
 **Pain points:**
 - <pain 1> — [s03]
 - <pain 2>
 **Current behaviors:**
-- Что делает сейчас для своих goals
+- What they do now to reach their goals
 **Tools they use:** <existing solutions>
-**Decision criteria:** <как выбирают tools>
+**Decision criteria:** <how they choose tools>
 **Source basis:** <interviews / surveys / app reviews — [s05]>
 
 ### Persona 2: <name/role>
 ...
 
-### Anti-persona (кому НЕ подходит)
-**Кто это:** ...
-**Почему не подходит:** ...
+### Anti-persona (who it does NOT fit)
+**Who this is:** ...
+**Why it does not fit:** ...
 ```
 
 ---
 
 ## P2 — `team-org`
 
-**Когда:** Конкурент-анализ, due diligence, organizational research.
+**When:** Competitor analysis, due diligence, organizational research.
 
-**Что внутри:** Структура команды/организации, ключевые роли, отношения.
+**What's inside:** The structure of the team/organization, the key roles, the relationships.
 
-**Антипаттерн:** Просто список людей без понимания их роли в принятии решений.
+**Anti-pattern:** Just a list of people without an understanding of their role in decision-making.
 
-**Композиция:** Дополнение к `profile-card` для глубокого due diligence.
+**Composition:** A supplement to `profile-card` for deep due diligence.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Team / Org structure
@@ -80,14 +81,14 @@
 - **GTM** — N people, lead: <name>
 
 **Signals from structure:**
-- ML team растёт быстро → ML-driven roadmap
-- No dedicated security → security as side responsibility
+- The ML team is growing fast → ML-driven roadmap
+- No dedicated security → security as a side responsibility
 - Sales/CS ratio: <N/M> → product-led vs sales-led
 
 **Hiring activity (last 6 months):**
 - N new hires in <function>
 - Specific roles: <list>
-- Что это значит: <expansion in X area>
+- What it means: <expansion in X area>
 
 **Source:** [s07] (LinkedIn analysis), [s11] (job postings)
 ```
@@ -96,37 +97,37 @@
 
 ## P3 — `key-people`
 
-**Когда:** Понимание ключевых людей в индустрии. Кто за чем стоит.
+**When:** Understanding the key people in the industry. Who stands behind what.
 
-**Что внутри:** Карточки людей: bio, прошлые проекты, влияние.
+**What's inside:** Cards for people: bio, past projects, influence.
 
-**Антипаттерн:** Слишком много людей — список без приоритизации. Бери ключевых (5-10), не всех.
+**Anti-pattern:** Too many people — a list without prioritisation. Take the key ones (5-10), not everyone.
 
-**Композиция:** Дополнение к `profile-card` или `landscape`. Глубокий due diligence.
+**Composition:** A supplement to `profile-card` or `landscape`. Deep due diligence.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Key people
 
 ### <Person 1 Name> — <current role>
 
-**Bio:** <короткая био>
+**Bio:** <short bio>
 **Prior:** <prev companies/projects>
-**Education:** <если relevant>
-**Achievements:** <что reach значимое>
-**Influence:** <насколько влияет на область — 1-5>
+**Education:** <if relevant>
+**Achievements:** <what significant was reached>
+**Influence:** <how much they shape the field — 1-5>
 **Public presence:** Twitter @, blog, recent talks
-**Conflict of interest considerations:** <если ангажирован к determined view>
+**Conflict of interest considerations:** <if committed to a determined view>
 **Source:** [s05]
 
 ### <Person 2 Name> — <role>
 ...
 
 ### Networks of key people
-- <Person 1> и <Person 2> часто collab — same alma mater
-- <Person 3> воспринимается как opponent к мнению <Person 1>
-- <Person 4> — emerging voice, недавно появился
+- <Person 1> and <Person 2> often collaborate — same alma mater
+- <Person 3> is perceived as an opponent to the view of <Person 1>
+- <Person 4> — an emerging voice, appeared recently
 
 ### Where these people speak / publish
 - <conferences>
@@ -138,25 +139,25 @@
 
 ## P4 — `user-journey`
 
-**Когда:** UX, product design. Когда нужно понять путь пользователя.
+**When:** UX, product design. When the user's path must be understood.
 
-**Что внутри:** Steps + что user делает + что чувствует + где friction.
+**What's inside:** Steps + what the user does + what they feel + where the friction is.
 
-**Антипаттерн:** Только actions без emotions — friction не выявить.
+**Anti-pattern:** Only actions without emotions — the friction cannot be identified.
 
-**Композиция:** После `persona`. Часто комбинируется.
+**Composition:** After `persona`. Often combined.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## User journey: <persona> achieving <goal>
 
 ### Step 1: <Awareness / Discovery>
-**Trigger:** что заставило начать
-**Action:** <что user делает>
-**Touchpoints:** <где взаимодействует — web/app/email>
+**Trigger:** what made them start
+**Action:** <what the user does>
+**Touchpoints:** <where they interact — web/app/email>
 **Emotion:** 😊 / 😐 / 😟 / 😡
-**Friction:** <если есть — что мешает>
+**Friction:** <if any — what gets in the way>
 **Source:** [s03]
 
 ### Step 2: <Consideration>
@@ -178,7 +179,7 @@
 ...
 
 ### Pain points summary
-- 🔴 Step 3 — биггест friction: <description> [s07]
+- 🔴 Step 3 — biggest friction: <description> [s07]
 - 🟡 Step 5 — onboarding too long
 - 🟢 Step 6 — works smoothly
 
@@ -191,66 +192,66 @@
 
 ## P5 — `behavioral-patterns`
 
-**Когда:** Behavioral analysis. Trading behavior, user behavior, market behavior.
+**When:** Behavioral analysis. Trading behavior, user behavior, market behavior.
 
-**Что внутри:** Паттерны поведения участников + их сила + триггеры.
+**What's inside:** Patterns in participant behavior + their strength + their triggers.
 
-**Антипаттерн:** Описание поведения без objective signal (как мы знаем что это паттерн).
+**Anti-pattern:** A description of behaviour without an objective signal (how we know it is a pattern).
 
-**Композиция:** Custom для behavioral/economic ресёрчей. После `persona` если есть.
+**Composition:** Custom for behavioral/economic research. After `persona` if present.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Behavioral patterns
 
-### Pattern 1: <название>
-**Что делают:** <описание поведения>
-**Когда:** <триггер / условия>
-**Кто:** <какие участники>
+### Pattern 1: <name>
+**What they do:** <description of the behaviour>
+**When:** <trigger / conditions>
+**Who:** <which participants>
 **Sample:** N=<observed>
 **Strength:** consistent | occasional | rare
 **Direction:** rational | irrational | strategic
 **Source:** [s07]
 
 **Why this happens (hypotheses):**
-- Incentive structure (см. `incentive-structure`)
+- Incentive structure (see `incentive-structure`)
 - Cognitive bias: <bias name>
 - Information asymmetry
 - Coordination dynamics
 
-**Implications for X:** <что это значит для нашей темы>
+**Implications for X:** <what this means for our topic>
 
-### Pattern 2: <название>
+### Pattern 2: <name>
 ...
 
-### Pattern 3: <название>
+### Pattern 3: <name>
 ...
 
-### Anti-patterns (что DOESN'T happen вопреки ожиданиям)
-- Никто не делает <expected behavior> — почему: ...
+### Anti-patterns (what DOESN'T happen contrary to expectations)
+- Nobody does <expected behavior> — why: ...
 ```
 
 ---
 
 ## P6 — `incentive-structure`
 
-**Когда:** Game theory, market design, organizational analysis.
+**When:** Game theory, market design, organizational analysis.
 
-**Что внутри:** Кто что получает, какие стимулы у каждого участника.
+**What's inside:** Who gets what, what the incentives of each participant are.
 
-**Антипаттерн:** Игнорировать misaligned incentives. Часто конфликт интересов = ключ объяснения.
+**Anti-pattern:** Ignoring misaligned incentives. A conflict of interest is often the key explanation.
 
-**Композиция:** До `behavioral-patterns`. Объясняет «почему так».
+**Composition:** Before `behavioral-patterns`. Explains "why it is this way".
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Incentive structure
 
-### Участники
+### Participants
 
-| Actor | Получает | Платит | Net incentive | Strength |
+| Actor | Gets | Pays | Net incentive | Strength |
 |---|---|---|---|---|
 | A | <gain> | <cost> | <direction> | high |
 | B | <gain> | <cost> | <direction> | medium |
@@ -259,29 +260,29 @@
 ### Detailed analysis
 
 #### Actor A
-- **Primary motive:** <что главное для A>
-- **What A optimizes:** <конкретная метрика>
-- **Constraints:** <что не может делать>
+- **Primary motive:** <what matters most to A>
+- **What A optimizes:** <specific metric>
+- **Constraints:** <what they cannot do>
 - **Conflict with whom:** <A vs B>
 - **Source:** [s05]
 
 #### Actor B
 ...
 
-### Misalignments (где интересы расходятся)
+### Misalignments (where interests diverge)
 - A vs B: A maximizes X, B maximizes ¬X
 - Result: <observable conflict>
 
-### Aligned incentives (где сходятся)
+### Aligned incentives (where they converge)
 - A and C both want Y
 - Result: <observable cooperation>
 
-### Equilibrium (если есть)
-- В текущей системе stable state: <description>
-- Causal model: <как одни поведения стабилизируют другие>
+### Equilibrium (if any)
+- In the current system the stable state: <description>
+- Causal model: <how some behaviours stabilize others>
 
 ### How to shift behavior
-- Изменить incentive: <if X changed, then A would do Y>
+- Change the incentive: <if X changed, then A would do Y>
 - Mechanism design: <leverage point>
 ```
 
@@ -289,22 +290,22 @@
 
 ## P7 — `expert-opinion`
 
-**Когда:** Expert-driven validation. Когда мнение экспертов критично.
+**When:** Expert-driven validation. When expert opinion is critical.
 
-**Что внутри:** Карточка эксперта с opinion и conflict of interest.
+**What's inside:** An expert card with the opinion and the conflict of interest.
 
-**Антипаттерн:** Принимать мнение эксперта без оценки conflicts. Эксперты тоже biased.
+**Anti-pattern:** Accepting an expert's opinion without assessing conflicts. Experts are biased too.
 
-**Композиция:** В validation как specific evidence type. Альтернатива `evidence-graded` для qualitative claims.
+**Composition:** In validation as a specific evidence type. An alternative to `evidence-graded` for qualitative claims.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Expert opinions
 
 ### Expert 1: <Name> — <credentials>
 
-**Stated opinion:** <что говорит, dirvect quote или close>
+**Stated opinion:** <what they say, direct quote or close>
 **Source:** [s05] (interview / talk / paper)
 **Date:** <when said>
 
@@ -314,7 +315,7 @@
 - Position at <institution>
 
 **Independence:**
-- **Funded by:** <source — может быть conflict>
+- **Funded by:** <source — may be a conflict>
 - **Affiliations:** <relevant ones>
 - **Past stances:** <consistent / changed view recently>
 - **Conflict of interest:** <yes/no/possible>
@@ -325,11 +326,11 @@
 ...
 
 ### Aggregate of expert opinions
-- Consensus: <если есть>
+- Consensus: <if any>
 - Disagreement: <where>
 - Independent vs conflicted ratio: <N/M>
 
 ### Caveats
-- Все эксперты в одной школе мысли → возможен groupthink
-- Эксперты разных школ → see `conflicting-evidence`
+- All experts from one school of thought → groupthink is possible
+- Experts from different schools → see `conflicting-evidence`
 ```

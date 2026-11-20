@@ -1,27 +1,28 @@
-# CONTEXT blocks — внешний контекст
+<!-- translated from upstream/references/blocks/context.md @ e233797 — see docs/TRANSLATION.md -->
+# CONTEXT blocks — external context
 
-Блоки про контекст вокруг темы: регуляторика, гео, культура, история, политика, технологический стек, экосистема.
+Blocks about the context around the topic: regulation, geography, culture, history, politics, tech stack, ecosystem.
 
 ---
 
 ## X1 — `regulatory`
 
-**Когда:** Финтех, медтех, AI, crypto, любой regulated domain.
+**When:** Fintech, medtech, AI, crypto, any regulated domain.
 
-**Что внутри:** Регуляторный контекст: законы, compliance requirements, ограничения по юрисдикциям.
+**What's inside:** Regulatory context: laws, compliance requirements, restrictions by jurisdiction.
 
-**Антипаттерн:** Регуляторика как list без impact — нужно показать как влияет на тему.
+**Anti-pattern:** Regulation as a list with no impact — you need to show how it affects the topic.
 
-**Композиция:** Перед `decision` или `landscape` если регуляторика критична.
+**Composition:** Before `decision` or `landscape` if regulation is critical.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Regulatory context
 
-### Юрисдикции и applicable regulations
+### Jurisdictions and applicable regulations
 
-| Юрисдикция | Регулятор | Ключевые требования | Status | Source |
+| Jurisdiction | Regulator | Key requirements | Status | Source |
 |---|---|---|---|---|
 | US | <SEC / FDA / etc> | <requirements> | active | [s03] |
 | EU | <ESMA / EBA / DPC> | GDPR, MiCA, ... | active | [s07] |
@@ -39,40 +40,40 @@
 - **Heavy:** <jurisdictions, e.g. EU MiCA>
 
 ### Banned / restricted
-- В <country> запрещено <activity>
-- В <country> ограничено <constraint>
+- In <country>, <activity> is prohibited
+- In <country>, <constraint> is restricted
 
 ### Regulatory risk for the topic
 - **High risk:** if <event>, whole industry affected
 - **Watch list:** <pending regulations to monitor>
-- **Wins from regulation:** moats для compliance-ready players
+- **Wins from regulation:** moats for compliance-ready players
 
 ### Source disclaimer
-- Не legal advice. Регуляторика меняется быстро.
+- Not legal advice. Regulation changes fast.
 - Last update: <date>
-- Для actual compliance — consult counsel.
+- For actual compliance — consult counsel.
 ```
 
 ---
 
 ## X2 — `geo-context`
 
-**Когда:** Глобальные рынки, миграция, юрисдикции, gocrossing-cultural темы.
+**When:** Global markets, migration, jurisdictions, cross-cultural topics.
 
-**Что внутри:** Различия по странам / регионам.
+**What's inside:** Differences by country / region.
 
-**Антипаттерн:** Generalizing «in Asia X happens» — Asia ≠ uniform. Будь конкретен.
+**Anti-pattern:** Generalising «in Asia X happens» — Asia is not uniform. Be concrete.
 
-**Композиция:** Дополнение к `landscape` или `regulatory`. Перед `cultural-context` если идут вместе.
+**Composition:** A supplement to `landscape` or `regulatory`. Before `cultural-context` if they go together.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Geographic context
 
 ### Regional differences
 
-| Region / Country | Что отличается | Why |
+| Region / Country | What differs | Why |
 |---|---|---|
 | US | <unique pattern> | <historical/economic reason> |
 | EU | <pattern> | <reason> |
@@ -100,15 +101,15 @@
 
 ## X3 — `cultural-context`
 
-**Когда:** Кросс-культурные темы. Где культура влияет существенно.
+**When:** Cross-cultural topics. Where culture matters substantially.
 
-**Что внутри:** Культурные особенности с конкретными impact на тему.
+**What's inside:** Cultural specifics with concrete impact on the topic.
 
-**Антипаттерн:** Стереотипы вместо observable patterns. Бери data-backed observations.
+**Anti-pattern:** Stereotypes instead of observable patterns. Take data-backed observations.
 
-**Композиция:** После `geo-context`. Дополняет географию.
+**Composition:** After `geo-context`. Complements the geography.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Cultural context
@@ -119,7 +120,7 @@
 **Where:** <region / culture>
 **What:** <observable behavior>
 **Source:** [s05] (ethnographic study / survey)
-**Impact on topic:** <как это меняет тему>
+**Impact on topic:** <how this changes the topic>
 
 #### Pattern 2: ...
 
@@ -135,7 +136,7 @@
 - Tech assumptions universal — actually vary by culture
 
 ### Source-rigorous notes
-- Avoid generalizations без backing data
+- Avoid generalizations without backing data
 - Cited cultural patterns from [s07] (peer-reviewed) and [s14] (industry survey N=2000)
 ```
 
@@ -143,21 +144,21 @@
 
 ## X4 — `historical-context`
 
-**Когда:** Historical analysis. Deep explainer. Где «как мы сюда попали» критично.
+**When:** Historical analysis. Deep explainer. Where «how we got here» is critical.
 
-**Что внутри:** Что было до и почему важно для понимания сейчас.
+**What's inside:** What came before and why it matters for understanding now.
 
-**Антипаттерн:** История ради истории. Каждый исторический факт должен relate to current understanding.
+**Anti-pattern:** History for history's sake. Every historical fact must relate to current understanding.
 
-**Композиция:** В начале объяснения. Перед `mental-model` или `stepwise`.
+**Composition:** At the start of the explanation. Before `mental-model` or `stepwise`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Historical context
 
 ### Origins (<period>)
-**What existed before:** <предшествующее состояние>
+**What existed before:** <the preceding state>
 **Key actors / movements:** <who/what mattered>
 **Source:** [s05]
 
@@ -175,17 +176,17 @@
 ...
 
 ### Path dependency
-Что мы имеем сейчас существует именно так потому что:
+What we have now exists the way it does precisely because:
 - Decision X in <year> locked in <pattern>
 - Failed attempts at Y in <year> made people skeptical of <approach>
-- Standard Z became default по historical accident
+- Standard Z became default by historical accident
 
-### Если бы история пошла иначе
-- Counterfactual 1: если бы <event A> не произошло → <different world>
-- Counterfactual 2: если бы <person B> не сделал <X> → <different now>
+### If history had gone differently
+- Counterfactual 1: if <event A> had not happened → <different world>
+- Counterfactual 2: if <person B> had not done <X> → <different now>
 
 ### Why historical context matters for current decisions
-- Path dependency means <current option> easier than <theoretical better option>
+- Path dependency means <current option> is easier than <theoretical better option>
 - Cultural memory of <past failure> makes <X> politically hard
 - Existing infrastructure investments lock in <pattern>
 ```
@@ -194,21 +195,21 @@
 
 ## X5 — `political-context`
 
-**Когда:** Geopolitics, sanctions, market access, government-related темы.
+**When:** Geopolitics, sanctions, market access, government-related topics.
 
-**Что внутри:** Политические факторы влияющие на тему.
+**What's inside:** Political factors affecting the topic.
 
-**Антипаттерн:** Partisan framing. Стараться нейтрально по форме, факт-based.
+**Anti-pattern:** Partisan framing. Strive to be neutral in form, fact-based.
 
-**Композиция:** Дополнение к `regulatory` или `geo-context`. Когда политика влияет существенно.
+**Composition:** A supplement to `regulatory` or `geo-context`. When politics matters substantially.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Political context
 
 ### Government stance (by jurisdiction)
-- **US:** <current admin position> — может измениться после next election
+- **US:** <current admin position> — may change after the next election
 - **EU:** <position> — driven by <commission body>
 - **China:** <position> — strategic priority for <reason>
 - **Russia:** <if relevant>
@@ -240,30 +241,30 @@
 
 ### Sources & neutrality
 - Multiple sources from different perspectives: [s03] (left-leaning), [s07] (right-leaning), [s11] (centrist)
-- Aim for triangulation, не единственная точка зрения
+- Aim for triangulation, not a single point of view
 ```
 
 ---
 
 ## X6 — `tech-stack-context`
 
-**Когда:** Tech research. Когда нужно понимать какие технологии в основе.
+**When:** Tech research. When you need to understand which technologies are underneath.
 
-**Что внутри:** Технологии в основе темы + dependencies + alternatives.
+**What's inside:** The technologies underneath the topic + dependencies + alternatives.
 
-**Антипаттерн:** Tech listing без понимания "what for". Каждая tech должна объяснять role.
+**Anti-pattern:** Tech listing without understanding "what for". Every tech must explain its role.
 
-**Композиция:** В технических explainer. Перед `mental-model` для tech-heavy тем.
+**Composition:** In technical explainers. Before `mental-model` for tech-heavy topics.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Tech stack context
 
 ### Foundational technologies
-- **<Tech A>** — что: <role in topic>, why это используется
-- **<Tech B>** — что: <role>, alternatives: <list>
-- **<Tech C>** — что: <role>, history: was once <alternative> until <event>
+- **<Tech A>** — what: <role in topic>, why it is used
+- **<Tech B>** — what: <role>, alternatives: <list>
+- **<Tech C>** — what: <role>, history: was once <alternative> until <event>
 
 ### Architecture pattern (high-level)
 ```
@@ -278,7 +279,7 @@
 - Backup / alternatives: <if any>
 
 ### Common variants of the stack
-- **Variant 1:** Tech A + Tech B + alternative для C
+- **Variant 1:** Tech A + Tech B + alternative for C
 - **Variant 2:** Different combination — when preferred
 - **Variant 3:** Minimal — for prototyping
 
@@ -300,20 +301,20 @@
 
 ## X7 — `ecosystem`
 
-**Когда:** Platform analysis. Когда тема — часть большей экосистемы.
+**When:** Platform analysis. When the topic is part of a larger ecosystem.
 
-**Что внутри:** Соседи, дополняющие, конкурирующие платформы вокруг темы.
+**What's inside:** Neighbours, complementing and competing platforms around the topic.
 
-**Антипаттерн:** Перечисление всех связанных вещей. Только релевантные ecosystem players.
+**Anti-pattern:** Listing every related thing. Only the relevant ecosystem players.
 
-**Композиция:** После `landscape` или дополняет его. Расширяет границы за пределы прямых конкурентов.
+**Composition:** After `landscape` or as a supplement to it. Extends the boundaries beyond direct competitors.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Ecosystem
 
-### Subject в центре экосистемы
+### The subject at the centre of the ecosystem
 
 ```
               ┌─── Customers / Users ───┐
@@ -340,7 +341,7 @@
 
 #### Complementors (make subject more valuable)
 - <complementor X> — increases value of subject by <mechanism>
-- <complementor Y> — без них subject less useful
+- <complementor Y> — without them the subject is less useful
 
 #### Substitutes (alternative ways to achieve same goal)
 - <substitute A> — when chosen over subject

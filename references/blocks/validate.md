@@ -1,50 +1,51 @@
-# VALIDATE blocks — проверка истинности
+<!-- translated from upstream/references/blocks/validate.md @ e233797 — see docs/TRANSLATION.md -->
+# VALIDATE blocks — truth verification
 
-Блоки для validation-жанра. «Правда ли X».
+Blocks for the validation genre. "Is X true?"
 
 ---
 
 ## V1 — `falsification-criteria`
 
-**Когда:** Validation всегда. ДО просмотра evidence.
+**When:** Validation always. BEFORE looking at the evidence.
 
-**Что внутри:** Что заставило бы признать claim ложным. Формулируется заранее — защита от confirmation bias.
+**What's inside:** What would force us to call the claim false. Formulated in advance — a defence against confirmation bias.
 
-**Антипаттерн:** Формулировать falsification после evidence — это уже rationalization. Pre-stated only.
+**Anti-pattern:** Formulating falsification after the evidence — that is already rationalization. Pre-stated only.
 
-**Композиция:** Сразу после `claim-precise`. До `evidence-graded`.
+**Composition:** Immediately after `claim-precise`. Before `evidence-graded`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Falsification criteria
 
-ДО просмотра evidence фиксируем: какие данные опровергнут claim?
+BEFORE looking at the evidence we fix: which data would refute the claim?
 
-**Если найдём:** <конкретное observation X> → claim ЛОЖНЫЙ.
-**Если найдём:** <observation Y> → claim ВЕРНЫЙ.
-**Если найдём:** <observation Z> → claim условно верный (только при <условие>).
+**If we find:** <specific observation X> → the claim is FALSE.
+**If we find:** <observation Y> → the claim is TRUE.
+**If we find:** <observation Z> → the claim is conditionally true (only under <condition>).
 
-**Какое evidence нам бы было НЕДОСТАТОЧНО:**
-- <тип источника / тип данных> — даже если найдём, не считаем
-- <напр.: одно исследование, не воспроизведённое — недостаточно>
+**Which evidence would be INSUFFICIENT for us:**
+- <source type / data type> — even if we find it, we do not count it
+- <e.g.: a single study, not replicated — insufficient>
 
-**Записано до начала поиска evidence:** да | нет (если нет — пометить, признать bias risk)
+**Recorded before the evidence search began:** yes | no (if no — flag it, admit the bias risk)
 ```
 
 ---
 
 ## V2 — `evidence-graded`
 
-**Когда:** Validation всегда. После falsification, перед verdict.
+**When:** Validation always. After falsification, before the verdict.
 
-**Что внутри:** Evidence FOR и AGAINST раздельно, каждый с quality grade A/B/C.
+**What's inside:** Evidence FOR and AGAINST separately, each with a quality grade A/B/C.
 
-**Антипаттерн:** Смешивать evidence в один список. FOR/AGAINST должны быть параллельны и сравнимы.
+**Anti-pattern:** Mixing the evidence into one list. FOR/AGAINST must be parallel and comparable.
 
-**Композиция:** После `falsification-criteria`. До `verdict-conditional`.
+**Composition:** After `falsification-criteria`. Before `verdict-conditional`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Evidence
@@ -56,15 +57,15 @@
 
 ### Evidence FOR
 
-#### F1: <тезис в одной фразе>
-**Источник:** [s03] — peer-reviewed, N=2000, 3-year follow-up
-**Что говорит:** ...
+#### F1: <the thesis in one sentence>
+**Source:** [s03] — peer-reviewed, N=2000, 3-year follow-up
+**What it says:** ...
 **Quality:** A
-**Scope:** где, когда, на ком исследование
+**Scope:** where, when, on whom the study was done
 **Limitations:** ...
 
-#### F2: <тезис>
-**Источник:** [s07]
+#### F2: <thesis>
+**Source:** [s07]
 **Quality:** B (observational)
 ...
 
@@ -72,9 +73,9 @@
 
 ### Evidence AGAINST
 
-#### A1: <тезис в одной фразе>
-**Источник:** [s11] — meta-analysis of 14 studies
-**Что говорит:** ...
+#### A1: <the thesis in one sentence>
+**Source:** [s11] — meta-analysis of 14 studies
+**What it says:** ...
 **Quality:** A
 **Scope:** ...
 
@@ -83,37 +84,37 @@
 ### Weight summary
 - FOR: 3 A-grade + 4 B-grade + 1 C-grade
 - AGAINST: 1 A-grade + 2 B-grade
-- **Balance:** evidence weighted toward FOR, но A против — серьёзно
+- **Balance:** the evidence is weighted toward FOR, but the A-grade against is serious
 ```
 
 ---
 
 ## V3 — `conflicting-evidence`
 
-**Когда:** Validation когда есть прямо противоречащие источники.
+**When:** Validation when there are directly contradictory sources.
 
-**Что внутри:** Случаи где данные говорят X, и где ¬X. Анализ почему расходятся.
+**What's inside:** Cases where the data says X, and where ¬X. An analysis of why they diverge.
 
-**Антипаттерн:** Скрывать конфликты. Конфликт сам по себе — важная информация.
+**Anti-pattern:** Hiding conflicts. A conflict is itself important information.
 
-**Композиция:** После `evidence-graded`. До `verdict-conditional`.
+**Composition:** After `evidence-graded`. Before `verdict-conditional`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Conflicting evidence
 
-### Conflict 1: <тема>
+### Conflict 1: <topic>
 **Side A says:** ... [s05]
 **Side B says:** ... [s11]
-**Почему расходятся:**
-- Different populations (A в группе X, B в группе Y)
+**Why they diverge:**
+- Different populations (A in group X, B in group Y)
 - Different methodology (RCT vs observational)
 - Conflict of interest (B funded by Z)
-- Time period (A 2018, B 2024 — могло измениться)
+- Time period (A 2018, B 2024 — things may have changed)
 
-**Что более вероятно правда:** <обоснование>
-**Confidence в этом разрешении:** medium
+**What is more likely true:** <justification>
+**Confidence in this resolution:** medium
 
 ### Conflict 2: ...
 ```
@@ -122,50 +123,50 @@
 
 ## V4 — `base-rates`
 
-**Когда:** Validation медицинских/научных/probabilistic claims. Где есть baseline вероятность.
+**When:** Validation of medical/scientific/probabilistic claims. Where there is a baseline probability.
 
-**Что внутри:** Apriori probability + почему она такая.
+**What's inside:** The apriori probability + why it is what it is.
 
-**Антипаттерн:** Игнорировать base rate. Bayesian reasoning требует prior.
+**Anti-pattern:** Ignoring the base rate. Bayesian reasoning requires a prior.
 
-**Композиция:** Перед `evidence-graded`. Контекст для оценки силы evidence.
+**Composition:** Before `evidence-graded`. Context for assessing the strength of the evidence.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Base rates (prior probability)
 
-**Claim:** «X вызывает Y».
+**Claim:** "X causes Y".
 
-**Базовая частота Y в общей популяции:** ~Z% [s05]
-**Базовая частота Y у людей с X:** ~W% [s07]
-**Разница (effect size):** W - Z = <X percentage points>
+**Base frequency of Y in the general population:** ~Z% [s05]
+**Base frequency of Y among people with X:** ~W% [s07]
+**Difference (effect size):** W - Z = <X percentage points>
 
-**Что это значит для prior:**
-- Если W ≈ Z → нет видимого эффекта в наблюдательных данных
-- Если W >> Z → strong correlation, но всё ещё нужна caustality
+**What this means for the prior:**
+- If W ≈ Z → no visible effect in the observational data
+- If W >> Z → strong correlation, but causality is still needed
 
-**Confounders которые могут объяснить разницу:**
+**Confounders that could explain the difference:**
 - Age (people with X are older on average)
 - Lifestyle
 - Selection bias (only certain types report X)
 
-**Prior probability claim верен (наша оценка до evidence):** ~30%.
+**Prior probability the claim is true (our estimate before the evidence):** ~30%.
 ```
 
 ---
 
 ## V5 — `verdict-conditional`
 
-**Когда:** Validation всегда. Финальный verdict.
+**When:** Validation always. The final verdict.
 
-**Что внутри:** Verdict с conditional модификациями — «правда при X, ложь при Y, недостаточно при Z».
+**What's inside:** The verdict with conditional modifications — "true under X, false under Y, not enough under Z".
 
-**Антипаттерн:** Бинарный verdict (true/false) когда реально conditional. Большинство claims conditional.
+**Anti-pattern:** A binary verdict (true/false) when things are really conditional. Most claims are conditional.
 
-**Композиция:** После всех evidence-блоков. До `closing` секции.
+**Composition:** After all the evidence blocks. Before `closing` section.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Verdict
@@ -175,60 +176,60 @@
 
 ### Unconditional verdict
 
-<если применимо: «Claim верен» или «Claim ложен» с одной фразой обоснования>
+<if applicable: "The claim is true" or "The claim is false" with a one-sentence justification>
 
-### Conditional verdict (если применимо)
+### Conditional verdict (if applicable)
 
-- **Верно ПРИ условии:** <X>
-- **Ложно при:** <Y>
-- **Недостаточно данных для:** <Z scenario>
+- **True UNDER the condition:** <X>
+- **False under:** <Y>
+- **Not enough data for:** <Z scenario>
 
 ### Scope verdict
-- **В контексте X:** confirmed
-- **В контексте Y:** unclear (надо больше данных)
-- **В контексте Z:** contradicted
+- **In context X:** confirmed
+- **In context Y:** unclear (more data needed)
+- **In context Z:** contradicted
 
-### Что вошло в verdict
+### What went into the verdict
 - Evidence FOR — A-grade: <count>, B-grade: <count>
 - Evidence AGAINST — A-grade: <count>, B-grade: <count>
-- Falsification criteria: <выполнены? нарушены?>
-- Base rate consideration: <учтена>
+- Falsification criteria: <met? violated?>
+- Base rate consideration: <taken into account>
 
-### Что НЕ вошло (deliberately excluded)
-- C-grade anecdotes (по дисциплине quality cutoff)
-- Sources с известным conflict of interest без раскрытия
+### What did NOT go in (deliberately excluded)
+- C-grade anecdotes (per the quality cutoff discipline)
+- Sources with a known conflict of interest and no disclosure
 ```
 
 ---
 
 ## V6 — `what-would-change-verdict`
 
-**Когда:** Validation после verdict. Что бы заставило пересмотреть.
+**When:** Validation after the verdict. What would force a re-examination.
 
-**Что внутри:** Конкретные типы данных, которые сдвинули бы verdict в любую сторону.
+**What's inside:** Concrete data types that would shift the verdict in either direction.
 
-**Антипаттерн:** «Больше исследований» без конкретики. Уточняй — какие именно исследования, какого дизайна.
+**Anti-pattern:** "More research" without specifics. Be precise — which research exactly, of what design.
 
-**Композиция:** После `verdict-conditional`. До `closing`.
+**Composition:** After `verdict-conditional`. Before `closing`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## What would change the verdict
 
-**Verdict вырос бы (с medium до high confidence)**, если бы появилось:
-- <тип study X с N >= ...>
-- Replication в <country/population>
+**The verdict would rise (from medium to high confidence)** if the following appeared:
+- <study type X with N >= ...>
+- A replication in <country/population>
 - Mechanism elucidation (mechanistic study)
 
-**Verdict упал бы (с confirmed до contradicted)**, если бы:
-- <тип evidence>
-- Retraction <s03>
-- Counter-RCT с эффектом opposite
+**The verdict would fall (from confirmed to contradicted)** if:
+- <evidence type>
+- Retraction of <s03>
+- A counter-RCT with the opposite effect
 
-**Verdict не изменится** от:
-- Ещё anecdotal evidence (qualitative ceiling reached)
-- Ещё observational без causation
+**The verdict will not change** from:
+- More anecdotal evidence (qualitative ceiling reached)
+- More observational data without causation
 - Marketing materials
 ```
 
@@ -236,20 +237,20 @@
 
 ## V7 — `replication-status`
 
-**Когда:** Научный validation. Проверка воспроизводимости.
+**When:** Scientific validation. Checking reproducibility.
 
-**Что внутри:** Воспроизведён ли результат, кем, сколько раз.
+**What's inside:** Whether the result has been replicated, by whom, how many times.
 
-**Антипаттерн:** Полагаться на одно исследование. Replication crisis показывает что нужно ≥2-3.
+**Anti-pattern:** Relying on a single study. The replication crisis shows you need ≥2-3.
 
-**Композиция:** Дополнение к `evidence-graded`. Один из quality factors.
+**Composition:** A supplement to `evidence-graded`. One of the quality factors.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Replication status
 
-### Оригинальное исследование
+### Original study
 - **Citation:** [s03]
 - **Year:** 2018
 - **N:** 250
@@ -261,7 +262,7 @@
 |---|---|---|---|---|
 | 2019 | [s05] | 180 | yes (diff lab) | ✅ replicated |
 | 2020 | [s07] | 500 | yes (diff country) | 🟡 partial replication (effect smaller) |
-| 2022 | [s11] | 300 | no (same lab) | ✅ replicated (但 same authors) |
+| 2022 | [s11] | 300 | no (same lab) | ✅ replicated (but same authors) |
 | 2023 | [s14] | 800 | yes | ❌ failed to replicate |
 
 ### Status
@@ -279,20 +280,20 @@
 
 ## V8 — `sample-size-analysis`
 
-**Когда:** Quantitative validation. Когда размер выборки критичен.
+**When:** Quantitative validation. When the sample size is critical.
 
-**Что внутри:** N в каждом источнике, statistical power, что значит для confidence.
+**What's inside:** N in each source, statistical power, what it means for confidence.
 
-**Антипаттерн:** Игнорировать малые N. Study с N=20 не базис для confident verdict.
+**Anti-pattern:** Ignoring small N. A study with N=20 is no basis for a confident verdict.
 
-**Композиция:** Дополнение к `evidence-graded`. Quality detail.
+**Composition:** A supplement to `evidence-graded`. Quality detail.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Sample size analysis
 
-| Источник | N | Power (если known) | Notes |
+| Source | N | Power (if known) | Notes |
 |---|---|---|---|
 | [s03] | 250 | 0.8 (calculated for d=0.3) | adequate for moderate effect |
 | [s05] | 50 | underpowered for small effects | could miss real but small effect |
@@ -306,32 +307,32 @@
 ### Power considerations
 - Small effect (d=0.2) detectable: needs N≥350
 - Medium effect (d=0.5) detectable: needs N≥65
-- В studies adequate для medium effect, marginal для small
+- The studies are adequate for a medium effect, marginal for a small one
 
 ### Significance vs significance
 - Statistical significance ≠ practical significance
-- Effect size в реальных единицах: <X% change в outcome>
-- Это clinical/practical значимо? <yes/no/depends>
+- Effect size in real units: <X% change in the outcome>
+- Is it clinically/practically significant? <yes/no/depends>
 ```
 
 ---
 
 ## V9 — `methodology-critique`
 
-**Когда:** Validation научных claims с серьёзной методологической глубиной.
+**When:** Validation of scientific claims with serious methodological depth.
 
-**Что внутри:** Критика методологии ключевых источников.
+**What's inside:** A critique of the methodology of the key sources.
 
-**Антипаттерн:** Принимать peer-review как finality. Peer-review не ловит все проблемы.
+**Anti-pattern:** Treating peer review as finality. Peer review does not catch every problem.
 
-**Композиция:** Дополнение к `evidence-graded`. Глубокая критика.
+**Composition:** A supplement to `evidence-graded`. Deep critique.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Methodology critique
 
-### [s03] — главное FOR-источник
+### [s03] — the main FOR source
 **Design:** RCT, N=250
 **Strengths:**
 - Pre-registered
@@ -339,14 +340,14 @@
 - Adequate power for stated effect
 
 **Weaknesses:**
-- Selection bias risk: только <demographics>, не generalizes
+- Selection bias risk: only <demographics>, does not generalize
 - Outcome measure subjective (self-report)
-- 18-month follow-up — могло измениться long-term
+- 18-month follow-up — may have changed long-term
 - Funding: <source> — potential conflict
 
 **Verdict on study:** strong but limited generalizability
 
-### [s11] — главное AGAINST-источник
+### [s11] — the main AGAINST source
 **Design:** Observational, N=800
 **Strengths:**
 ...
@@ -357,7 +358,7 @@
 
 **Verdict:** suggestive but not definitive
 
-### Common methodological issues в области
+### Common methodological issues in the field
 - <pattern 1>
 - <pattern 2>
 ```
@@ -366,26 +367,26 @@
 
 ## V10 — `bayesian-update`
 
-**Когда:** Probabilistic validation. Когда есть prior и evidence для update.
+**When:** Probabilistic validation. When there is a prior and evidence to update on.
 
-**Что внутри:** Prior → posterior calculation с likelihood ratios.
+**What's inside:** Prior → posterior calculation with likelihood ratios.
 
-**Антипаттерн:** Хардкорная Bayesian math без обоснования. Это для read-friendly verdict.
+**Anti-pattern:** Hardcore Bayesian math without justification. This is for a read-friendly verdict.
 
-**Композиция:** После `evidence-graded`. Дополнение к `verdict-conditional`.
+**Composition:** After `evidence-graded`. A supplement to `verdict-conditional`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Bayesian update
 
 ### Prior
-- P(claim верен) до evidence: ~30% (см. `base-rates`)
+- P(claim is true) before the evidence: ~30% (see `base-rates`)
 
 ### Evidence likelihoods
 
 | Evidence | P(E | claim) | P(E | ¬claim) | LR |
-|---|---|---|---|
+|---|---|---|---|---|---|
 | F1 (RCT positive) | 0.7 | 0.2 | 3.5 |
 | F2 (replication) | 0.6 | 0.3 | 2.0 |
 | A1 (failed replication) | 0.3 | 0.7 | 0.43 |
@@ -401,12 +402,12 @@ Posterior probability = 1.29 / (1 + 1.29) ≈ 56%
 ```
 
 ### Posterior
-- **P(claim верен) после evidence:** ~56%
+- **P(claim is true) after the evidence:** ~56%
 - **Movement from prior:** +26 percentage points
 - **Confidence:** medium (close to 50/50, sensitive to LR estimates)
 
 ### Sensitivity
-- Если LR(F1) пересмотреть до 2.0 → posterior 38%
-- Если добавить ещё одно failed replication → posterior 35%
-- Этот anal sensitive — verdict robust в diapason 40-65%, не больше
+- If LR(F1) is revised down to 2.0 → posterior 38%
+- If one more failed replication is added → posterior 35%
+- This analysis is sensitive — the verdict is robust in the 40-65% range, no wider
 ```

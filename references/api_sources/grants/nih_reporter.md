@@ -1,3 +1,4 @@
+<!-- translated from upstream/references/api_sources/grants/nih_reporter.md @ e233797 — see docs/TRANSLATION.md -->
 # NIH RePORTER API (v2)
 
 ## Overview
@@ -5,15 +6,15 @@
 - **Endpoint base:** `https://api.reporter.nih.gov/v2/`
 - **Auth:** None
 - **Free tier:** Unlimited, no registration
-- **Rate limit:** Официального numeric-лимита нет. NIH просит не более ~1 req/sec и переносить крупные batch-джобы на выходные или будни 21:00–05:00 ET; при нарушении — блокировка IP.
+- **Rate limit:** No official numeric limit. NIH asks for no more than ~1 req/sec and for large batch jobs to be moved to weekends or weekdays 21:00–05:00 ET; on violation — an IP block.
 - **Docs:** https://api.reporter.nih.gov/ (Swagger UI, "V2.0")
-- **Status page:** Выделенной status page нет. Вопросы — RePORT@mail.nih.gov
-- **Coverage:** Гранты NIH и других HHS-агентств. Данные подтверждены минимум с fiscal year 1985 (0 результатов на FY1975/1980, 49 745 на FY1985)
+- **Status page:** No dedicated status page. Questions — RePORT@mail.nih.gov
+- **Coverage:** Grants from NIH and other HHS agencies. Data is confirmed at least from fiscal year 1985 (0 results for FY1975/1980, 49 745 for FY1985)
 - **Verified:** 2026-08-17
 
 ## What it returns
 
-JSON со структурированными project-записями: суммы, PI, организация, agency/institute, fiscal year, linked publications/patents/clinical studies (через отдельные endpoints).
+JSON with structured project records: amounts, PI, organization, agency/institute, fiscal year, linked publications/patents/clinical studies (through separate endpoints).
 
 ```json
 {
@@ -33,20 +34,20 @@ JSON со структурированными project-записями: сум�
 
 ## When to use
 
-- Найти кто и сколько получил NIH-финансирования по теме/институту/PI
-- Проверить funding acknowledgment биомедицинского paper
-- Landscape-анализ по конкретному NIH Institute/Center (NIDDK, NCI, NIAID и т.д.)
-- Связать грант с публикациями/патентами/клиническими исследованиями (через `publications/search`, `patents/search`, `clinicalstudies/search` того же v2 API)
+- Find who received how much NIH funding by topic/institution/PI
+- Check the funding acknowledgment of a biomedical paper
+- Landscape analysis for a specific NIH Institute/Center (NIDDK, NCI, NIAID, etc.)
+- Link a grant to publications/patents/clinical studies (via `publications/search`, `patents/search`, `clinicalstudies/search` of the same v2 API)
 
 ## When not to use
 
-- Гранты не-HHS агентств (NSF, DOE) — не покрывает
-- Данные до FY1985 — не в базе
-- Будущие/открытые NIH-конкурсы (funding opportunities) — RePORTER это выданные awards, не opportunities; для форкастов и открытых FOA нужен Grants.gov или grants.nih.gov/funding
+- Grants from non-HHS agencies (NSF, DOE) — not covered
+- Data before FY1985 — not in the database
+- Future/open NIH competitions (funding opportunities) — RePORTER is awarded grants, not opportunities; for forecasts and open FOAs you need Grants.gov or grants.nih.gov/funding
 
 ## Auth setup
 
-Не нужен. Запросы — POST с JSON body, без ключей и заголовков авторизации.
+Not needed. Requests are POST with a JSON body, without keys or authorization headers.
 
 ## Query patterns
 
@@ -86,14 +87,14 @@ POST /v2/publications/search
 
 ## Example queries
 
-**Проверено 2026-08-17, ответ 200 (76 hits):**
+**Verified 2026-08-17, response 200 (76 hits):**
 
 ```
 POST https://api.reporter.nih.gov/v2/projects/search
 {"criteria":{"fiscal_years":[2023],"pi_names":[{"any_name":"Collins"}]},"limit":2,"offset":0}
 ```
 
-**Landscape по теме и году:**
+**Landscape by topic and year:**
 
 ```
 POST https://api.reporter.nih.gov/v2/projects/search
@@ -102,21 +103,21 @@ POST https://api.reporter.nih.gov/v2/projects/search
 
 ## Limitations
 
-- Пагинация ограничена: максимум offset 14 999 для projects, 9 999 для publications; максимум 500 записей за один запрос (default 50)
-- Только HHS-агентства (NIH и смежные), нет non-HHS federal grants
-- Данные до FY1985 недоступны
-- Жёсткая community rate-limit guidance (не формальный лимит, но риск IP-бана при агрессивном polling)
-- POST-only API — GET-запросы для поиска не работают, нужен JSON body
+- Pagination is bounded: a maximum offset of 14 999 for projects, 9 999 for publications; a maximum of 500 records per request (default 50)
+- HHS agencies only (NIH and adjacent), no non-HHS federal grants
+- Data before FY1985 is unavailable
+- Strict community rate-limit guidance (not a formal limit, but a risk of an IP ban under aggressive polling)
+- POST-only API — GET requests do not work for search, a JSON body is required
 
 ## Combine with
 
-- **PubMed E-utilities** (`domain_specific/pubmed.md`) — публикации по тому же PI/теме, cross-check с `agency_ic_fundings`
-- **ClinicalTrials.gov** (`domain_specific/clinicaltrials.md`) — клинические испытания, привязанные к NIH-гранту
-- **NSF Awards API** (`grants/nsf_awards.md`) — то же для не-медицинского федерального финансирования США
-- **Grants.gov** (`grants/grants_gov.md`) — если нужны будущие/открытые NIH funding opportunities, а не выданные awards
+- **PubMed E-utilities** (`domain_specific/pubmed.md`) — publications by the same PI/topic, cross-check with `agency_ic_fundings`
+- **ClinicalTrials.gov** (`domain_specific/clinicaltrials.md`) — clinical trials tied to an NIH grant
+- **NSF Awards API** (`grants/nsf_awards.md`) — the same for non-medical US federal funding
+- **Grants.gov** (`grants/grants_gov.md`) — if you need future/open NIH funding opportunities rather than awarded grants
 
 ## Fallback if API down or rate-limited
 
-1. Пауза ~1 req/sec и повтор — при системном блоке IP нужно ждать снятия блокировки NIH admin
-2. HTML-поиск через https://reporter.nih.gov/search (тот же датасет UI)
-3. Bulk-выгрузка через NIH ExPORTER (https://reporter.nih.gov/exporter) — годовые CSV/XML дампы того же датасета
+1. A pause of ~1 req/sec and retry — on a systemic IP block you have to wait for the NIH admin to lift the block
+2. HTML search via https://reporter.nih.gov/search (the same dataset, UI)
+3. Bulk export via NIH ExPORTER (https://reporter.nih.gov/exporter) — annual CSV/XML dumps of the same dataset

@@ -1,7 +1,7 @@
 <!-- translated from upstream/references/phases/p7_refresh.md @ e233797 — see docs/TRANSLATION.md -->
 ## Phase 7. Refresh targets generation (medium/deep — mandatory)
 
-**Model:** `sonnet` / `medium`. A mechanical pass over the final report with extraction of entities, numbers, hypotheses.
+**Model:** `mid` / `medium`. A mechanical pass over the final report with extraction of entities, numbers, hypotheses.
 
 **Why:** this file is the **entry point for future `update <slug>`**. Without it every update wastes time re-discovering «what to track in this topic at all».
 

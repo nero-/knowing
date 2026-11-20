@@ -1,22 +1,23 @@
+<!-- translated from upstream/references/api_sources/companies/crunchbase.md @ e233797 — see docs/TRANSLATION.md -->
 # Crunchbase Basic API
 
 ## Overview
 
 - **Endpoint base:** `https://api.crunchbase.com/api/v4/`
-- **Auth:** API key (`user_key` query-параметр или `X-cb-user-key` заголовок — оба подтверждены официальной докой data.crunchbase.com/docs/using-the-api)
-- **Free tier:** Self-serve бесплатной покупки/trial на 2026-08-17 не найдено. Официальная дока прямо отправляет на "Contact us to explore API pricing" — Full API только по Enterprise/Applications лицензии, custom price. Упоминается план "Crunchbase Basic", ограниченный подмножеством "Basic APIs" — его цена нигде не публикуется
-- **Paid:** не подтверждено на 2026-08-17. Ни "$99/mo Basic" (наша старая цифра), ни "$49/мес" (из внешней разведки) не встретились на официальных страницах about.crunchbase.com/products/data-licensing и data.crunchbase.com/docs/using-the-api — обе отправляют на sales-конверсацию без цифр. Похоже, оба числа на самом деле про подписку **Crunchbase Pro** (веб-платформа поиска/экспорта) — это другой продукт, не Data API
+- **Auth:** API key (`user_key` query parameter or `X-cb-user-key` header — both confirmed by the official docs at data.crunchbase.com/docs/using-the-api)
+- **Free tier:** no self-serve free purchase/trial found as of 2026-08-17. The official docs send you straight to "Contact us to explore API pricing" — the full API is only available under an Enterprise/Applications licence, custom price. A "Crunchbase Basic" plan is mentioned, limited to a subset of "Basic APIs" — its price is not published anywhere
+- **Paid:** not confirmed as of 2026-08-17. Neither "$99/mo Basic" (our old figure) nor "$49/mo" (from external reconnaissance) appeared on the official pages about.crunchbase.com/products/data-licensing and data.crunchbase.com/docs/using-the-api — both send you to a sales conversation without numbers. It looks like both numbers are actually about a **Crunchbase Pro** subscription (the web search/export platform) — a different product, not the Data API
 - **Docs:** https://data.crunchbase.com/docs/getting-started
 - **Coverage:** Startup data — funding rounds, founders, acquisitions, valuations
 - **Verified:** 2026-08-17
 
 ## What it returns
 
-JSON с organization data, funding events, people, news.
+JSON with organization data, funding events, people, news.
 
 ## Auth setup
 
-1. https://about.crunchbase.com/products/data-licensing → "Contact us" (self-serve на 2026-08-17 не найден; `www.crunchbase.com/api` из старой версии этого файла сейчас блокирует прямой curl-запрос — 403)
+1. https://about.crunchbase.com/products/data-licensing → "Contact us" (no self-serve found as of 2026-08-17; `www.crunchbase.com/api` from an older version of this file now blocks a direct curl request — 403)
 2. `export CRUNCHBASE_API_KEY="..."`
 
 ## Query patterns
@@ -44,7 +45,7 @@ Body: {
 GET /entities/funding_rounds/{uuid}
 ```
 
-## Example queries для deepdive
+## Example queries for the deep run
 
 **Phase 4 — competitive landscape:**
 
@@ -62,18 +63,18 @@ POST /searches/organizations
 
 ## Limitations
 
-- **Paid** для серьёзного использования, цена — по запросу в sales (custom, не публикуется)
-- Free trial в текущей публичной доке не упомянут (не подтверждено на 2026-08-17, было в старой версии этого файла)
-- Data quality лучше для US/EU startups, слабее для Asia
+- **Paid** for serious use, the price is on request from sales (custom, not published)
+- A free trial is not mentioned in the current public docs (not confirmed as of 2026-08-17, it was in an older version of this file)
+- Data quality is better for US/EU startups, weaker for Asia
 
 ## Combine with
 
-- **OpenCorporates** — для company registry data (⚠️ больше не free — с 2026 платный, от £2250/год, либо заявка на грант для journalists/NGO; см. `opencorporates.md`)
+- **OpenCorporates** — for company registry data (⚠️ no longer free — paid since 2026, from £2250/year, or a grant application for journalists/NGOs; see `opencorporates.md`)
 - **PitchBook** — alternative (paid, comprehensive)
-- **AngelList/Wellfound** — для startup jobs
+- **AngelList/Wellfound** — for startup jobs
 
 ## Fallback
 
-- HTML scrape Crunchbase profiles
+- HTML scrape of Crunchbase profiles
 - Latka SaaS revenue database
-- Company's own about page + LinkedIn
+- The company's own about page + LinkedIn

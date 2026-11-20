@@ -8,7 +8,7 @@ that name live", with failover behind it.
 Three things decide which endpoint serves a step, in order:
 
 1. **The agent**, when it names a model for a call (`model: "opus"`). Honoured as given.
-2. **The phase**, if the config pins one (`[phases."6"] model = "opus"`), matching `phases.yaml`.
+2. **The phase**, if the config pins one (`[phases."6"] model = "big"`), matching `phases.yaml`.
 3. **`default`**, when nobody said anything.
 
 An unknown name is an error that lists the names you do have. A typo must never quietly reroute a
@@ -37,18 +37,9 @@ base_url = "http://100.97.112.71:8000/v1"
 [providers.ollama]                    # local llama.cpp / LM Studio / Ollama: any /v1
 base_url = "http://localhost:11434/v1"
 
-[providers.openrouter]                # cloud, OpenAI-compatible
-base_url = "https://openrouter.ai/api/v1"
-api_key_env = "OPENROUTER_API_KEY"
-
-[providers.anthropic]                 # cloud, different dialect
-kind = "anthropic"
-base_url = "https://api.anthropic.com"
-api_key_cmd = "pass show anthropic/key"
-
 # --- tiers reference endpoints ------------------------------------------------
 [tiers.strong]
-endpoints = ["sparks/DeepSeek-V4.1-Flash", "anthropic/claude-opus-5"]
+endpoints = ["sparks/DeepSeek-V4.1-Flash", "tp2/Qwen3.8-Flash-Next"]
 rotate = "sticky"
 fallback = ["mid"]
 
@@ -56,7 +47,7 @@ fallback = ["mid"]
 endpoints = ["tp2/Qwen3.8-Flash-Next"]
 
 [tiers.cheap]
-endpoints = ["tp2/Qwen3.8-Flash-Next", "ollama/qwen3:8b", "openrouter/deepseek/deepseek-v4"]
+endpoints = ["tp2/Qwen3.8-Flash-Next", "ollama/qwen3:8b"]
 ```
 
 Then `--provider tiers`. Local servers (vLLM, Ollama, llama.cpp, LM Studio) need no key — any value is
@@ -66,17 +57,17 @@ accepted by them, so the default `"vllm"` is fine. Cloud endpoints take one of:
 |---|---|
 | `api_key = "..."` | throwaway/testing; not recommended for a repo |
 | `api_key_env = "VAR"` | standard; resolved when the endpoint is first used |
-| `api_key_cmd = "..."` | a secret manager or a file you already keep (`pass`, `op read`, `grep …`) — the same `!command` convention pi's own `models.json` uses |
+| `api_key_cmd = "..."` | a secret manager or a file you already keep (`pass`, `op read`, `grep …`) — the same `!command` convention pi's own `models.json` uses. Local servers ignore the value entirely |
 
 Credentials resolve **lazily**, on first use, so rotating a key is not a config edit. A missing
 variable is an error naming the variable, never a silent fallback.
 
-### Mixing dialects
+### Dialects
 
-`kind = "openai"` (default) covers vLLM, Ollama, llama.cpp, LM Studio, TGI, OpenRouter, Together,
-Groq, Fireworks, DeepInfra, and OpenAI itself. `kind = "anthropic"` uses the Anthropic SDK. That is the
-whole list on purpose: anything else (Bedrock, Vertex) is a gateway away, and the gateway is
-OpenAI-compatible.
+This fork is **local-only**: every endpoint speaks OpenAI's `/v1` — vLLM, llama.cpp, Ollama, LM Studio,
+TGI. Nothing cloud is configured, documented or required. (`kind` still accepts `anthropic` because
+upstream's provider class is vendored and tested; a local-only setup never touches it, and there is no
+support path for it here.)
 
 ### Check it before you run
 

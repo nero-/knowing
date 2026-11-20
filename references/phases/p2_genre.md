@@ -1,7 +1,7 @@
 <!-- translated from upstream/references/phases/p2_genre.md @ e233797 — see docs/TRANSLATION.md -->
 ## Phase 2. Genre & block selection
 
-**Model:** `sonnet` / `medium`.
+**Model:** `mid` / `medium`.
 
 After reframing, before the plan — we determine what type of report we are assembling.
 

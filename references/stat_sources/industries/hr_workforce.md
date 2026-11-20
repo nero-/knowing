@@ -1,3 +1,4 @@
+<!-- translated from upstream/references/stat_sources/industries/hr_workforce.md @ e233797 — see docs/TRANSLATION.md -->
 # HR / Labor / Workforce
 
 ## Tier 1
@@ -7,7 +8,7 @@
 **Access:** OPEN
 **What:** Labor market dynamics derived from LinkedIn data — hiring rates, skills gaps, migration
 **When:** labor market trends, white-collar hiring
-**Quality:** B (LinkedIn user bias но huge sample)
+**Quality:** B (LinkedIn user bias but a huge sample)
 
 ### Indeed Hiring Lab
 **URL:** hiringlab.org
@@ -23,10 +24,10 @@
 **When:** salary benchmarks, employee sentiment
 
 ### BLS (US labor)
-См. core/gov_macro.md.
+See core/gov_macro.md.
 
 ### Eurostat Labour Market
-См. core/gov_macro.md (Eurostat).
+See core/gov_macro.md (Eurostat).
 
 ## Tier 2
 
@@ -67,12 +68,12 @@
 
 ### Levels.fyi
 **URL:** levels.fyi
-**Access:** PARTIAL — главная (`www.levels.fyi`) отдаёт HTTP 200 (маркетинговый контент, без конкретных цифр), но company/salary-страницы (`/companies/<company>/salaries/<role>`, включая `.md`-вариант) возвращают HTTP 202 с пустым телом и заголовком `x-amzn-waf-action: challenge` — это AWS WAF JS-челлендж на CloudFront, не тот 403, что называла разведка от 05.08, но по факту тот же результат: без прохождения челленджа данных нет
+**Access:** PARTIAL — the home page (`www.levels.fyi`) returns HTTP 200 (marketing content, without concrete figures), but the company/salary pages (`/companies/<company>/salaries/<role>`, including the `.md` variant) return HTTP 202 with an empty body and the header `x-amzn-waf-action: challenge` — this is an AWS WAF JS challenge on CloudFront, not the 403 that the 05.08 reconnaissance named, but in effect the same result: without passing the challenge there is no data
 **What:** Tech compensation data (self-reported)
 **When:** tech total compensation analysis
 **Quality:** B-C (self-reported but extensive coverage of tech roles)
-**Limitations:** Основной promise записи — детальные salary-таблицы по компании/роли — закрыт AWS WAF challenge на уровне запроса, программный доступ невозможен. Официального публичного API нет (подтверждено фаундером в community-треде Levels.fyi: "No API, but we have some embeds"). Платный enterprise data offering существует (`levels.fyi/offerings/data/`, проверено — HTTP 200), но это не live-доступ, а отдельный коммерческий продукт.
-**Fallback if blocked:** H1B Salary Database (h1bdata.info, см. ниже в этом файле) — проверено живым запросом 2026-08-17, HTTP 200, реальные цифры базовых зарплат по H1B-заявкам. Payscale (payscale.com/research) — тоже проверен живым запросом 2026-08-17, HTTP 200, реальный контент с медианами/средними. При этой же проверке Glassdoor и Salary.com оказались за Cloudflare-челленджем (403) — не использовать как fallback без отдельной верификации.
+**Limitations:** The entry's main promise — detailed salary tables by company/role — is closed by an AWS WAF challenge at the request level, programmatic access is impossible. There is no official public API (confirmed by the founder in a Levels.fyi community thread: "No API, but we have some embeds"). A paid enterprise data offering exists (`levels.fyi/offerings/data/`, checked — HTTP 200), but that is not live access, it is a separate commercial product.
+**Fallback if blocked:** H1B Salary Database (h1bdata.info, see below in this file) — checked with a live request on 2026-08-17, HTTP 200, real base salary figures from H1B filings. Payscale (payscale.com/research) — also checked with a live request on 2026-08-17, HTTP 200, real content with medians/averages. In that same check Glassdoor and Salary.com turned out to be behind a Cloudflare challenge (403) — do not use them as a fallback without separate verification.
 **Verified:** 2026-08-17
 
 ### H1B Salary Database
@@ -93,8 +94,8 @@
 - **Catalyst** — `catalyst.org` — OPEN
 
 ### Tech-specific labor
-- **Stack Overflow Developer Survey** (см. consulting_industry.md)
-- **JetBrains State of Developer** (см. consulting_industry.md)
+- **Stack Overflow Developer Survey** (see consulting_industry.md)
+- **JetBrains State of Developer** (see consulting_industry.md)
 - **Hired State of Software Engineers** — OPEN
 
 ## Combining patterns

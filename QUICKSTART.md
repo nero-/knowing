@@ -1,52 +1,101 @@
 # Quickstart
 
-Get your first documented research run in ~5 minutes.
+One documented research run, local models only, in about ten minutes of setup and then however long
+the question deserves.
 
-## 1. Install the skill
-
-This is a Claude Code skill — a folder of methodology Claude reads, not a binary.
+## 1. Put the skill where your agent looks
 
 ```bash
-git clone https://github.com/Socialpranker/deepdive.git \
-  ~/.claude/skills/deepdive
+git clone https://github.com/nero-/knowing ~/Agent/knowing
+cd ~/Agent/knowing
+python3 overlay/apply_patches.py               # required: the checks live inside upstream's finish chain
+python3 -m pip install --user pyyaml requests
+ln -s ~/Agent/knowing ~/.agents/skills/knowing
 ```
 
-No build, no dependencies for *using* the skill — Claude runs it with its own
-WebSearch / WebFetch / sub-agent tools. (Python is only for the maintainer-side
-catalog/eval checks; you don't need it to run research.)
+A skill is a folder of instructions and scripts your agent reads — not a binary, and not something you
+run by hand. Once it is installed, you ask for research in normal language and the agent drives the
+phases, running the scripts as it goes.
 
-## 2. Invoke it
+Remove or archive any older research skill first: two skills claiming the same job compete for the same
+request.
 
-In a Claude Code session, just ask in natural language — any of these trigger it:
+## 2. Point it at your models
 
-> «проведи ресёрч: <your question>»  ·  "deep dive <your question>"
-
-Claude will: restate your question, pick a report genre, write a `plan.md`, search
-across <!--gen:count:channels-->29<!--/gen--> channels and <!--gen:count:stat_sources-->460<!--/gen-->
-curated stat sources (+ <!--gen:count:api-->47<!--/gen-->+ APIs), score and triangulate every
-source via a claims-ledger, synthesize with a multi-angle red team, and verify citations.
-
-## 3. What you get
-
-A folder (default `~/deepdive/<slug>/`) you can return to months later:
-
-```
-<slug>/
-├── plan.md              # the research plan: question, hypotheses, acceptance criteria
-├── sources/             # one file per source — verbatim quotes + credibility scoring
-│   ├── 01_<slug>.md
-│   └── ...
-├── <date>_<genre>.md    # the final report — every claim traces to a source file
-└── refresh_targets.md   # entities/numbers to re-check later via `update <slug>`
+```bash
+python3 overlay/config.py from-pi ~/.pi/agent/models.json > ~/.config/knowing/models.toml
 ```
 
-Every claim cites a source file; every source carries Credibility / Recency / Bias
-scores. That's the point: not an answer you have to trust, but an investigation you
-can audit.
+Then edit it. Local endpoints only — anything speaking `/v1` works (vLLM, llama.cpp, Ollama, LM Studio):
 
-## Next steps
+```toml
+default = "small"
 
-- Full methodology: [`SKILL.md`](SKILL.md) — the <!--gen:count:phases-->13<!--/gen-->-phase workflow.
-- The catalog: [`references/`](references/) — <!--gen:count:blocks-->106<!--/gen--> report
-  blocks, <!--gen:count:genres-->6<!--/gen--> genres.
-- Want to add sources or APIs? [`CONTRIBUTING.md`](CONTRIBUTING.md).
+[providers.big-box]
+base_url = "http://100.120.4.113:8015/v1"
+
+[providers.small-box]
+base_url = "http://100.97.112.71:8000/v1"
+
+[models.big]
+endpoints = ["big-box/DeepSeek-V4.1-Flash"]
+rotate = "sticky"
+fallback = ["mid"]
+
+[models.mid]
+endpoints = ["big-box/DeepSeek-V4.1-Flash", "small-box/Qwen3.8-Flash-Next"]
+
+[models.small]
+endpoints = ["small-box/Qwen3.8-Flash-Next"]
+```
+
+Names are yours; `phases.yaml` references them, and `[phases."6"] model = "big"` can pin one.
+`rotate = "sticky"` keeps one model for the whole process, which matters where the prompt cache does.
+
+Verify before spending a run:
+
+```bash
+python3 overlay/config.py check --probe
+```
+
+## 3. Ask for research
+
+"Research X, deep enough to decide Y" is enough. The skill writes `plan.md` first, and that file is a
+gate: it declares the depth *and* the three facts that justify it.
+
+```yaml
+depth: medium
+reversibility: irreversible
+cost_of_error: high
+answer_exists: no
+```
+
+Breadth floors are enforced and not waivable: medium means ≥60 candidates screened and ≥25 sources read,
+deep means ≥100 and ≥35. If you want a fast answer, say so — a declaration of `shallow` is honest and
+keeps citation liveness and quote hashing, but skips the red team.
+
+## 4. Read the finish output, not the prose
+
+The agent ends by running `scripts/finish.py`, whose last two steps are upstream's validator and the
+overlay gate. If either is red, the run is not done, whatever the report says. The overlay rejects:
+
+- a claim with no `anchor` (`source_id:line`) or a quote hash that does not match the card;
+- a depth declaration missing a fact, or lower than its own facts imply;
+- a `triangulated` claim resting only on `abstract_only` sources;
+- no `adversarial.md`, no `VERDICT:` line, no `DECLINED TO JUDGE`, or `VERDICT: BLOCK`.
+
+## 5. What you will have
+
+```
+research/<slug>/
+  plan.md · candidates.csv · sources.csv · sources/<id>.md
+  claims.csv          claim → sources → status → anchor → quote hash
+  adversarial.md      VERDICT + declined-to-judge
+  report.md           the deliverable
+  .verify/            citation liveness, faithfulness contract
+```
+
+The point of the run is the ledger: every claim row carries a locator and the hash of the line it quotes,
+so any sentence can be re-checked later without re-fetching anything.
+
+Details, the model guide and the remaining gaps: `docs/USAGE.md`, `docs/MODELS.md`.

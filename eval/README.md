@@ -19,7 +19,7 @@
 
 Скрипт меряет то, что скилл реально произвёл (все <!--gen:count:phases-->13<!--/gen--> фаз, роутинг, субагенты,
 файлы `sources/`), а не воспроизведение его логики в коде. Цена этого — один
-ручной шаг: точные токены прогона живут в харнессе Claude Code, скрипт их не
+ручной шаг: точные токены прогона живут в харнессе the agent harness, скрипт их не
 видит, поэтому `real_cost_usd` ты вписываешь руками из `/cost`.
 
 ## Как устроена оценка
@@ -44,7 +44,7 @@ pip install -r ../scripts/requirements.txt
 # 1. положи вопрос
 cp questions/EXAMPLE.md questions/my-q.md      # заполни
 
-# 2. прогони ОДИН И ТОТ ЖЕ вопрос на разных конфигах, в Claude Code:
+# 2. прогони ОДИН И ТОТ ЖЕ вопрос на разных конфигах, в the agent harness:
 #    /model sonnet → /deepdive <вопрос>          → research/<slug>/
 #    /deepdive <вопрос> with all on opus         → research/<slug>-opus/
 #    после каждого прогона запиши цену из /cost

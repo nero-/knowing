@@ -14,7 +14,7 @@ Goal: before any search, make sure we are searching for the right thing. Most ba
 
    **The fork test is hard.** Not a single if-then fork ⇒ the research will change nothing ⇒ an honest downgrade to shallow «curiosity» mode with an explicit note in plan.md — no heavy pipeline. This is not a punishment but a saving: the deep budget is not spent on a doc that leads nowhere. A vague answer (no verb/artifact/deadline) → one push-back, then an assumption with the note «the application is the agent's hypothesis, not confirmed by the user».
 
-   **Ledger check.** If `~/.claude/research/applications_ledger.csv` exists — read the latest rows before reframing. ≥2 unapplied runs in a row (status `unused`/`deferred`) → show the pattern to the user: «the last N research runs led to no decision — here are their unarticulated specs; how is this one different?»
+   **Ledger check.** If `~/.knowing/research/applications_ledger.csv` exists — read the latest rows before reframing. ≥2 unapplied runs in a row (status `unused`/`deferred`) → show the pattern to the user: «the last N research runs led to no decision — here are their unarticulated specs; how is this one different?»
 
 3. **Formulate hypotheses.** 2–4 of them. A hypothesis is a statement that data can refute. Not «study the topic» (that is not a hypothesis), but «X is better than Y on criterion Z» (refutable).
 

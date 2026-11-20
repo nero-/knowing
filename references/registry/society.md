@@ -1,16 +1,17 @@
-# Реестр источников — Общество
+<!-- translated from upstream/references/registry/society.md @ e233797 — see docs/TRANSLATION.md -->
+# Source registry — Society
 
-Конфликты, госнарративы, индексы демократии и инфраструктуры, рынок труда, культура, игры, спорт.
+Conflicts, state narratives, democracy and infrastructure indices, the labour market, culture, games, sport.
 
-**Проверено:** 2026-08-05 — каждый адрес отвечал живым запросом на момент разведки. Отобраны только источники ценности 5 из 5.
-**Адреса конечные, после редиректов** — исходная проверка шла без `curl -L`, иначе мёртвый адрес красится зелёным ответом с редиректа.
-**Записей:** 28, из них 1 требуют ключ или регистрацию.
+**Verified:** 2026-08-05 — every address answered a live request at the time of reconnaissance. Only sources of value 5 out of 5 were selected.
+**The addresses are final, after redirects** — the original check ran without `curl -L`, otherwise a dead address is painted green by a response from a redirect.
+**Entries:** 28, of them 1 require a key or registration.
 
-Реестр отвечает на «где смотреть по этому сигналу», а не «насколько источник надёжен»: колонка достоверности — оценка разведки, а не результат Фазы 5. Провенанс числа всё равно проверяется по `source_scoring.md`. Срок годности такого списка — месяцы; мёртвый адрес не баг реестра, а сигнал перепроверить.
+The registry answers "where to look for this signal", not "how reliable the source is": the credibility column is a reconnaissance estimate, not a Phase 5 result. The provenance of a number is still checked via `source_scoring.md`. The shelf life of such a list is months; a dead address is not a registry bug but a signal to re-check.
 
-| Источник | Адрес | Сигнал | Доступ | Достоверность |
+| Source | Address | Signal | Access | Credibility |
 |---|---|---|---|---|
-| ACLED — Armed Conflict Location & Event Data Project (API, требует регистрацию) | <https://acleddata.com/conflict-data> | conflict-event-signal | нужен ключ | high |
+| ACLED — Armed Conflict Location & Event Data Project (API, requires registration) | <https://acleddata.com/conflict-data> | conflict-event-signal | нужен ключ | high |
 | Al Jazeera English — All News RSS Feed | <https://www.aljazeera.com/xml/rss/all.xml> | conflict-event-signal | free | medium |
 | Colombia Reports — RSS Feed | <https://colombiareports.com/feed> | conflict-event-signal | free | medium |
 | Defense News — RSS Feed | <https://www.defensenews.com/arc/outboundfeeds/rss/> | conflict-event-signal | free | high |
@@ -24,7 +25,7 @@
 | The Rio Times — RSS Feed | <https://www.riotimesonline.com/feed> | conflict-event-signal | free | medium |
 | FBI IC3 Annual Report — Internet Crime Complaint Center Victim Statistics | <https://www.ic3.gov/AnnualReport/Reports/2025_IC3Report.pdf> | crime-victimization-statistics-signal | free | high |
 | The Metropolitan Museum of Art — Open Access Collection API | <https://collectionapi.metmuseum.org/public/collection/v1/objects/1> | cultural-heritage-signal | free | high |
-| V-Dem (Varieties of Democracy) — vdemdata датасет (GitHub, RData) | <https://api.github.com/repos/vdeminstitute/vdemdata/contents/data> | democracy-index-signal | free | high |
+| V-Dem (Varieties of Democracy) — vdemdata dataset (GitHub, RData) | <https://api.github.com/repos/vdeminstitute/vdemdata/contents/data> | democracy-index-signal | free | high |
 | ESRB — VideoGame Rating Schema (per-title page) | <https://www.esrb.org/ratings/38265/steel-assault/> | gaming-content-rating-signal | free | high |
 | Steam Store API — App Details | <https://store.steampowered.com/api/appdetails?appids=730> | gaming-industry-data-signal | free | high |
 | World Bank Logistics Performance Index (LPI) API | <https://api.worldbank.org/v2/country/all/indicator/LP.LPI.OVRL.XQ?format=json&per_page=300> | infrastructure-index-signal | free | high |

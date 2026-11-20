@@ -355,7 +355,7 @@ one channel: the `paths` coincide, the independence is illusory.
 Numbers do not get a type — they are already in `numbers.csv`; there is also the optional `label` column — what this number is, in words.
 
 **Holes (status ≠ triangulated) → gap wave.** See `phases/p5_claims.md` «Gap wave»: a targeted
-`deepdive-fetcher` for a specific hole, at most 2 rounds, otherwise honestly
+`knowing-fetcher` for a specific hole, at most 2 rounds, otherwise honestly
 `status: data-insufficient`.
 
 ## The sources/NN_slug.md file — template
@@ -427,7 +427,7 @@ content_kind: -                   # - (html) | pdf | feed — a feed gives an an
 - **Modality verbatim:** «may», «typically», «in our tests» — as in the original, without strengthening.
 - **Limitations and the author's interest:** who the author is, what they sell, what the source did not check.
 
-The card is written by `sonnet` in batches of 5–8 files after fetch (`phases/p4_search.md` 4.1); the fetcher on `haiku` does not fill it in. A quote in Key quotes comes with ±1 sentence of context, otherwise modality and conditions are lost.
+The card is written by `mid` in batches of 5–8 files after fetch (`phases/p4_search.md` 4.1); the fetcher on `small` does not fill it in. A quote in Key quotes comes with ±1 sentence of context, otherwise modality and conditions are lost.
 
 ## Related sources
 

@@ -1,75 +1,76 @@
-# MAP blocks — картография
+<!-- translated from upstream/references/blocks/map.md @ e233797 — see docs/TRANSLATION.md -->
+# MAP blocks — cartography
 
-Блоки для landscape-жанра и любых ресёрчей про карту области, игроков, связи.
+Blocks for the landscape genre and any research about the map of a field, its players, its connections.
 
 ---
 
 ## M1 — `categories`
 
-**Когда:** Landscape. Деление области на категории до перечисления игроков.
+**When:** Landscape. Dividing the field into categories before enumerating the players.
 
-**Что внутри:** Категории с определениями и количеством игроков.
+**What's inside:** Categories with definitions and the number of players.
 
-**Антипаттерн:** Слишком много категорий (>6) — теряется польза. Перекрывающиеся категории — невозможно классифицировать.
+**Anti-pattern:** Too many categories (>6) — the value is lost. Overlapping categories — impossible to classify.
 
-**Композиция:** После `scope`. До `profile-card`.
+**Composition:** After `scope`. Before `profile-card`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Categories
 
-### Категория A: <название>
-**Определение:** <что входит, по каким признакам>
-**Игроков:** N
-**Лидеры:** P1, P2
+### Category A: <name>
+**Definition:** <what belongs here, by which criteria>
+**Players:** N
+**Leaders:** P1, P2
 
-### Категория B: <название>
-**Определение:** ...
-**Игроков:** M
-**Лидеры:** ...
+### Category B: <name>
+**Definition:** ...
+**Players:** M
+**Leaders:** ...
 
-### Категория C: пограничные / новые
-**Что это:** игроки которые не вписываются в A/B чётко
+### Category C: borderline / new
+**What it is:** players that do not fit A/B cleanly
 
-**Принцип классификации:** <по чему делим — по бизнес-модели / технологии / target audience>
+**Classification principle:** <what we divide by — business model / technology / target audience>
 ```
 
 ---
 
 ## M2 — `profile-card`
 
-**Когда:** Landscape (по 1 на игрока). Конкурент-анализ.
+**When:** Landscape (1 per player). Competitor analysis.
 
-**Что внутри:** Структурированная карточка игрока: origin, scale, ниша, strengths/weaknesses, link.
+**What's inside:** A structured player card: origin, scale, niche, strengths/weaknesses, link.
 
-**Антипаттерн:** Разный шаблон для разных игроков — не сравнить. Один шаблон для всех в landscape.
+**Anti-pattern:** A different template for different players — incomparable. One template for everyone in a landscape.
 
-**Композиция:** После `categories`. По одной карточке на игрока, группированы по категориям.
+**Composition:** After `categories`. One card per player, grouped by category.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Player profiles
 
-### Категория A
+### Category A
 
-#### P1: <название>
+#### P1: <name>
 - **Origin:** founded YYYY, <country>
 - **Funding / scale:** $XM <round>, ~N employees, ARR ~$Y
-- **Что делает:** <одна фраза>
-- **Ниша / unique:** <чем выделяется>
+- **What it does:** <one sentence>
+- **Niche / unique:** <what sets it apart>
 - **Strengths:** ... [s03]
 - **Weaknesses / critique:** ... [s07]
-- **Tech / approach:** <stack или ключевой подход>
-- **Customers / users:** <ICP, известные кейсы>
+- **Tech / approach:** <stack or key approach>
+- **Customers / users:** <ICP, known cases>
 - **Links:** [website](url) · [docs](url) · [blog](url)
 - **Status:** active | growing | declining | acquired by X (date)
 
-#### P2: <название>
+#### P2: <name>
 (same structure)
 
-### Категория B
+### Category B
 
 #### P3: ...
 ```
@@ -78,22 +79,22 @@
 
 ## M3 — `positioning-map`
 
-**Когда:** Landscape когда есть 2 осмысленные оси для позиционирования.
+**When:** Landscape when there are 2 meaningful axes for positioning.
 
-**Что внутри:** 2×2 ASCII карта + обоснование осей.
+**What's inside:** A 2×2 ASCII map + justification of the axes.
 
-**Антипаттерн:** Оси без обоснования — кажется arbitrary. Каждая ось должна быть осмысленной для области.
+**Anti-pattern:** Axes without justification — they look arbitrary. Each axis must be meaningful for the field.
 
-**Композиция:** После `profile-card`. До `trends`.
+**Composition:** After `profile-card`. Before `trends`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Positioning map
 
 Axes:
-- **X axis: Niche ↔ Mainstream** — широта целевой аудитории
-- **Y axis: Low capability ↔ High capability** — глубина продукта по core feature
+- **X axis: Niche ↔ Mainstream** — breadth of the target audience
+- **Y axis: Low capability ↔ High capability** — depth of the product on its core feature
 
 ```
               High capability
@@ -108,101 +109,101 @@ Axes:
               Low capability
 ```
 
-**Обоснование размещения:**
-- P1 (high/niche): сильные продукты, узкая аудитория [s03]
-- P3 (high/mainstream): лидер по всем фронтам [s07]
-- P2 (low/niche): нишевая утилитка
+**Justification of placement:**
+- P1 (high/niche): strong products, narrow audience [s03]
+- P3 (high/mainstream): leader on all fronts [s07]
+- P2 (low/niche): a niche utility
 - P4 (low/mainstream): bottom of market
 - P5 (mid/mainstream): emerging
 
-**Movement (за последний год):**
-- P5 движется к high-cap
-- P2 в стагнации
+**Movement (over the past year):**
+- P5 is moving toward high-cap
+- P2 is stagnating
 ```
 
 ---
 
 ## M4 — `trends`
 
-**Когда:** Landscape, market analysis. Что происходит со временем.
+**When:** Landscape, market analysis. What happens over time.
 
-**Что внутри:** Что растёт / умирает / появляется / консолидация vs фрагментация.
+**What's inside:** What is growing / dying / appearing / consolidation vs fragmentation.
 
-**Антипаттерн:** Trends на ощущениях. Каждый trend — конкретный observable signal или цифра.
+**Anti-pattern:** Trends based on vibes. Every trend is a concrete observable signal or a number.
 
-**Композиция:** После `positioning-map`. До `white-spaces`.
+**Composition:** After `positioning-map`. Before `white-spaces`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Trends
 
-### Что растёт
-- **<trend>** — signal: <конкретное наблюдение>, источник [s03]
+### What is growing
+- **<trend>** — signal: <concrete observation>, source [s03]
 - **<trend>** — ...
 
-### Что умирает
+### What is dying
 - **<trend>** — signal: ..., [s07]
 - ...
 
-### Что появляется (emerging)
-- **<trend>** — signal: <маркер появления>, [s11]
+### What is emerging
+- **<trend>** — signal: <marker of emergence>, [s11]
 - ...
 
-### Консолидация vs фрагментация
-- **Консолидация:** N acquisitions за последний год — кто кого
-- **Новые entrants:** M новых компаний — где
-- **Direction:** консолидация / фрагментация / нейтрально
+### Consolidation vs fragmentation
+- **Consolidation:** N acquisitions over the past year — who bought whom
+- **New entrants:** M new companies — where
+- **Direction:** consolidation / fragmentation / neutral
 
-### Что НЕ движется (несмотря на ожидания)
-- <thing> — ожидали что вырастет, не растёт. Почему: ...
+### What is NOT moving (despite expectations)
+- <thing> — we expected it to grow, it is not growing. Why: ...
 ```
 
 ---
 
 ## M5 — `white-spaces`
 
-**Когда:** Landscape для product strategy. Где никого нет — возможности.
+**When:** Landscape for product strategy. Where nobody is — the opportunities.
 
-**Что внутри:** Пустые ниши с обоснованием почему пустые.
+**What's inside:** Empty niches with a justification of why they are empty.
 
-**Антипаттерн:** White space без объяснения почему он пустой — может быть «никому не нужно», а не возможность.
+**Anti-pattern:** A white space without an explanation of why it is empty — it may be "nobody needs it" rather than an opportunity.
 
-**Композиция:** После `trends`. Логически вытекает из карты.
+**Composition:** After `trends`. Follows logically from the map.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## White spaces
 
-### WS1: <ниша>
-**Где никого:** <описание ниши>
-**Почему пустая (наши гипотезы):**
-- A: рынок маленький → no opportunity
-- B: технически сложно → opportunity для тех кто решит
-- C: никто не пробовал → opportunity для first mover
-**Самая вероятная причина:** <одна из A/B/C> [s05]
+### WS1: <niche>
+**Where nobody is:** <description of the niche>
+**Why it is empty (our hypotheses):**
+- A: the market is small → no opportunity
+- B: technically hard → opportunity for those who solve it
+- C: nobody has tried → opportunity for a first mover
+**Most likely reason:** <one of A/B/C> [s05]
 
-### WS2: <ниша>
+### WS2: <niche>
 ...
 
 ### Sanity check
-Спросили ли мы людей в индустрии, точно ли пустая ниша? Если нет — пометка «may be incomplete».
+Did we ask people in the industry whether the niche really is empty? If not — mark it "may be incomplete".
 ```
 
 ---
 
 ## M6 — `genealogy`
 
-**Когда:** Custom для academic/tech областей. Кто откуда вышел.
+**When:** Custom for academic/tech fields. Who came out of where.
 
-**Что внутри:** Деревья происхождения: компании из компаний, идеи из идей, fork'и.
+**What's inside:** Descent trees: companies out of companies, ideas out of ideas, forks.
 
-**Антипаттерн:** Линейная история без ветвлений — упрощение. Реальная genealogy всегда дерево.
+**Anti-pattern:** A linear history without branches — an oversimplification. Real genealogy is always a tree.
 
-**Композиция:** Дополнение к `categories` или `network-graph`. Для глубокого понимания области.
+**Composition:** A supplement to `categories` or `network-graph`. For a deep understanding of the field.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Genealogy
@@ -224,61 +225,61 @@ Axes:
   Fork A1  Fork A2          Sub C1   Sub C2
 ```
 
-**Лица:**
-- FoundationCo основан <X, Y, Z>. Многие алюмни — founders современных игроков.
-- Spin A — основан <ex-FoundationCo> в 2015. См. карточку выше.
+**People:**
+- FoundationCo was founded by <X, Y, Z>. Many alumni are founders of today's players.
+- Spin A — founded by <ex-FoundationCo> in 2015. See the card above.
 - ...
 
-**Что это даёт понять:** <напр.: «вся область выросла из 3 школ мысли»>
+**What this makes clear:** <e.g.: "the whole field grew out of 3 schools of thought">
 ```
 
 ---
 
 ## M7 — `ranked-list`
 
-**Когда:** Custom для «топ-N» вопросов. Когда нужно отранжировать.
+**When:** Custom for "top-N" questions. When ranking is needed.
 
-**Что внутри:** Ранжированный список с критериями ранжирования и обоснованием.
+**What's inside:** A ranked list with the ranking criteria and the justification.
 
-**Антипаттерн:** Ранжирование без критериев — сразу спорно. Прозрачно покажи критерии.
+**Anti-pattern:** Ranking without criteria — immediately arguable. Show the criteria transparently.
 
-**Композиция:** Альтернатива `profile-card` для landscape когда ранжирование важнее категоризации.
+**Composition:** An alternative to `profile-card` for a landscape when ranking matters more than categorisation.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Top N
 
-**Критерий ранжирования:** <по чему ранжируем> (по убыванию).
+**Ranking criterion:** <what we rank by> (descending).
 
 | Rank | Player | Score | Key reason | Source |
 |---|---|---|---|---|
-| 1 | A | 92 | <одна фраза> | [s03] |
-| 2 | B | 85 | <одна фраза> | [s07] |
-| 3 | C | 80 | <одна фраза> | [s11] |
-| 4 | D | 72 | <одна фраза> | [s15] |
-| 5 | E | 68 | <одна фраза> | [s19] |
+| 1 | A | 92 | <one sentence> | [s03] |
+| 2 | B | 85 | <one sentence> | [s07] |
+| 3 | C | 80 | <one sentence> | [s11] |
+| 4 | D | 72 | <one sentence> | [s15] |
+| 5 | E | 68 | <one sentence> | [s19] |
 
-**Что НЕ вошло (close to making list):** F, G.
+**What did NOT make it (close to making list):** F, G.
 
 **Caveats:**
-- Ранжирование зависит от критерия — при другом критерии порядок другой
-- Confidence в ранжировании: high для 1-2, medium для 3-5
+- The ranking depends on the criterion — with another criterion the order differs
+- Confidence in the ranking: high for 1-2, medium for 3-5
 ```
 
 ---
 
 ## M8 — `value-chain`
 
-**Когда:** Industry analysis. Цепочка создания ценности по звеньям.
+**When:** Industry analysis. The value creation chain by link.
 
-**Что внутри:** Звенья цепи + игроки на каждом + где value capture.
+**What's inside:** The links of the chain + the players at each + where value is captured.
 
-**Антипаттерн:** Цепочка из 2 звеньев — почти всегда оверсимплификация.
+**Anti-pattern:** A chain of 2 links — almost always an oversimplification.
 
-**Композиция:** Дополнение к `categories`. Альтернативное измерение для landscape.
+**Composition:** A supplement to `categories`. An alternative dimension for a landscape.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Value chain
@@ -291,37 +292,37 @@ Axes:
    - Origin2               - Aggr2          - ML2          - API2     - App2
 ```
 
-**На каком звене захватывается ценность:**
+**At which link value is captured:**
 - Sources of raw data: low margin, commoditized
 - Aggregation: medium margin, network effects
-- **Processing/ML: highest margin** ← где деньги
+- **Processing/ML: highest margin** ← where the money is
 - APIs: medium margin, lock-in
 - Apps: variable
 
 **Vertical integration:**
-- Кто owns несколько звеньев: <player X owns aggregation + processing + API>
-- Pure-play на одном звене: <player Y, Z>
+- Who owns several links: <player X owns aggregation + processing + API>
+- Pure-play at one link: <player Y, Z>
 ```
 
 ---
 
 ## M9 — `network-graph`
 
-**Когда:** Relationships in field. Кто с кем связан.
+**When:** Relationships in field. Who is connected to whom.
 
-**Что внутри:** Mermaid `graph LR` — основная форма. ASCII или таблица отношений — фолбэк без сборки документа.
+**What's inside:** Mermaid `graph LR` — the primary form. ASCII or a relations table — the fallback when the document is not built.
 
-**Антипаттерн:** Граф, где связи не типизированы, — картинка «все со всеми». Каждое ребро несёт тип (`partners`/`competes`/`integrates`/`acquired`) и расшифровывается в легенде под схемой.
+**Anti-pattern:** A graph where the edges are not typed — a picture of "everyone with everyone". Every edge carries a type (`partners`/`competes`/`integrates`/`acquired`) and is spelled out in the legend under the diagram.
 
-**Композиция:** Дополнение к `categories`. Когда связи между игроками важнее категоризации.
+**Composition:** A supplement to `categories`. When the relations between players matter more than categorisation.
 
-**Шаблон:**
+**Template:**
 
 ````markdown
 ## Network
 
 ```mermaid
-%% caption: связи игроков рынка на <дата>
+%% caption: connections among the market players as of <date>
 graph LR
   A -- partners --> B
   A -- partners --> C
@@ -329,41 +330,41 @@ graph LR
   D -- integrates --> A
 ```
 
-**Типы связей:**
-- **partners:** формальное партнёрство, есть public announcement
-- **competes:** прямой конкурент по >50% продукта
-- **integrates:** один использует другого как dependency
+**Edge types:**
+- **partners:** formal partnership, there is a public announcement
+- **competes:** a direct competitor on >50% of the product
+- **integrates:** one uses the other as a dependency
 - **acquired:** owned
 
-**Ключевые наблюдения:**
-- A — central hub, partners с большинством
-- D и E — бывшие competitors, теперь integrates after pivot
+**Key observations:**
+- A — a central hub, partners with the majority
+- D and E — former competitors, now integrates after pivot
 - ...
 ````
 
-**Рендер:** см. E13 — тот же конвейер `build_report.py` → `mmdc` → «Схема N».
+**Rendering:** see E13 — the same pipeline `build_report.py` → `mmdc` → "Diagram N".
 
 ---
 
 ## M10 — `funding-tree`
 
-**Когда:** Startup ecosystem. Инвестиционные связи.
+**When:** Startup ecosystem. Investment ties.
 
-**Что внутри:** Кто кого инвестировал, ownership chains, последние rounds.
+**What's inside:** Who invested in whom, ownership chains, the latest rounds.
 
-**Антипаттерн:** Только sizes без даты — funding устаревает быстро.
+**Anti-pattern:** Sizes without dates only — funding goes stale fast.
 
-**Композиция:** Дополнение к `profile-card` для landscape стартапов.
+**Composition:** A supplement to `profile-card` for a startup landscape.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Funding tree
 
 ### Investors (top)
-- **VC A:** портфель: P1, P3, P5. Total deployed: $50M.
-- **VC B:** портфель: P2, P4. Specializes in <stage/sector>.
-- **Strategic Z:** инвестирует только в <профиль>, владеет P6.
+- **VC A:** portfolio: P1, P3, P5. Total deployed: $50M.
+- **VC B:** portfolio: P2, P4. Specializes in <stage/sector>.
+- **Strategic Z:** invests only in <profile>, owns P6.
 
 ### Latest rounds
 | Player | Round | Date | Amount | Lead investor | Valuation |
@@ -373,41 +374,41 @@ graph LR
 | P5 | Series A | 2024-11 | $12M | VC A | $60M |
 
 ### Ownership patterns
-- VC A — biggest player, ~30% индустрии в портфеле
-- Cross-holdings: VC A и VC B участвовали вместе в P5
-- M&A pattern: <если есть>
+- VC A — the biggest player, ~30% of the industry in its portfolio
+- Cross-holdings: VC A and VC B participated together in P5
+- M&A pattern: <if any>
 
 ### Total capital in space
-~$<X>M за последние 24 месяца. Тренд: <ускорение / замедление>.
+~$<X>M over the last 24 months. Trend: <acceleration / deceleration>.
 ```
 
 ---
 
 ## M11 — `geographic-distribution`
 
-**Когда:** Geo-distributed теме (global market analysis).
+**When:** A geo-distributed topic (global market analysis).
 
-**Что внутри:** Где игроки/события расположены, plus гео-различия.
+**What's inside:** Where the players/events are located, plus geo differences.
 
-**Антипаттерн:** Только список стран без объяснения почему важно.
+**Anti-pattern:** A bare list of countries without an explanation of why it matters.
 
-**Композиция:** Дополнение для landscape с географической дифференциацией.
+**Composition:** A supplement for a landscape with geographic differentiation.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Geographic distribution
 
-### По регионам
+### By region
 
-| Region | N players | Top examples | Specific характер |
+| Region | N players | Top examples | Specific character |
 |---|---|---|---|
 | North America | 12 | A, B, C | enterprise-focused |
 | EU | 7 | D, E, F | compliance-driven |
 | Asia | 5 | G, H | mobile-first |
 | Rest | 3 | I | emerging |
 
-### Hot spots (где плотность)
+### Hot spots (where the density is)
 - San Francisco Bay Area: 6 players
 - London: 3 players
 - Singapore: 2 players
@@ -418,24 +419,24 @@ graph LR
 - **Asia:** consumer apps, mobile UX
 
 ### Cross-region patterns
-- Multi-region: <кто>
-- Single-region only: <кто>
-- Expanding: <кто, куда>
+- Multi-region: <who>
+- Single-region only: <who>
+- Expanding: <who, where to>
 ```
 
 ---
 
 ## M12 — `lifecycle-stage`
 
-**Когда:** Industry maturity analysis. Где каждый игрок на S-curve.
+**When:** Industry maturity analysis. Where each player sits on the S-curve.
 
-**Что внутри:** Игроки распределены по стадиям lifecycle.
+**What's inside:** Players distributed across the lifecycle stages.
 
-**Антипаттерн:** Считать что все на одной стадии. Реально — разные.
+**Anti-pattern:** Assuming everyone is at the same stage. In reality they differ.
 
-**Композиция:** Альтернативное измерение для landscape. Дополнение к `categories`.
+**Composition:** An alternative dimension for a landscape. A supplement to `categories`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Lifecycle stages

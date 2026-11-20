@@ -1,161 +1,162 @@
-# CLOSE blocks — закрытие отчёта
+<!-- translated from upstream/references/blocks/close.md @ e233797 — see docs/TRANSLATION.md -->
+# CLOSE blocks — closing the report
 
-Блоки финала отчёта: counter-arguments, open questions, next steps, источники.
+The blocks that finish the report: counter-arguments, open questions, next steps, sources.
 
 ---
 
 ## Z1 — `counter-arguments`
 
-**Когда:** Medium/deep всех жанров. Обязательно.
+**When:** Medium/deep of all genres. Mandatory.
 
-**Что внутри:** Steel-man контр-аргументы с силой и нашим ответом.
+**What's inside:** Steel-man counter-arguments with their strength and our answer.
 
-Источник входных данных: лог red team из Фазы 6 (`findings/redteam_<date>.md`). HIGH-дефекты без закрытия → Open Questions.
+Source of the input data: the red team log from Phase 6 (`findings/redteam_<date>.md`). HIGH defects without a closure → Open Questions.
 
-**Антипаттерн:** Straw-man (слабые контр-аргументы). Должен быть самый сильный аргумент против — даже если убеждает.
+**Anti-pattern:** Straw-man (weak counter-arguments). It must be the strongest argument against — even if it is convincing.
 
-**Композиция:** После основного содержимого, до closing. Минимум 2-3 в medium/deep.
+**Composition:** After the main content, before closing. At least 2-3 in medium/deep.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Counter-arguments (steel-man)
 
-### CA1: <короткое название контр-аргумента>
-**Против чего:** Q1 / F2 / TL;DR-1 / recommendation
-**Кто говорит:** [s09](sources/09_*.md) (или «hypothetical steel-man» если нет source)
-**Аргумент:** <как формулирует оппонент, дословно или близко>
-**Сила:** низкая | средняя | высокая
-**Наш ответ:**
-- <почему мы всё-таки утверждаем что утверждаем>
-- ИЛИ <принимаем, понижаем confidence до medium>
-- ИЛИ <это open question, нужно ещё research>
-**Что меняет в выводах:** <конкретное изменение или "ничего, выдерживаем"
+### CA1: <short name of the counter-argument>
+**Against what:** Q1 / F2 / TL;DR-1 / recommendation
+**Who says it:** [s09](sources/09_*.md) (or «hypothetical steel-man» if there is no source)
+**The argument:** <as the opponent formulates it, verbatim or close>
+**Strength:** low | medium | high
+**Our answer:**
+- <why we still claim what we claim>
+- OR <we accept it, lower confidence to medium>
+- OR <this is an open question, more research is needed>
+**What it changes in the conclusions:** <a concrete change or "nothing, we hold"
 
-### CA2: <название>
+### CA2: <name>
 ...
 
-### CA3: <название>
+### CA3: <name>
 ...
 
-### Поиск ещё противоположной позиции
-- Намеренно искали ли контр-аргументы (≥1 целевой запрос)? <да/нет>
-- Если не нашли сильного — это сигнал что либо тема трivial либо плохо искали
+### Looking for further opposing positions
+- Did we deliberately look for counter-arguments (≥1 targeted query)? <yes/no>
+- If we found no strong one — that is a signal that either the topic is trivial or we looked badly
 ```
 
 ---
 
 ## Z2 — `open-questions`
 
-**Когда:** Всегда. Что не закрыто и что копать дальше.
+**When:** Always. What is not closed and what to dig into next.
 
-**Что внутри:** Список открытых вопросов с типом.
+**What's inside:** A list of open questions with their type.
 
-Источник входных данных: лог red team из Фазы 6 (`findings/redteam_<date>.md`). HIGH-дефекты без закрытия → Open Questions.
+Source of the input data: the red team log from Phase 6 (`findings/redteam_<date>.md`). HIGH defects without a closure → Open Questions.
 
-**Антипаттерн:** «Многое осталось неясным» без конкретики. Open Q должен быть actionable для next research.
+**Anti-pattern:** «Much remained unclear» with no specifics. An open Q must be actionable for the next research.
 
-**Композиция:** После `counter-arguments`. До `next-research`.
+**Composition:** After `counter-arguments`. Before `next-research`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Open questions
 
-- **OQ1.** <конкретный вопрос>
-  - Тип: «нет данных» | «противоречивые источники» | «нужен другой эксперт» | «методологически сложно»
-  - Что бы помогло: <тип источника или approach>
+- **OQ1.** <a concrete question>
+  - Type: «no data» | «contradictory sources» | «a different expert is needed» | «methodologically hard»
+  - What would help: <a type of source or approach>
 
-- **OQ2.** <вопрос>
-  - Тип: ...
-  - Что бы помогло: ...
+- **OQ2.** <question>
+  - Type: ...
+  - What would help: ...
 
-- **OQ3.** <вопрос>
-  - Тип: ...
+- **OQ3.** <question>
+  - Type: ...
 
-### Известные unknown unknowns
-- Областью N мы не покрыли вообще — может скрывать relevant info
-- Источники только на <язык>, могли пропустить <другой язык>
+### Known unknown unknowns
+- We did not cover area N at all — it may hide relevant info
+- Sources only in <language>, we may have missed <another language>
 ```
 
 ---
 
 ## Z3 — `next-research`
 
-**Когда:** Всегда. Что копать дальше после этого ресёрча.
+**When:** Always. What to dig into after this research.
 
-**Что внутри:** 2-3 темы для следующих ресёрчей с slug.
+**What's inside:** 2-3 topics for the next research runs, with a slug.
 
-**Антипаттерн:** «Ещё много чего можно исследовать» — каждый next research должен быть конкретной темой с slug.
+**Anti-pattern:** «There is much more to research» — every next research must be a concrete topic with a slug.
 
-**Композиция:** После `open-questions`.
+**Composition:** After `open-questions`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Next research
 
-- **Next 1:** <Тема>
+- **Next 1:** <Topic>
   - Slug: `<slug-name>`
-  - Почему именно эту: <логически вытекает из open questions / приоритетная>
-  - Жанр: <предполагаемый — explainer/decision/etc>
+  - Why this one: <logically follows from the open questions / is the priority>
+  - Genre: <the assumed one — explainer/decision/etc>
 
-- **Next 2:** <Тема>
+- **Next 2:** <Topic>
   - Slug: `<slug-name>`
-  - Почему: ...
-  - Жанр: ...
+  - Why: ...
+  - Genre: ...
 
-- **Next 3:** <Тема>
+- **Next 3:** <Topic>
   - Slug: `<slug-name>`
-  - Почему: ...
+  - Why: ...
 ```
 
 ---
 
 ## Z4 — `actionable-next-steps`
 
-**Когда:** Decision, validation. Когда ресёрч должен переходить в действие.
+**When:** Decision, validation. When the research must turn into action.
 
-**Что внутри:** Первые 3 действия после ресёрча.
+**What's inside:** The first 3 actions after the research.
 
-**Антипаттерн:** Расплывчатые actions («подумать про X»). Каждый — конкретный act с владельцем и сроком.
+**Anti-pattern:** Vague actions («think about X»). Every one must be a concrete act with an owner and a deadline.
 
-**Композиция:** После `recommendation-conditional` в decision. После `verdict-conditional` в validation.
+**Composition:** After `recommendation-conditional` in decision. After `verdict-conditional` in validation.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Actionable next steps
 
-### Action 1 — <короткое название>
-**Что делать:** <конкретное действие>
-**Owner:** <кто> (или «I» если solo)
-**Когда:** <срок, по возможности абсолютная дата>
-**Output:** <что должно появиться>
-**Зависит от:** <предусловия если есть>
+### Action 1 — <short name>
+**What to do:** <a concrete action>
+**Owner:** <who> (or «I» if solo)
+**When:** <a deadline, an absolute date if possible>
+**Output:** <what must appear>
+**Depends on:** <preconditions if any>
 
 ### Action 2 — ...
 ### Action 3 — ...
 
-### Если что-то изменится (triggers)
-- Если <X> произойдёт → пересмотри Action 1
-- Если <Y> → запусти update этого ресёрча
-- Если <Z> → re-evaluate recommendation
+### If something changes (triggers)
+- If <X> happens → revisit Action 1
+- If <Y> → run an update of this research
+- If <Z> → re-evaluate recommendation
 ```
 
 ---
 
 ## Z5 — `map-of-sources`
 
-**Когда:** Всегда. Группировка источников по типам.
+**When:** Always. Grouping the sources by type.
 
-**Что внутри:** Источники по типам с явным выделением opposition voices.
+**What's inside:** Sources by type with the opposition voices explicitly marked out.
 
-**Антипаттерн:** Скрывать excluded источники (low quality). Покажи что было excluded и почему.
+**Anti-pattern:** Hiding the excluded sources (low quality). Show what was excluded and why.
 
-**Композиция:** Всегда. До `metadata`.
+**Composition:** Always. Before `metadata`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Map of sources
@@ -165,112 +166,112 @@
 - **Industry-media (N):** [s04](sources/04_*.md), [s10](sources/10_*.md), [s13](sources/13_*.md)
 - **Expert blogs (N):** [s06](sources/06_*.md), [s14](sources/14_*.md)
 - **Opposition voices (N):** [s09](sources/09_*.md), [s11](sources/11_*.md), [s15](sources/15_*.md)
-- **Excluded (low quality, N):** [s24], [s25] — total < 8, не использовались в выводах
+- **Excluded (low quality, N):** [s24], [s25] — total < 8, not used in the conclusions
 
-### Покрытие
-- Типов источников: N (из 7 возможных)
+### Coverage
+- Source types: N (out of 7 possible)
 - A-grade quality (total ≥ 12): N
 - B-grade (9-11): N
 - Excluded (< 9): N
 
-### Что отсутствует
-- <тип источника которого не хватает> — почему
+### What is missing
+- <the type of source that is lacking> — why
 
-Полный список: [sources.csv](sources.csv).
+Full list: [sources.csv](sources.csv).
 ```
 
 ---
 
 ## Z6 — `findings-index`
 
-**Когда:** Если есть крупные findings вынесенные в отдельные `findings/FN.md` файлы.
+**When:** If there are large findings moved out into separate `findings/FN.md` files.
 
-**Что внутри:** Ссылки на findings с confidence.
+**What's inside:** Links to the findings with confidence.
 
-**Антипаттерн:** Использовать когда findings нет — пропусти блок.
+**Anti-pattern:** Using it when there are no findings — skip the block.
 
-**Композиция:** После Q&A или основного содержимого. Перед `closing`.
+**Composition:** After Q&A or the main content. Before `closing`.
 
-**Шаблон секции в отчёте:**
+**Template of the section in the report:**
 
 ```markdown
 ## Findings index
 
-Атомарные тезисы вынесены отдельно для переиспользования в других ресёрчах:
+Atomic theses moved out separately for reuse in other research:
 
-- [F1: <тезис>](findings/F1.md) — confidence: high, базируется на s01, s07, s12
-- [F2: <тезис>](findings/F2.md) — confidence: medium
-- [F3: <тезис>](findings/F3.md) — confidence: high
+- [F1: <thesis>](findings/F1.md) — confidence: high, based on s01, s07, s12
+- [F2: <thesis>](findings/F2.md) — confidence: medium
+- [F3: <thesis>](findings/F3.md) — confidence: high
 
-Каждый findings можно цитировать из других ресёрчей по ID.
+Each finding can be cited from other research by its ID.
 ```
 
-### Шаблон отдельного `findings/FN.md` файла
+### Template of a separate `findings/FN.md` file
 
-Используй для тезисов, которые:
-- Сложнее одного блока в основном отчёте.
-- Будут переиспользоваться в других ресёрчах.
-- Заслуживают отдельной защиты со steel-man.
+Use it for theses that:
+- Are more complex than one block in the main report.
+- Will be reused in other research.
+- Deserve a separate defence with a steel-man.
 
 ```markdown
 ---
 id: F1
-thesis: <тезис в одном предложении>
+thesis: <the thesis in one sentence>
 confidence: high | medium | low
 sources: [s01, s07, s12, s15]
 created: <YYYY-MM-DD>
 status: active | superseded
 ---
 
-# F1: <название тезиса>
+# F1: <name of the thesis>
 
-## Тезис
+## Thesis
 
-<1-2 предложения, как формулируем>
+<1-2 sentences, as we formulate it>
 
-## Поддерживающие факты
+## Supporting facts
 
-1. **<Факт A>** — из [s01](../sources/01_*.md):
-   > «дословная цитата»
+1. **<Fact A>** — from [s01](../sources/01_*.md):
+   > «verbatim quote»
 
-2. **<Факт B>** — из [s07](../sources/07_*.md):
-   > «дословная цитата»
+2. **<Fact B>** — from [s07](../sources/07_*.md):
+   > «verbatim quote»
 
-3. **<Факт C>** — из [s12](../sources/12_*.md):
-   > «дословная цитата»
+3. **<Fact C>** — from [s12](../sources/12_*.md):
+   > «verbatim quote»
 
-## Сильнейший контр-аргумент (steel-man)
+## The strongest counter-argument (steel-man)
 
-<Самый сильный аргумент ПРОТИВ этого тезиса, который смог найти>
+<The strongest argument AGAINST this thesis that could be found>
 
-**Откуда:** [s09](../sources/09_*.md)
-**Что говорит:** ...
-**Почему всё-таки держимся тезиса:** ...
-**Или: почему понижаем confidence:** ...
+**Where from:** [s09](../sources/09_*.md)
+**What it says:** ...
+**Why we still hold the thesis:** ...
+**Or: why we lower confidence:** ...
 
-## Что это значит для decision
+## What this means for the decision
 
-<Что меняется в зависимости от того, верен этот тезис или нет>
+<What changes depending on whether this thesis is right or not>
 
-## Связанные тезисы / ресёрчи
+## Related theses / research runs
 
-- F2 — поддерживает
-- F4 (из ресёрча `<slug>`) — конкурирует
+- F2 — supports
+- F4 (from the research `<slug>`) — competes
 ```
 
 ---
 
 ## Z7 — `confidence-summary`
 
-**Когда:** Длинные отчёты (deep) с многими findings. Когда читателю нужна сводка confidence.
+**When:** Long reports (deep) with many findings. When the reader needs a summary of confidence.
 
-**Что внутри:** Таблица всех claims с confidence.
+**What's inside:** A table of all claims with confidence.
 
-**Антипаттерн:** Дублировать confidence из основного текста без новой инфы. Делай только если sumary value.
+**Anti-pattern:** Duplicating the confidence from the main text with no new info. Do it only if there is summary value.
 
-**Композиция:** Перед `map-of-sources`.
+**Composition:** Before `map-of-sources`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Confidence summary
@@ -283,78 +284,78 @@ status: active | superseded
 | <claim 4> | high | direct primary source | F2 |
 
 ### Reading
-- **High-confidence claims (N):** действуй на них без оглядки
-- **Medium (N):** учитывай в planning, но валидируй ещё
-- **Low (N):** не принимай решения только на них
+- **High-confidence claims (N):** act on them without looking back
+- **Medium (N):** take them into planning, but validate further
+- **Low (N):** do not make decisions on them alone
 
-### Если хочешь поднять confidence medium → high
-- См. Open Questions OQ1, OQ3
-- Или next research <slug>
+### If you want to raise confidence medium → high
+- See Open Questions OQ1, OQ3
+- Or the next research <slug>
 ```
 
 ---
 
 ## Z8 — `assumptions-log`
 
-**Когда:** Любой ресёрч где есть явные допущения. Особенно forecast/projection.
+**When:** Any research with explicit assumptions. Especially forecast/projection.
 
-**Что внутри:** Список допущений с описанием sensitivity.
+**What's inside:** A list of assumptions with a description of the sensitivity.
 
-**Антипаттерн:** Скрывать допущения. Если допущение неверно — verdict рушится.
+**Anti-pattern:** Hiding the assumptions. If an assumption is wrong — the verdict collapses.
 
-**Композиция:** Перед `closing`. Может быть в `metadata` для коротких отчётов.
+**Composition:** Before `closing`. May live in `metadata` for short reports.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Assumptions
 
-Допущения на которых построен ресёрч. Если они неверны — verdict меняется.
+The assumptions the research is built on. If they are wrong — the verdict changes.
 
-### A1: <допущение>
-**Почему предположил:** <reasoning>
-**Доказательство (если есть):** [s05]
-**Sensitivity:** high — если неверно, <что меняется в выводах>
-**Confidence в допущении:** medium
+### A1: <assumption>
+**Why I assumed it:** <reasoning>
+**Evidence (if any):** [s05]
+**Sensitivity:** high — if wrong, <what changes in the conclusions>
+**Confidence in the assumption:** medium
 
-### A2: <допущение>
-**Почему:** ...
-**Sensitivity:** low — даже если неверно, мало меняется
+### A2: <assumption>
+**Why:** ...
+**Sensitivity:** low — even if wrong, little changes
 **Confidence:** high
 
-### A3: <допущение>
-**Почему:** "не нашёл противоположных данных"
+### A3: <assumption>
+**Why:** "found no opposing data"
 **Sensitivity:** medium
-**Confidence:** low — это weak assumption, worth testing
+**Confidence:** low — this is a weak assumption, worth testing
 
-### Если несколько допущений рушатся одновременно
-- Самые катастрофические комбинации: A1 + A3 → <что было бы>
-- Robust к: failure of A2 alone, A4 alone
+### If several assumptions collapse at once
+- The most catastrophic combinations: A1 + A3 → <what it would be>
+- Robust to: failure of A2 alone, A4 alone
 ```
 
 ---
 
 ## Z9 — `glossary-final`
 
-**Когда:** Длинные отчёты с обильной терминологией. Когда читатель может потеряться.
+**When:** Long reports with abundant terminology. When the reader may get lost.
 
-**Что внутри:** Финальный alphabetical glossary всех терминов из отчёта.
+**What's inside:** A final alphabetical glossary of all the terms from the report.
 
-**Антипаттерн:** Дублировать `glossary-mini` или `glossary-full`. Использовать ОДИН тип glossary, не несколько.
+**Anti-pattern:** Duplicating `glossary-mini` or `glossary-full`. Use ONE type of glossary, not several.
 
-**Композиция:** Перед `metadata`. Только если в начале не было полного glossary.
+**Composition:** Before `metadata`. Only if there was no full glossary at the beginning.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Glossary (final)
 
-В алфавитном порядке. Если термин определялся в тексте — короткая отсылка.
+In alphabetical order. If a term was defined in the text — a short reference.
 
-- **A** — <определение>. Введён в Q1.
-- **B** — <определение>. См. mental-model.
-- **C** — <определение>. Из [s07].
-- **D** — <определение>.
+- **A** — <definition>. Introduced in Q1.
+- **B** — <definition>. See mental-model.
+- **C** — <definition>. From [s07].
+- **D** — <definition>.
 - ...
 ```
 
@@ -362,54 +363,54 @@ status: active | superseded
 
 ## Z10 — `update-triggers`
 
-**Когда:** Все ресёрчи. Что должно произойти, чтобы понадобился update.
+**When:** All research. What must happen for an update to be needed.
 
-**Что внутри:** Условия которые сделают ресёрч устаревшим.
+**What's inside:** The conditions that will make the research obsolete.
 
-**Антипаттерн:** «Когда что-то изменится» без конкретики. Должны быть observable triggers.
+**Anti-pattern:** «When something changes» with no specifics. They must be observable triggers.
 
-**Композиция:** Перед `metadata`. Помогает решить когда переоткрывать ресёрч.
+**Composition:** Before `metadata`. Helps decide when to reopen the research.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Update triggers
 
-Этот ресёрч устареет если:
+This research goes stale if:
 
-- **Time-based:** через <X месяцев>, потому что <area changes fast>
+- **Time-based:** after <X months>, because <area changes fast>
 - **Event-based:**
-  - <event 1> произойдёт (e.g., new regulation, key player exits market)
+  - <event 1> happens (e.g., new regulation, key player exits market)
   - <event 2>
-  - Появится contrary RCT (для validation)
+  - A contrary RCT appears (for validation)
 - **Threshold-based:**
-  - Если <metric X> превысит Y
-  - Если появится >N новых entrants в landscape
+  - If <metric X> exceeds Y
+  - If >N new entrants appear in the landscape
 
 ### Watch list
-- Подпись на <feed/newsletter>
+- Subscribe to <feed/newsletter>
 - Quarterly check on <metric>
 - Notify if <key person> publishes
 
 ### What an update would look like
-- Запуск с `update <slug>` (см. update mode)
-- Дельта-исследование: проверить только что изменилось
-- Не повторять scoping и methodology — только обновить evidence
+- Run with `update <slug>` (see update mode)
+- Delta research: check only what changed
+- Do not repeat the scoping and methodology — only refresh the evidence
 ```
 
-## Z11 — `refresh-targets` (отдельный файл)
+## Z11 — `refresh-targets` (a separate file)
 
-**Когда:** все medium/deep ресёрчи. Z10 говорит **когда** обновлять, Z11 — **что конкретно проверять** при update. Без Z11 update теряет много времени на re-discovery.
+**When:** all medium/deep research. Z10 says **when** to update, Z11 says **what exactly to check** on an update. Without Z11 an update wastes a lot of time on re-discovery.
 
-**Где живёт:** не внутри финального отчёта, а **отдельным файлом** `research/<slug>/refresh_targets.md`. Это позволяет `update` mode сразу прочитать его и пойти проверять.
+**Where it lives:** not inside the final report, but as a **separate file** `research/<slug>/refresh_targets.md`. That lets `update` mode read it straight away and go and check.
 
-**Что внутри:** список конкретных entities, метрик, тематических маркеров, гипотез — всё что update будет реверифицировать.
+**What's inside:** a list of concrete entities, metrics, topic markers, hypotheses — everything the update will re-verify.
 
-**Композиция:** генерируется в Phase 7 (synthesis), после написания финального отчёта. Шаблон ниже — заполняй на основе того что реально использовалось в M-, N-, V-блоках.
+**Composition:** generated in Phase 7 (synthesis), after the final report is written. The template below — fill it in based on what was actually used in the M-, N-, V-blocks.
 
-**См. также:** `references/refresh_protocol.md` — как именно `update` использует этот файл.
+**See also:** `references/refresh_protocol.md` — how exactly `update` uses this file.
 
-**Шаблон `refresh_targets.md`:**
+**Template `refresh_targets.md`:**
 
 ```markdown
 ---
@@ -466,7 +467,7 @@ Patterns that update will use to find new entrants, new publications, new datase
 ### GitHub topics
 - `topic:<keyword-1>` — for finding new repos in domain
 - `topic:<keyword-2>`
-- Filter: `stars:>50 created:>last_research_date` (адаптировать дату при update)
+- Filter: `stars:>50 created:>last_research_date` (adapt the date on update)
 
 ### Academic concepts
 - **OpenAlex concept ID:** `<C-XXXXXXX>` («<concept name>»)
@@ -511,46 +512,46 @@ If specific sources are critical to the report's conclusions, they get extra re-
 
 **Anti-patterns:**
 
-- ❌ Заполнять Z11 «from memory» — каждое поле должно ссылаться на блок из финального отчёта где оно использовалось
-- ❌ Перечислять «все возможные источники» — это refresh_targets, а не bibliographic database. Только critical-path
-- ❌ Без update_cadence — пользователь не поймёт когда возвращаться
-- ❌ Без сохранённых hash/snapshot для entity pages — fingerprinting не работает
+- ❌ Filling in Z11 «from memory» — every field must reference a block from the final report where it was used
+- ❌ Listing «all possible sources» — this is refresh_targets, not a bibliographic database. Critical path only
+- ❌ No update_cadence — the user will not understand when to come back
+- ❌ No saved hash/snapshot for the entity pages — fingerprinting does not work
 
 ---
 
 ## Z12 — `so-what-for-you`
 
-**Когда:** Medium/deep, обязательно. Проекция ключевых выводов отчёта на конкретный кейс пользователя — а не абстрактное «вот что мы узнали про мир».
+**When:** Medium/deep, mandatory. A projection of the report's key conclusions onto the user's concrete case — not an abstract «here is what we learned about the world».
 
-**Вход:** `plan.md` секция 0 (Decision Spec: решение / потребитель→шаг / if-then вилки + User context) + `claims.csv` (ключевые тезисы с их confidence).
+**Input:** `plan.md` section 0 (Decision Spec: the decision / consumer→step / if-then forks + User context) + `claims.csv` (the key theses with their confidence).
 
-**Что внутри:** Для каждого ключевого вывода — что это значит именно для ситуации пользователя, конкретное действие, trade-off этого действия, и kill-criteria (что должно произойти, чтобы рекомендация перестала быть верной).
+**What's inside:** For each key conclusion — what it means specifically for the user's situation, a concrete action, the trade-off of that action, and the kill-criteria (what must happen for the recommendation to stop being true).
 
-**Маппинг на Decision Spec (обязательный):** каждый ключевой claim привязывается к вилке/критерию решения, на которые он влияет. Итог маппинга — **applicability ratio** = замапленные claims / все ключевые claims; число уходит в frontmatter `application.md` (Фаза 8) и в eval-рубрику как дескриптивная метрика. Claims, не влияющие ни на одну вилку, перечисляются отдельной строкой с честным вопросом «зачем он в отчёте?» — это кандидаты на выпил из scope при следующем ресёрче темы. Низкий ratio — это и есть измеренная «бесполезность языка»: отчёт говорит много, на решение влияет мало.
+**Mapping to the Decision Spec (mandatory):** every key claim is tied to the fork/criterion of the decision that it affects. The output of the mapping is the **applicability ratio** = mapped claims / all key claims; the number goes into the frontmatter of `application.md` (Phase 8) and into the eval rubric as a descriptive metric. Claims that affect no fork are listed on a separate line with the honest question «why is it in the report?» — they are candidates for being cut from scope in the next research run on the topic. A low ratio is exactly the measured «uselessness of the language»: the report says a lot, affects the decision little.
 
-**Антипаттерн:** Повторение TL;DR другими словами. Z12 должен добавлять то, чего нет в TL;DR — персонализацию под конкретный кейс из `plan.md` секции 0, а не пересказ фактов. Второй антипаттерн: замапить все claims на вилки формально («относится к решению в целом») — маппинг честный, только прямое влияние на выбор ветки.
+**Anti-pattern:** Repeating the TL;DR in other words. Z12 must add what is not in the TL;DR — personalisation to the concrete case from `plan.md` section 0, not a retelling of facts. The second anti-pattern: mapping all claims onto the forks formally («relates to the decision as a whole») — the mapping is honest only where there is a direct influence on the choice of branch.
 
-**Композиция:** После `map-of-sources` [Z5] / `confidence-summary` [Z7], **перед** `actionable-next-steps` [Z4] — сначала «что это значит для тебя», потом «что конкретно делать».
+**Composition:** After `map-of-sources` [Z5] / `confidence-summary` [Z7], **before** `actionable-next-steps` [Z4] — first «what this means for you», then «what exactly to do».
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## So what for you
 
-Контекст использования (из plan.md §0): <кто спрашивает, зачем, как использует>
+Context of use (from plan.md §0): <who is asking, why, how they will use it>
 
-### Вывод 1: <ключевой тезис из claims.csv, confidence: high/medium/low>
-**Вилка Decision Spec:** <«если X → A» / — не влияет ни на одну (флаг: зачем в отчёте?)>
-**Что это значит для твоей ситуации:** <конкретная проекция, не абстракция>
-**Рекомендуемое действие:** <что делать с учётом этого>
-**Trade-off:** <что теряешь, выбирая это действие>
-**Kill-criteria:** <что должно произойти, чтобы эта рекомендация перестала быть верной>
+### Conclusion 1: <the key thesis from claims.csv, confidence: high/medium/low>
+**Decision Spec fork:** <«if X → A» / — affects none (flag: why is it in the report?)>
+**What this means for your situation:** <a concrete projection, not an abstraction>
+**Recommended action:** <what to do given this>
+**Trade-off:** <what you lose by choosing this action>
+**Kill-criteria:** <what must happen for this recommendation to stop being true>
 
-### Вывод 2: <тезис, confidence>
-**Что это значит:** ...
-**Действие:** ...
+### Conclusion 2: <thesis, confidence>
+**What this means:** ...
+**Action:** ...
 **Trade-off:** ...
 **Kill-criteria:** ...
 
-### Вывод 3: ...
+### Conclusion 3: ...
 ```

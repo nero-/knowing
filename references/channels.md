@@ -400,7 +400,7 @@ A channel says WHERE to search; the concrete vetted addresses per signal live in
 **NOT WebSearch — this is file system access.**
 
 **Targets:**
-- `CLAUDE.md`, `CLAUDE.local.md` — project context
+- `AGENTS.md`, `project notes` — project context
 - `docs/`, `README.md`
 - `research/<other-slug>/<date>_*.md` — previous research runs
 - Source code (if relevant)

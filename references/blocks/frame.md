@@ -1,249 +1,250 @@
-# FRAME blocks — рамка отчёта
+<!-- translated from upstream/references/blocks/frame.md @ e233797 — see docs/TRANSLATION.md -->
+# FRAME blocks — the frame of the report
 
-Блоки рамки: TL;DR, scope, claim, metadata. Это структурный скелет любого отчёта.
+Frame blocks: TL;DR, scope, claim, metadata. This is the structural skeleton of any report.
 
 ---
 
 ## F1 — `tldr`
 
-**Когда:** Всегда. Первый блок отчёта.
+**When:** Always. The first block of the report.
 
-**Что внутри:** 2-4 строки главного. Каждая с confidence-маркером.
+**What's inside:** 2-4 lines of the main thing. Each with a confidence marker.
 
-**Антипаттерн:** «вода», абстрактные формулировки. TL;DR должен быть актионным — что узнал, что меняется.
+**Anti-pattern:** «water», abstract formulations. The TL;DR must be actionable — what was learned, what changes.
 
-**Композиция:** Пишется ПОСЛЕДНИМ, после всех остальных блоков. Сначала разбираешься, потом сжимаешь.
+**Composition:** Written LAST, after all the other blocks. First you think it through, then you compress.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## TL;DR
 
-- **<Главный ответ 1 одной фразой>** [confidence: high]
-- **<Главный ответ 2>** [confidence: medium] — <почему понижено>
-- **<Главный ответ 3>** [confidence: low] — <предостережение>
+- **<Main answer 1 in one phrase>** [confidence: high]
+- **<Main answer 2>** [confidence: medium] — <why it was lowered>
+- **<Main answer 3>** [confidence: low] — <caveat>
 ```
 
 ---
 
 ## F2 — `decision-context`
 
-**Когда:** Decision, custom-decision. Объясняет рамку решения.
+**When:** Decision, custom-decision. Explains the frame of the decision.
 
-**Что внутри:** Что решаем, варианты, constraints, stakes уровень.
+**What's inside:** What we are deciding, the options, the constraints, the stakes level.
 
-**Антипаттерн:** Размытое «нужно выбрать систему» без критериев. Должно быть чётко: что оптимизируем и в каких рамках.
+**Anti-pattern:** A vague «we need to choose a system» with no criteria. It must be precise: what we optimise and within which frame.
 
-**Композиция:** Идёт сразу после `tldr` в decision-жанре. Перед `options-matrix`.
+**Composition:** Goes right after `tldr` in the decision genre. Before `options-matrix`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Decision context
 
-- **Что решаем:** <решение в одной строке>
-- **Варианты:** A, B, C (или "map mode: исследование без выбора")
-- **Оптимизируем по приоритету:** 1. <criterion>, 2. <criterion>, 3. <criterion>
-- **Constraints:** <бюджет / время / навыки команды / legacy>
+- **What we are deciding:** <the decision in one line>
+- **Options:** A, B, C (or "map mode: research with no choice")
+- **We optimise by priority:** 1. <criterion>, 2. <criterion>, 3. <criterion>
+- **Constraints:** <budget / time / team skills / legacy>
 - **Stakes:** low | medium | high
-- **Когда нужно решение:** <дедлайн или "по готовности">
+- **When the decision is needed:** <deadline or "when ready">
 ```
 
 ---
 
 ## F3 — `scope`
 
-**Когда:** Landscape, validation, любой ресёрч с явными границами.
+**When:** Landscape, validation, any research with explicit boundaries.
 
-**Что внутри:** Что входит, что НЕ входит, срез на дату (важно для landscape — устаревает).
+**What's inside:** What is in scope, what is NOT in scope, the cut as of a date (important for landscape — it goes stale).
 
-**Антипаттерн:** Пропустить scope в landscape — получишь претензии «а почему X не упомянул».
+**Anti-pattern:** Skipping scope in a landscape — you get complaints «and why didn't you mention X».
 
-**Композиция:** После `tldr` или сразу под заголовком. До основного содержимого.
+**Composition:** After `tldr` or right under the title. Before the main content.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Scope
 
-- **Что входит:** <критерии включения>
-- **Что НЕ входит:** <явные исключения и почему>
-- **Срез на дату:** <YYYY-MM-DD>
-- **География:** <страны/регионы или "глобально">
-- **Период (для historical):** <от/до>
+- **What is in scope:** <inclusion criteria>
+- **What is NOT in scope:** <explicit exclusions and why>
+- **Cut as of date:** <YYYY-MM-DD>
+- **Geography:** <countries/regions or "globally">
+- **Period (for historical):** <from/to>
 ```
 
 ---
 
 ## F4 — `claim-precise`
 
-**Когда:** Validation. Точная формулировка проверяемого утверждения.
+**When:** Validation. A precise formulation of the claim under test.
 
-**Что внутри:** Полный claim, скоуп применимости, явные исключения.
+**What's inside:** The full claim, the scope of applicability, explicit exclusions.
 
-**Антипаттерн:** Расплывчатый claim («X полезен») — нечего проверять. Должен быть фальсифицируем.
+**Anti-pattern:** A vague claim («X is useful») — there is nothing to check. It must be falsifiable.
 
-**Композиция:** Сразу после `tldr` в validation. Перед `falsification-criteria`.
+**Composition:** Right after `tldr` in validation. Before `falsification-criteria`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## The claim
 
-- **Точная формулировка:** <claim как утверждение, не вопрос>
-- **Скоуп применимости:** <где, когда, в каком контексте>
-- **Что НЕ утверждается:** <явные исключения, чтобы не подменили>
-- **Источник утверждения:** <откуда мы это услышали> (если есть)
+- **Precise formulation:** <the claim as a statement, not a question>
+- **Scope of applicability:** <where, when, in which context>
+- **What is NOT claimed:** <explicit exclusions, so that it is not substituted>
+- **Source of the claim:** <where we heard it> (if any)
 ```
 
 ---
 
 ## F5 — `metadata`
 
-**Когда:** Всегда. Footer отчёта.
+**When:** Always. The footer of the report.
 
-**Что внутри:** Author, date, depth, blocks, version, status.
+**What's inside:** Author, date, depth, blocks, version, status.
 
-**Антипаттерн:** Дублировать frontmatter в metadata. Footer — для читателя, frontmatter — для машинной обработки.
+**Anti-pattern:** Duplicating the frontmatter in the metadata. The footer is for the reader, the frontmatter is for machine processing.
 
-**Композиция:** Самый последний блок отчёта.
+**Composition:** The very last block of the report.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ---
 
-## Метаданные
+## Metadata
 
-- **Дата:** <YYYY-MM-DD>
-- **Глубина:** <shallow | medium | deep>
-- **Жанр:** <qa | explainer | decision | landscape | validation | custom>
-- **Блоков использовано:** <N>
-- **Источников:** <N> (использовано в выводах: <K>)
-- **Время:** ~<X часов>
-- **Версия:** initial | update-1 | update-2
-- **Статус:** active | superseded by `<YYYY-MM-DD>_<genre>.md`
-- **План:** [plan.md](plan.md)
-- **Источники:** [sources.csv](sources.csv)
+- **Date:** <YYYY-MM-DD>
+- **Depth:** <shallow | medium | deep>
+- **Genre:** <qa | explainer | decision | landscape | validation | custom>
+- **Blocks used:** <N>
+- **Sources:** <N> (used in the conclusions: <K>)
+- **Time:** ~<X hours>
+- **Version:** initial | update-1 | update-2
+- **Status:** active | superseded by `<YYYY-MM-DD>_<genre>.md`
+- **Plan:** [plan.md](plan.md)
+- **Sources:** [sources.csv](sources.csv)
 ```
 
 ---
 
 ## F6 — `key-finding-callout`
 
-**Когда:** Длинные отчёты (medium/deep) когда есть ОДИН insight значительно важнее остальных.
+**When:** Long reports (medium/deep), when there is ONE insight significantly more important than the rest.
 
-**Что внутри:** Выделенная цитата-вывод с источниками и confidence.
+**What's inside:** A highlighted quote-conclusion with sources and confidence.
 
-**Антипаттерн:** Использовать как replacement для TL;DR. Это дополнение, не замена.
+**Anti-pattern:** Using it as a replacement for the TL;DR. It is an addition, not a substitute.
 
-**Композиция:** После `tldr`, как акцент на главный insight.
+**Composition:** After `tldr`, as an accent on the main insight.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## 🎯 Key finding
 
-> **<Главный insight одной-двумя фразами>**
+> **<The main insight in one or two phrases>**
 >
-> Источники: [s03], [s07], [s12]
+> Sources: [s03], [s07], [s12]
 > Confidence: high
-> Что это значит: <короткое следствие>
+> What it means: <a short consequence>
 ```
 
 ---
 
 ## F7 — `executive-summary`
 
-**Когда:** Decision/landscape для стейкхолдеров, не-технических читателей. 1-страничный отчёт-внутри-отчёта.
+**When:** Decision/landscape for stakeholders, non-technical readers. A 1-page report-inside-the-report.
 
-**Что внутри:** Plain-English версия отчёта на 1 страницу.
+**What's inside:** A plain-English version of the report on 1 page.
 
-**Антипаттерн:** Дублировать TL;DR. Executive summary — отдельный читатель, своя глубина.
+**Anti-pattern:** Duplicating the TL;DR. The executive summary has a separate reader, its own depth.
 
-**Композиция:** После `tldr`, до основного содержимого. Опциональный, не для всех отчётов.
+**Composition:** After `tldr`, before the main content. Optional, not for every report.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Executive Summary
 
-**Контекст:** <2-3 предложения, что исследовали и зачем>
+**Context:** <2-3 sentences on what we researched and why>
 
-**Главные выводы:**
+**Main conclusions:**
 1. ...
 2. ...
 3. ...
 
-**Рекомендация:** <если применимо, одна фраза>
+**Recommendation:** <if applicable, one phrase>
 
-**Риски:** <2-3 главных>
+**Risks:** <the 2-3 main ones>
 
-**Что дальше:** <первое действие>
+**What next:** <the first action>
 ```
 
 ---
 
 ## F8 — `glossary-link`
 
-**Когда:** Проект имеет общий glossary (например, `docs/glossary.md` или `UBIQUITOUS_LANGUAGE.md`).
+**When:** The project has a shared glossary (for example, `docs/glossary.md` or `UBIQUITOUS_LANGUAGE.md`).
 
-**Что внутри:** Ссылка на внешний glossary вместо встроенного.
+**What's inside:** A link to the external glossary instead of an inline one.
 
-**Антипаттерн:** Дублировать glossary в отчёте если он уже есть в проекте — расходится со временем.
+**Anti-pattern:** Duplicating the glossary in the report when it already exists in the project — it drifts over time.
 
-**Композиция:** Замена `glossary-mini` или `glossary-full` если внешний glossary существует.
+**Composition:** A replacement for `glossary-mini` or `glossary-full` if an external glossary exists.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Glossary
 
-Терминология этого отчёта совпадает с проектным glossary: [<filename>.md](../<path>).
+The terminology of this report matches the project glossary: [<filename>.md](../<path>).
 
-Дополнительные термины введённые ТОЛЬКО в этом ресёрче:
-- **<Термин 1>** — <определение>
-- **<Термин 2>** — <определение>
+Additional terms introduced ONLY in this research:
+- **<Term 1>** — <definition>
+- **<Term 2>** — <definition>
 ```
 
 ---
 
 ## F9 — `background`
 
-**Когда:** Дефолт для medium/deep во всех жанрах. Отвечает на «почему вопрос вообще стоит так, как стоит» — до того как начинаем разбирать содержание.
+**When:** The default for medium/deep in all genres. Answers «why the question is posed the way it is» — before we start dissecting the content.
 
-**Что внутри:** Предыстория и причины — что было до этого вопроса, откуда он взялся, какие события/решения привели к тому, что он актуален сейчас. 5-10 строк, не больше — это контекст, не отдельный ресёрч в ресёрче.
+**What's inside:** Prehistory and causes — what came before this question, where it came from, which events/decisions made it relevant right now. 5-10 lines, no more — this is context, not a research within a research.
 
-**Антипаттерн:** Пересказ Википедии о теме целиком. Background должен объяснять именно ПОЧЕМУ вопрос стоит так, не давать общую историю предмета.
+**Anti-pattern:** Retelling Wikipedia about the topic in full. Background must explain exactly WHY the question is posed this way, not give the general history of the subject.
 
-**Композиция:** После `scope` [F3] (если scope есть) или сразу после `tldr` [F1]. До основного содержимого отчёта.
+**Composition:** After `scope` [F3] (if there is a scope) or right after `tldr` [F1]. Before the main content of the report.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Background
 
-<5-10 строк: что предшествовало этому вопросу — событие, тренд, решение, изменение
-условий — из-за которого вопрос стал релевантным именно сейчас. Явно называй
-источники предпосылки, если они есть: [s03].>
+<5-10 lines: what preceded this question — an event, a trend, a decision, a change
+in conditions — because of which the question became relevant right now. Name the
+sources of the premise explicitly, if there are any: [s03].>
 
-**Почему это важно для ответа:** <короткая связка — как эта предыстория влияет на
-то, как нужно читать остальной отчёт>
+**Why this matters for the answer:** <a short link — how this prehistory affects
+the way the rest of the report must be read>
 ```
 
 ## F10 — `verification-header`
 
-**Когда:** medium/deep — обязателен, ставится Фазой 6.5. В shallow — только строка liveness (Layers 2–4 не гонялись). Без него отчёт не «готов»: заголовок и есть заявление о том, насколько ему можно верить.
+**When:** medium/deep — mandatory, set by Phase 6.5. In shallow — only the liveness line (Layers 2–4 were not run). Without it the report is not «ready»: the header is itself the statement of how far it can be trusted.
 
-**Что внутри:** Блокквот в самом верху отчёта, до `tldr` [F1]. Четыре оси одной строкой — liveness × faithfulness × qualifiers × constructs — плюс вторая строка независимости источников для medium/deep. Цепочка «источник → claim → отчёт» рвётся в любом звене, поэтому оси не заменяют друг друга и показываются вместе.
+**What's inside:** A blockquote at the very top of the report, before `tldr` [F1]. Four axes on one line — liveness × faithfulness × qualifiers × constructs — plus a second line on source independence for medium/deep. The chain «source → claim → report» breaks at any link, so the axes do not substitute for one another and are shown together.
 
-Все цифры берутся из `.verify/*.json` и `claims.csv` и **никогда не пересчитываются руками**. Как они производятся и что означает плохое значение каждой — `references/runtime_verification.md`.
+All numbers are taken from `.verify/*.json` and `claims.csv` and are **never recounted by hand**. How they are produced and what a bad value on each means — `references/runtime_verification.md`.
 
-**Антипаттерн:** Показывать заголовок как оценку («9/10, хорошо»). Каждая цифра — сигнал провала, а не балл. Отдельно: ноль `contested` по конфликтной теме — не достижение, а признак, что несогласных не искали. Метрика, которую улучшают, переставая делать работу, — не метрика.
+**Anti-pattern:** Showing the header as a score («9/10, good»). Every number is a failure signal, not a grade. Separately: zero `contested` on a contested topic is not an achievement but a sign that dissenters were not looked for. A metric that is improved by stopping doing the work is not a metric.
 
-**Композиция:** Самый первый элемент отчёта, до [F1]. В экспорте (Фаза 6.9) верстается панелью доверия на первой странице.
+**Composition:** The very first element of the report, before [F1]. In the export (Phase 6.9) it is laid out as a trust panel on the first page.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 > **Citation integrity: 21/23 live · faithfulness 20/22 supported · qualifiers 22/22 preserved · constructs 7/7 sourced · 0 red flags · 2 paywalled**
@@ -258,7 +259,7 @@
 > CL6 contested: minority s60 (regulator filing) vs 3 secondary — both positions in §4.
 ```
 
-Когда флаги нашлись и были погашены:
+When flags were found and paid down:
 
 ```markdown
 > **Citation integrity: 23/23 live · faithfulness 23/23 supported · qualifiers 21/23 preserved · 1 red flag + 1 overclaim + 2 qualifiers restored**
@@ -266,11 +267,11 @@
 > CL7 (BROADENED → "on fixtures with embedded state" restored in TL;DR).
 ```
 
-Когда ось ниже порога и пользователь решил выпускать всё равно (только medium):
+When an axis is below the floor and the user decided to ship anyway (medium only):
 
 ```markdown
 > ⚠ **Citation integrity: liveness 0.64 · faithfulness 0.71 · qualifiers 0.88 — liveness below floor (0.70).**
 > s07, s11 (transport UNKNOWN), s19 (OPEN dead → claim demoted); C9 (UNSUPPORTED → Open Questions).
 ```
 
-shallow: строки faithfulness/qualifier/construct опускаются, если слои не гонялись.
+shallow: the faithfulness/qualifier/construct lines are dropped if the layers were not run.

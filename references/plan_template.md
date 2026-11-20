@@ -85,9 +85,9 @@ What already exists on the topic in the project — found in the discover phase.
 - `<memory file>` mentions <fact> — <accept / reconsider / not relevant>
 - (or: «memory is empty or not relevant»)
 
-**CLAUDE.md project context:**
-- <relevant project info from CLAUDE.md / CLAUDE.local.md>
-- (or: «CLAUDE.md does not mention the topic»)
+**AGENTS.md project context:**
+- <relevant project info from AGENTS.md / project notes>
+- (or: «AGENTS.md does not mention the topic»)
 
 **Decision:** initial research | update of `<slug>` | re-investigation (with reason)
 

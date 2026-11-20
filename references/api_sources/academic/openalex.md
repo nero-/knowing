@@ -1,18 +1,19 @@
+<!-- translated from upstream/references/api_sources/academic/openalex.md @ e233797 — see docs/TRANSLATION.md -->
 # OpenAlex API
 
 ## Overview
 
 - **Endpoint base:** `https://api.openalex.org`
-- **Auth:** Ключ не обязателен для базовых запросов — live-проверено 2026-08-17: `GET /works?per-page=1` без ключа → HTTP 200. С начала 2026 официально появился опциональный бесплатный API-ключ (даёт 10× бюджет + приоритет), без ключа — более узкий "keyless"-бюджет
-- **Free tier:** НЕ unlimited — с 2026 введена credit-based система. Без ключа: live-заголовки 2026-08-17 показали `x-ratelimit-limit: 1000` кредитов с суточным сбросом (~полночь UTC), список-запрос стоит 1 кредит по наблюдению (точная цифра нигде официально не задокументирована — это прямое наблюдение, не заявленный лимит). С бесплатным ключом: официально "$1 API-бюджета в день" на аккаунт, карта не нужна (help.openalex.org/hc/en-us/articles/24397762024087-Pricing, страница обновлена 2026-08-11)
-- **Rate limit:** 100 req/sec — жёсткий потолок для всех тарифов, задокументировано официально (help.openalex.org/api/authentication). Старая цифра "10 req/sec, 100k/day" не подтвердилась ни в доке, ни в live-заголовках
-- **Docs:** https://docs.openalex.org (редиректит на https://help.openalex.org)
-- **Coverage:** 250M+ scholarly works (replaced Microsoft Academic) — live-запрос 2026-08-17 вернул `"count": 324389590` в `meta`
+- **Auth:** A key is not required for basic queries — live-verified 2026-08-17: `GET /works?per-page=1` without a key → HTTP 200. Since the start of 2026 an optional free API key officially exists (gives a 10× budget + priority), without a key you get a narrower "keyless" budget
+- **Free tier:** NOT unlimited — a credit-based system was introduced in 2026. Without a key: live headers on 2026-08-17 showed `x-ratelimit-limit: 1000` credits with a daily reset (~midnight UTC), a list query costs 1 credit by observation (the exact figure is not officially documented anywhere — this is direct observation, not a declared limit). With a free key: officially "$1 API budget per day" per account, no card needed (help.openalex.org/hc/en-us/articles/24397762024087-Pricing, page updated 2026-08-11)
+- **Rate limit:** 100 req/sec — a hard ceiling for all tiers, officially documented (help.openalex.org/api/authentication). The old figure "10 req/sec, 100k/day" was not confirmed either in the docs or in live headers
+- **Docs:** https://docs.openalex.org (redirects to https://help.openalex.org)
+- **Coverage:** 250M+ scholarly works (replaced Microsoft Academic) — a live query on 2026-08-17 returned `"count": 324389590` in `meta`
 - **Verified:** 2026-08-17
 
 ## What it returns
 
-JSON с metadata + citations graph + author networks + institutional affiliations.
+JSON with metadata + citations graph + author networks + institutional affiliations.
 
 ```json
 {
@@ -30,31 +31,31 @@ JSON с metadata + citations graph + author networks + institutional affiliation
 
 ## When to use
 
-- Citation graph analysis на массовом scale (10k+ papers)
-- Найти institutional collaborations (университеты, страны)
-- Concept-based discovery (OpenAlex добавляет concept tags ML-derived)
-- Research metrics — find most-cited in field
+- Citation graph analysis at massive scale (10k+ papers)
+- Find institutional collaborations (universities, countries)
+- Concept-based discovery (OpenAlex adds ML-derived concept tags)
+- Research metrics — find most-cited in a field
 
 ## When not to use
 
-- Простой paper lookup — Semantic Scholar чище API
-- Нужны abstracts — OpenAlex имеет inverted_index abstracts (нужна реконструкция)
+- A simple paper lookup — Semantic Scholar has a cleaner API
+- You need abstracts — OpenAlex has inverted_index abstracts (reconstruction needed)
 
 ## Auth setup
 
-Ключ не обязателен для базовых/некоммерческих запросов (live-подтверждено 2026-08-17), но с 2026 официально рекомендован — 10× дневной бюджет вместо узкого keyless-лимита:
+A key is not required for basic/non-commercial queries (live-confirmed 2026-08-17), but since 2026 it is officially recommended — a 10× daily budget instead of the narrow keyless limit:
 
-1. https://openalex.org/settings/api → создать аккаунт (~30 сек), скопировать ключ
+1. https://openalex.org/settings/api → create an account (~30 sec), copy the key
 2. `export OPENALEX_API_KEY="..."`
-3. Точный формат передачи ключа (query-параметр vs заголовок) в этой сессии live не перепроверялся — тестового ключа нет, см. текущую доку на help.openalex.org
+3. The exact format for passing the key (query parameter vs header) was not re-verified live in this session — there is no test key, see the current docs at help.openalex.org
 
-Без ключа работает politeness pool:
+Without a key the politeness pool works:
 
 ```
 GET /works?search={query}&mailto=your@email.com
 ```
 
-Это по-прежнему даёт priority доступ внутри keyless-бюджета, но не заменяет ключ по объёму.
+This still gives priority access within the keyless budget, but does not replace a key in terms of volume.
 
 ## Query patterns
 
@@ -102,7 +103,7 @@ GET /concepts/{concept-id}
 GET /works?filter=concepts.id:{concept-id}&per-page=200
 ```
 
-## Example queries для deepdive
+## Example queries for the deep run
 
 **Phase 4 — get all recent papers in a niche concept:**
 
@@ -130,7 +131,7 @@ GET /works?search={query}&per-page=200&cursor={next_cursor}
 
 ## Abstracts (inverted_index format)
 
-OpenAlex stores abstracts as inverted index (token positions). Reconstruct:
+OpenAlex stores abstracts as an inverted index (token positions). Reconstruct:
 
 ```python
 # pseudo-code
@@ -141,30 +142,30 @@ for word, positions in inverted_index.items():
 abstract = " ".join(abstract_words[i] for i in sorted(abstract_words))
 ```
 
-Или используй `mailto=` parameter — некоторые ответы include reconstructed abstract.
+Or use the `mailto=` parameter — some responses include a reconstructed abstract.
 
 ## Limitations
 
-- Abstract inverted_index format awkward для агента
-- ML-derived concepts иногда noisy
-- Smaller community than Semantic Scholar (меньше maintenance attention)
-- Free tier больше не unlimited (с 2026) — при интенсивном использовании без ключа можно упереться в суточный keyless-лимит (точная цифра не задокументирована официально, live-наблюдение 2026-08-17 — см. Overview); для серьёзного объёма нужен бесплатный ключ
+- The abstract inverted_index format is awkward for an agent
+- ML-derived concepts are sometimes noisy
+- Smaller community than Semantic Scholar (less maintenance attention)
+- The free tier is no longer unlimited (since 2026) — under intensive use without a key you can hit the daily keyless limit (the exact figure is not officially documented, live observation 2026-08-17 — see Overview); for serious volume you need a free key
 
 ## Combine with
 
 - **Semantic Scholar** — cleaner API, similar coverage
-- **CrossRef** — для DOI lookup
-- **OurResearch Unpaywall** — для extra OA URLs
+- **CrossRef** — for DOI lookup
+- **OurResearch Unpaywall** — for extra OA URLs
 
 ## Fallback if API down or rate-limited
 
 1. Semantic Scholar API (similar coverage)
-2. CrossRef для DOI metadata
-3. Direct DOI lookup через doi.org redirects
+2. CrossRef for DOI metadata
+3. Direct DOI lookup via doi.org redirects
 
 ## Notes
 
-- OpenAlex — самый полный citation graph в open data
-- Великолепно для research network analysis
-- Без ключа доступен базовый объём (live-наблюдение 2026-08-17: порядка 1000 кредитов/сутки); для существенного объёма — бесплатный ключ с $1/день бюджета, карта не нужна
-- Уникален возможностью filter по institutions / countries / concepts на массовом scale
+- OpenAlex has the most complete citation graph in open data
+- Excellent for research network analysis
+- Without a key a basic volume is available (live observation 2026-08-17: on the order of 1000 credits/day); for substantial volume — a free key with a $1/day budget, no card needed
+- Unique in its ability to filter by institutions / countries / concepts at massive scale

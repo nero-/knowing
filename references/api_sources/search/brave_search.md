@@ -1,3 +1,4 @@
+<!-- translated from upstream/references/api_sources/search/brave_search.md @ e233797 — see docs/TRANSLATION.md -->
 # Brave Search API
 
 ## Overview
@@ -7,11 +8,11 @@
 - **Free tier:** 2000 queries/month, 1 query/sec
 - **Paid:** $3-$5 per 1000 queries
 - **Docs:** https://api.search.brave.com/app/documentation
-- **Independent index** (не Google rebrand)
+- **Independent index** (not a Google rebrand)
 
 ## What it returns
 
-JSON с organic results, news, videos, infobox.
+JSON with organic results, news, videos, infobox.
 
 ```json
 {
@@ -34,26 +35,26 @@ JSON с organic results, news, videos, infobox.
 
 ## When to use
 
-- Нужен Google-quality search без Google bias
-- Privacy-respecting alternative
+- You need Google-quality search without Google bias
+- A privacy-respecting alternative
 - Bulk programmatic search
 
 ## When not to use
 
-- Бесплатных запросов > 2000/month
-- Нужен Google specifically (SerpAPI для этого)
+- You need more than 2000 free queries/month
+- You need Google specifically (SerpAPI is for that)
 
 ## Auth setup
 
 1. https://api.search.brave.com → sign up
-2. Получи API key
-3. В env: `export BRAVE_SEARCH_API_KEY="BSA..."`
+2. Get an API key
+3. In env: `export BRAVE_SEARCH_API_KEY="BSA..."`
 
 ## Query patterns
 
-Прямой вызов из скилла: `python3 scripts/search_query.py --engine brave --query "..." [--n 10] [--json]`
-(читает `BRAVE_SEARCH_API_KEY` из env, exit 2 если ключа нет). Ниже — сырой HTTP-контракт,
-который скрипт реализует.
+Direct call from the skill: `python3 scripts/search_query.py --engine brave --query "..." [--n 10] [--json]`
+(reads `BRAVE_SEARCH_API_KEY` from env, exit 2 if there is no key). Below is the raw HTTP contract
+the script implements.
 
 ### Web search
 
@@ -72,13 +73,13 @@ GET https://api.search.brave.com/res/v1/news/search?q={query}&count=20&freshness
 
 ### Goggle (custom rankings)
 
-Brave Goggles позволяют создать custom ranker:
+Brave Goggles let you create a custom ranker:
 
 ```
 GET https://api.search.brave.com/res/v1/web/search?q={query}&goggles_id={GOGGLE_ID}
 ```
 
-## Example queries для deepdive
+## Example queries for the deep run
 
 **Phase 4 — landscape research:**
 
@@ -94,18 +95,18 @@ GET /news/search?q=duckdb%20release&count=10&freshness=pm
 
 ## Limitations
 
-- 2000 free queries/month — для deep ресёрчей с активными sub-agents этого мало
-- Меньше "rich features" чем Google (no instant answers для всего)
-- Index не такой широкий как Google для нишевых тем
+- 2000 free queries/month — for deep runs with active sub-agents that is not much
+- Fewer "rich features" than Google (no instant answers for everything)
+- The index is not as broad as Google's for niche topics
 
 ## Combine with
 
-- **Tavily** — для готовых answers с sources
-- **SerpAPI** — если нужен именно Google
-- **Exa** — для семантического поиска
+- **Tavily** — for ready-made answers with sources
+- **SerpAPI** — if you need Google specifically
+- **Exa** — for semantic search
 
 ## Fallback if API down or rate-limited
 
-1. Tavily API (свой free tier)
-2. Standard WebSearch tool в Claude Code
-3. DuckDuckGo through Brave alternative (но менее качественный)
+1. Tavily API (its own free tier)
+2. Standard WebSearch tool in the agent harness
+3. DuckDuckGo through a Brave alternative (but lower quality)

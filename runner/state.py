@@ -16,7 +16,7 @@ from pathlib import Path
 
 log = logging.getLogger(__name__)
 
-DEFAULT_ROOT = Path.home() / ".claude"
+DEFAULT_ROOT = Path.home() / ".knowing"  # knowing: own state directory
 STATE_DIRNAME = "deepdive-state"
 
 

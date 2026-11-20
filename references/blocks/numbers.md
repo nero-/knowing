@@ -1,20 +1,21 @@
-# NUMBERS blocks — количественные данные
+<!-- translated from upstream/references/blocks/numbers.md @ e233797 — see docs/TRANSLATION.md -->
+# NUMBERS blocks — quantitative data
 
-Блоки для quantitative claims: metrics, market sizing, forecasts, benchmarks.
+Blocks for quantitative claims: metrics, market sizing, forecasts, benchmarks.
 
 ---
 
 ## N1 — `metric-tracker`
 
-**Когда:** «По метрикам», «по KPI», любой ресёрч с конкретными числовыми показателями.
+**When:** "By metrics", "by KPI", any research with concrete numeric indicators.
 
-**Что внутри:** Метрики с цифрами, единицами, временем, источниками.
+**What's inside:** Metrics with numbers, units, time, sources.
 
-**Антипаттерн:** Цифры без единиц или времени — бесполезны. Каждое число с context.
+**Anti-pattern:** Numbers without units or time — useless. Every number needs context.
 
-**Композиция:** Custom для quantitative ресёрчей. Часто комбинируется с `data-table` или `profile-card`.
+**Composition:** Custom for quantitative research. Often combined with `data-table` or `profile-card`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Metrics
@@ -33,11 +34,11 @@
 - **<metric 3>:** methodology of YoY calculation
 
 ### Metric quality notes
-- <metric 2> is an estimate from public signals, не official
-- <metric 5> varies seasonally — value is average
+- <metric 2> is an estimate from public signals, not official
+- <metric 5> varies seasonally — the value is an average
 
 ### Movement / trends
-- <metric 1> grew from N to M over period
+- <metric 1> grew from N to M over the period
 - <metric 5> declining: <hypothesis why>
 ```
 
@@ -45,37 +46,37 @@
 
 ## N2 — `market-sizing`
 
-**Когда:** Market research. Когда нужно понять размер рынка.
+**When:** Market research. When the size of a market must be established.
 
-**Что внутри:** TAM/SAM/SOM или другая sizing методология.
+**What's inside:** TAM/SAM/SOM or another sizing methodology.
 
-**Антипаттерн:** Слишком оптимистичный TAM без обоснования. Каждый layer должен иметь top-down и bottom-up validation.
+**Anti-pattern:** An overly optimistic TAM without justification. Every layer must have top-down and bottom-up validation.
 
-**Композиция:** Custom для market analysis. Перед `landscape` для контекста.
+**Composition:** Custom for market analysis. Before `landscape`, for context.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Market sizing
 
 ### TAM (Total Addressable Market)
 **Value:** ~$<X>B
-**Definition:** все потенциальные покупатели вне зависимости от reach
-**Methodology:** top-down (industry reports) ИЛИ bottom-up (users × ARPU)
+**Definition:** all potential buyers regardless of reach
+**Methodology:** top-down (industry reports) OR bottom-up (users × ARPU)
 **Top-down estimate:** [s03] — $X.YB
 **Bottom-up estimate:** <calc> — $X.YB
-**Convergence:** <если оба подхода сходятся, confidence higher>
+**Convergence:** <if both approaches converge, confidence is higher>
 **Confidence:** medium
 
 ### SAM (Serviceable Addressable Market)
-**Value:** ~$<X>B (X% от TAM)
-**Definition:** TAM minus segments которые мы не можем reach (geography, regulations, etc)
+**Value:** ~$<X>B (X% of TAM)
+**Definition:** TAM minus the segments we cannot reach (geography, regulations, etc)
 **Excluded:** <segment 1>, <segment 2>
 **Confidence:** medium
 
 ### SOM (Serviceable Obtainable Market)
-**Value:** ~$<X>M (X% от SAM)
-**Definition:** реалистично достижимый рынок за <timeframe>
+**Value:** ~$<X>M (X% of SAM)
+**Definition:** the realistically attainable market within <timeframe>
 **Reasoning:** <obstacles, competitive constraints>
 **Confidence:** low (depends on execution)
 
@@ -85,24 +86,24 @@
 - SOM reachable in <X years>
 
 ### Caveats
-- "Markets" overlap with adjacent — clean delineation hard
-- Top-down reports часто inflate by N% (industry interest)
-- Bottom-up rely on multiple assumptions
+- "Markets" overlap with adjacent ones — clean delineation is hard
+- Top-down reports are often inflated by N% (industry interest)
+- Bottom-up relies on multiple assumptions
 ```
 
 ---
 
 ## N3 — `growth-rates`
 
-**Когда:** Growth analysis. YoY / CAGR / MoM.
+**When:** Growth analysis. YoY / CAGR / MoM.
 
-**Что внутри:** Темпы роста с диапазонами и источниками.
+**What's inside:** Growth rates with ranges and sources.
 
-**Антипаттерн:** Один rate без context (short period? cherry-picked?). Покажи временное окно.
+**Anti-pattern:** A single rate without context (short period? cherry-picked?). Show the time window.
 
-**Композиция:** Дополнение к `metric-tracker` или `trends`.
+**Composition:** A supplement to `metric-tracker` or `trends`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Growth rates
@@ -133,15 +134,15 @@
 
 ## N4 — `unit-economics`
 
-**Когда:** SaaS / business analysis. CAC, LTV, payback period.
+**When:** SaaS / business analysis. CAC, LTV, payback period.
 
-**Что внутри:** Unit economics formula с numbers.
+**What's inside:** The unit economics formula with numbers.
 
-**Антипаттерн:** Только LTV/CAC ratio без abstraction over time. LTV растёт со временем, CAC падает — снапшот вводит в заблуждение.
+**Anti-pattern:** Only the LTV/CAC ratio without the time dimension. LTV grows over time, CAC falls — a snapshot misleads.
 
-**Композиция:** Custom для product/business analysis. Дополнение к `metric-tracker`.
+**Composition:** Custom for product/business analysis. A supplement to `metric-tracker`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Unit economics
@@ -184,15 +185,15 @@
 
 ## N5 — `cost-breakdown`
 
-**Когда:** Финансовый анализ. Due diligence. Понимание structures of costs.
+**When:** Financial analysis. Due diligence. Understanding structures of costs.
 
-**Что внутри:** Структура затрат с долями.
+**What's inside:** The cost structure with shares.
 
-**Антипаттерн:** Общие категории без drill-down. Если "infrastructure" — что именно?
+**Anti-pattern:** Generic categories without drill-down. If "infrastructure" — what exactly?
 
-**Композиция:** Custom для financial. Дополнение к `unit-economics`.
+**Composition:** Custom for financial. A supplement to `unit-economics`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Cost breakdown
@@ -234,15 +235,15 @@
 
 ## N6 — `benchmark-numbers`
 
-**Когда:** Performance analysis. Когда нужны industry benchmarks для сравнения.
+**When:** Performance analysis. When industry benchmarks are needed for comparison.
 
-**Что внутри:** Industry-wide benchmarks для метрик.
+**What's inside:** Industry-wide benchmarks for metrics.
 
-**Антипаттерн:** Старые benchmarks (>2 years). Cherry-picked benchmarks без range.
+**Anti-pattern:** Stale benchmarks (>2 years). Cherry-picked benchmarks without a range.
 
-**Композиция:** Дополнение к `metric-tracker` для context.
+**Composition:** A supplement to `metric-tracker` for context.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Industry benchmarks
@@ -274,15 +275,15 @@
 
 ## N7 — `forecast`
 
-**Когда:** Прогнозирование. Любое утверждение о будущих значениях.
+**When:** Forecasting. Any statement about future values.
 
-**Что внутри:** Прогнозы с диапазонами и допущениями.
+**What's inside:** Forecasts with ranges and assumptions.
 
-**Антипаттерн:** Точечный forecast без интервала ("will be $5M next year"). Forecast always range.
+**Anti-pattern:** A point forecast without an interval ("will be $5M next year"). A forecast is always a range.
 
-**Композиция:** Custom для prediction-heavy ресёрчей. После `growth-rates` или `historical-data`.
+**Composition:** Custom for prediction-heavy research. After `growth-rates` or `historical-data`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Forecast
@@ -331,15 +332,15 @@
 
 ## N8 — `historical-data`
 
-**Когда:** Data analysis, trend research. Когда нужен временной ряд.
+**When:** Data analysis, trend research. When a time series is needed.
 
-**Что внутри:** Историческая time series с данными и аномалиями.
+**What's inside:** A historical time series with the data and the anomalies.
 
-**Антипаттерн:** Только final values без full series. Конкретные точки во времени могут показать сюжет.
+**Anti-pattern:** Only final values without the full series. Specific points in time can show the story.
 
-**Композиция:** Перед `forecast` или `trends`. Дополнение к `metric-tracker`.
+**Composition:** Before `forecast` or `trends`. A supplement to `metric-tracker`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Historical data
@@ -376,11 +377,11 @@ Value
 ### Notable events / inflections
 - 2020-Q2: drop -X% (COVID effect)
 - 2021-Q3: jump +Y% (new product launch)
-- 2023-Q1: plateau начался — почему: [s07]
+- 2023-Q1: the plateau began — why: [s07]
 - 2024-Q4: recovery — [s11]
 
 ### Patterns
-- Seasonality: <yes/no, какая>
+- Seasonality: <yes/no, which>
 - Cyclicality: <yes/no>
 - Trend: <linear / exponential / decay / cyclic>
 

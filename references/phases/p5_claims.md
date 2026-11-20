@@ -1,7 +1,7 @@
 <!-- translated from upstream/references/phases/p5_claims.md @ e233797 — see docs/TRANSLATION.md -->
 ## Phase 5. Claims ledger and triangulation
 
-**Executor:** assembly of `claims.csv` from index rows — `sub: explore-haiku` (haiku / medium from the frontmatter; on low, Haiku 5.5 skips the checks). Triangulation check — the script `score_claims.py --write`, no model needed (the rule is mechanical, see below — only a count of sources/types/roots per row).
+**Executor:** assembly of `claims.csv` from index rows — `sub: explore-`small`` (`small` / medium from the frontmatter; on low, the small model 5.5 skips the checks). Triangulation check — the script `score_claims.py --write`, no model needed (the rule is mechanical, see below — only a count of sources/types/roots per row).
 
 **Source scoring is no longer a separate step.** Every source in `sources/NN.md` already has a filled frontmatter with its scoring — the fetch sub-agent set it at step 4.1, at the moment it read the source (H7 rule: whoever read it, scores it). Here, in Phase 5, the scale is described in detail in `source_scoring.md` for reference, but a second pass over all sources is not required.
 
@@ -59,7 +59,7 @@ CL2,"CDC adds >200ms p99 latency at scale",H2,s09;s14,industry;industry,own;own,
 
 ### Gap wave (Phase 5 continues — not a new phase, same as the Phase 4 loop convention)
 
-**Executor:** `sub: deepdive-fetcher` (haiku / medium from the frontmatter). A narrow, pointed task on one specific hole — an expensive model is not needed, but this is searching, and on low Haiku 5.5 skips searches.
+**Executor:** `subagent_type: knowing-fetcher` (`small` / medium, from its frontmatter). A narrow, pointed task on one specific hole — an expensive model is not needed, but this is searching, and on low effort a small model skips searches.
 
 After the first filling of `claims.csv`, compile the list of holes — rows with `status ≠ triangulated`.
 

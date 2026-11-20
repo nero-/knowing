@@ -179,7 +179,7 @@ def main() -> int:
         "--verdicts", type=Path, help="record: JSON с вердиктами адъюдикатора"
     )
     ap.add_argument(
-        "--wiki-root", type=Path, default=None, help="override ~/.claude (tests)"
+        "--wiki-root", type=Path, default=None, help="override ~/.knowing (tests)"
     )
     args = ap.parse_args()
 

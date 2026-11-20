@@ -139,7 +139,7 @@ def main() -> int:
     ap.add_argument("--research-dir", required=True, type=Path)
     ap.add_argument("--mode", choices=("shallow", "medium", "deep"))
     ap.add_argument("--offline", action="store_true", help="skip the network liveness check")
-    ap.add_argument("--wiki-root", type=Path, default=None, help="override ~/.claude (tests)")
+    ap.add_argument("--wiki-root", type=Path, default=None, help="override ~/.knowing (tests)")
     ap.add_argument("--verbose", action="store_true", help="print every step's output")
     args = ap.parse_args()
     d = args.research_dir

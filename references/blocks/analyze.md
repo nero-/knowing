@@ -1,85 +1,86 @@
-# ANALYZE blocks — структурированный анализ
+<!-- translated from upstream/references/blocks/analyze.md @ e233797 — see docs/TRANSLATION.md -->
+# ANALYZE blocks — structured analysis
 
-Блоки для структурированных аналитических разрезов: tables, SWOT, root cause, etc.
+Blocks for structured analytical cuts: tables, SWOT, root cause, etc.
 
 ---
 
 ## A1 — `data-table`
 
-**Когда:** Custom для «по показателям» вопросов. Любая сравнительная аналитика с заранее определёнными метриками.
+**When:** Custom for «by indicators» questions. Any comparative analytics with metrics defined in advance.
 
-**Что внутри:** Параметрическая таблица объект × показатель.
+**What's inside:** A parametric table of object × indicator.
 
-**Антипаттерн:** Включать показатели «потому что есть данные». Только те что отвечают на вопрос пользователя.
+**Anti-pattern:** Including indicators «because there is data». Only those that answer the user's question.
 
-**Композиция:** Базовый блок для custom-сравнения. Часто комбинируется с `profile-card`.
+**Composition:** The base block for a custom comparison. Often combined with `profile-card`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
-## <Объекты> по показателям
+## <Objects> by indicators
 
-| Объект | Показатель 1 | Показатель 2 | Показатель 3 | Показатель 4 | Источник |
+| Object | Indicator 1 | Indicator 2 | Indicator 3 | Indicator 4 | Source |
 |---|---|---|---|---|---|
 | Item A | <value> | <value> | <value> | <value> | [s03] |
 | Item B | <value> | <value> | <value> | <value> | [s05] |
 | Item C | <value> | <value> | <value> | <value> | [s07] |
 | Item D | <value> | <value> | <value> | <value> | [s11] |
 
-### Definitions показателей
-- **Показатель 1:** <как измеряется, в каких единицах>
-- **Показатель 2:** ...
-- **Показатель 3:** ...
+### Definitions of the indicators
+- **Indicator 1:** <how it is measured, in which units>
+- **Indicator 2:** ...
+- **Indicator 3:** ...
 
 ### Quality of data
-- For Item A: данные за <дату>, источник [s03] — Credibility 5
-- Для Item B: estimates только (точных публичных нет) — Credibility 3
-- Для Items C, D: comparable, current
+- For Item A: data as of <date>, source [s03] — Credibility 5
+- For Item B: estimates only (no exact public figures) — Credibility 3
+- For Items C, D: comparable, current
 
 ### Observations
-- <Item X> лидирует по <показатель>
-- <Item Y> явный outlier по <показатель> — почему
-- Разброс по <показатель>: <min>-<max>, median <Z>
+- <Item X> leads on <indicator>
+- <Item Y> is a clear outlier on <indicator> — why
+- Spread on <indicator>: <min>-<max>, median <Z>
 ```
 
 ---
 
 ## A2 — `timeline`
 
-**Когда:** Custom для исторических / sequential тем.
+**When:** Custom for historical / sequential topics.
 
-**Что внутри:** Хронология с датами и значимостью каждого события.
+**What's inside:** A chronology with dates and the significance of each event.
 
-**Антипаттерн:** Хронология без significance — кажется trivia. Каждое событие должно объяснять «и что».
+**Anti-pattern:** A chronology without significance — it reads as trivia. Every event must explain «so what».
 
-**Композиция:** Альтернатива `stepwise` для исторических тем. Дополнение к `historical-context`.
+**Composition:** An alternative to `stepwise` for historical topics. A supplement to `historical-context`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Timeline
 
-### YYYY-MM-DD — <Событие 1>
-**Что произошло:** ...
-**Significance:** <почему это поворотный момент>
-**Источник:** [s03]
+### YYYY-MM-DD — <Event 1>
+**What happened:** ...
+**Significance:** <why this is a turning point>
+**Source:** [s03]
 
-### YYYY-MM-DD — <Событие 2>
-**Что произошло:** ...
+### YYYY-MM-DD — <Event 2>
+**What happened:** ...
 **Significance:** ...
-**Источник:** [s07]
+**Source:** [s07]
 
-### YYYY-MM-DD — <Событие 3>
+### YYYY-MM-DD — <Event 3>
 ...
 
-### Patterns в timeline
-- **Acceleration:** события идут чаще после <date>
-- **Catalysts:** <event X> запустил <chain of events Y, Z>
-- **Inflection point:** <date> — после неё всё стало по-другому
+### Patterns in the timeline
+- **Acceleration:** events come more often after <date>
+- **Catalysts:** <event X> set off <chain of events Y, Z>
+- **Inflection point:** <date> — after it everything became different
 
-### Ключевые игроки / authors во времени
-- Person A: active 2015-2020, заложил основы
-- Person B: continued 2018-current, развивает в направлении X
+### Key players / authors over time
+- Person A: active 2015-2020, laid the foundations
+- Person B: continued 2018-current, developing in direction X
 - ...
 ```
 
@@ -87,30 +88,30 @@
 
 ## A3 — `qa-list`
 
-**Когда:** Q&A-жанр всегда. Custom как дополнение к другим жанрам.
+**When:** Q&A genre always. Custom as a supplement to other genres.
 
-**Что внутри:** Атомарные Q→A с confidence и source links.
+**What's inside:** Atomic Q→A pairs with confidence and source links.
 
-**Антипаттерн:** Вопросы не атомарные («Q1: расскажи всё про X»). Один вопрос = один ответ.
+**Anti-pattern:** Non-atomic questions («Q1: tell me everything about X»). One question = one answer.
 
-**Композиция:** Главный блок Q&A. В других жанрах — дополнительная секция.
+**Composition:** The main block of Q&A. In other genres — an extra section.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Q&A
 
-### Q1: <конкретный вопрос своими словами>
-**Ответ:** <2-4 предложения>
-**Confidence:** high | medium | low — <если ниже high, почему>
-**Откуда:** [s03](sources/03_*.md), [s12](sources/12_*.md), [s17](sources/17_*.md)
-**Нюансы:** <оговорки, контекст применимости>
+### Q1: <a concrete question in your own words>
+**Answer:** <2-4 sentences>
+**Confidence:** high | medium | low — <if below high, why>
+**From:** [s03](sources/03_*.md), [s12](sources/12_*.md), [s17](sources/17_*.md)
+**Nuances:** <caveats, context of applicability>
 
-### Q2: <вопрос>
-**Ответ:** ...
+### Q2: <question>
+**Answer:** ...
 **Confidence:** ...
-**Откуда:** ...
-**Нюансы:** ...
+**From:** ...
+**Nuances:** ...
 
 ### Q3: ...
 ### Q4: ...
@@ -121,45 +122,45 @@
 
 ## A4 — `hypotheses-outcome`
 
-**Когда:** Q&A, validation, любой ресёрч с явными hypotheses в plan.md.
+**When:** Q&A, validation, any research with explicit hypotheses in plan.md.
 
-**Что внутри:** Таблица: гипотеза → статус → источники.
+**What's inside:** A table: hypothesis → verdict → sources.
 
-**Антипаттерн:** Молча отказаться от гипотезы из plan. Каждая должна получить status.
+**Anti-pattern:** Silently dropping a hypothesis from the plan. Every one must get a verdict.
 
-**Композиция:** Перед `closing` секцией. Замыкает loop с plan.md.
+**Composition:** Before the `closing` section. Closes the loop with plan.md.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Hypotheses outcome
 
-| Гипотеза | Статус | Источники | Комментарий |
+| Hypothesis | Verdict | Sources | Comment |
 |---|---|---|---|
-| H1: <тезис> | ✅ confirmed | s01, s07, s12 | Подтверждена 3 разнотипными |
-| H2: <тезис> | ⚠️ partial | s03, s15 | Только при условии X |
-| H3: <тезис> | ❌ contradicted | s09, s11, s14 | Опровергнута 3 источниками |
-| H4: <тезис> | 🤷 insufficient | — | Данных недостаточно, см. Open Questions |
+| H1: <thesis> | ✅ confirmed | s01, s07, s12 | Confirmed by 3 sources of different types |
+| H2: <thesis> | ⚠️ partial | s03, s15 | Only under condition X |
+| H3: <thesis> | ❌ contradicted | s09, s11, s14 | Refuted by 3 sources |
+| H4: <thesis> | 🤷 insufficient | — | Not enough data, see Open Questions |
 
-### Что говорит результат
-- 2 из 4 гипотез подтверждены — ожидаемый результат
-- H3 contradicted — это neat finding, фиксируем
-- H4 — нужен другой подход / next research
+### What the result says
+- 2 of 4 hypotheses confirmed — the expected result
+- H3 contradicted — a neat finding, we record it
+- H4 — a different approach is needed / next research
 ```
 
 ---
 
 ## A5 — `swot`
 
-**Когда:** Business/product/strategic analysis. Classic SWOT.
+**When:** Business/product/strategic analysis. Classic SWOT.
 
-**Что внутри:** 4 квадранта: Strengths, Weaknesses (внутренние), Opportunities, Threats (внешние).
+**What's inside:** 4 quadrants: Strengths, Weaknesses (internal), Opportunities, Threats (external).
 
-**Антипаттерн:** Перепутать внутреннее и внешнее. S и W — про сам объект, O и T — про среду.
+**Anti-pattern:** Mixing up the internal and the external. S and W are about the object itself, O and T are about the environment.
 
-**Композиция:** Дополнение к decision или landscape. Перед `recommendation`.
+**Composition:** A supplement to decision or landscape. Before `recommendation`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## SWOT
@@ -191,15 +192,15 @@
 
 ## A6 — `risk-register`
 
-**Когда:** Custom для рискованных решений. Project planning, business decisions.
+**When:** Custom for risky decisions. Project planning, business decisions.
 
-**Что внутри:** Реестр рисков с probability × impact + mitigation.
+**What's inside:** A risk register with probability × impact + mitigation.
 
-**Антипаттерн:** Без mitigation — реестр становится списком тревог.
+**Anti-pattern:** No mitigation — the register becomes a list of worries.
 
-**Композиция:** В decision для рискованных. После `options-matrix`.
+**Composition:** In decision for risky ones. After `options-matrix`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Risk register
@@ -219,24 +220,24 @@
 - **R2:** ...
 
 ### Risk acceptance
-- Какой уровень риска допустим — <threshold>
-- Кто принимает риск — <person/role>
-- Что триггерит escalation — <signal>
+- Which level of risk is acceptable — <threshold>
+- Who accepts the risk — <person/role>
+- What triggers escalation — <signal>
 ```
 
 ---
 
 ## A7 — `dependency-graph`
 
-**Когда:** Project planning. System analysis. Что от чего зависит.
+**When:** Project planning. System analysis. What depends on what.
 
-**Что внутри:** Узлы + dependencies + critical path.
+**What's inside:** Nodes + dependencies + critical path.
 
-**Антипаттерн:** Дерево без направления. Зависимости направлены — A зависит от B.
+**Anti-pattern:** A tree with no direction. Dependencies are directed — A depends on B.
 
-**Композиция:** Custom для проектных ресёрчей. Альтернатива `flow-diagram` для статичных систем.
+**Composition:** Custom for project research. An alternative to `flow-diagram` for static systems.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Dependencies
@@ -253,41 +254,41 @@
 
 ### Critical path
 - A → E → B → D — longest path
-- Latency этой цепи: <если время — Z hours/days/weeks>
+- Latency of this chain: <if time matters — Z hours/days/weeks>
 
 ### Dependency types
-- **Hard:** A не работает без B (strong dependency)
-- **Soft:** A работает хуже без B (degraded)
-- **Optional:** A может работать без B
+- **Hard:** A does not work without B (strong dependency)
+- **Soft:** A works worse without B (degraded)
+- **Optional:** A can work without B
 
-### Risks от dependencies
-- Если падает E — упадут A, B, D (high blast radius)
-- Если падает F — только G (low blast radius)
-- Single points of failure: <узлы>
+### Risks from dependencies
+- If E falls — A, B, D fall (high blast radius)
+- If F falls — only G (low blast radius)
+- Single points of failure: <nodes>
 ```
 
 ---
 
 ## A8 — `bottleneck-analysis`
 
-**Когда:** Performance analysis. Ops. Любой анализ узких мест.
+**When:** Performance analysis. Ops. Any bottleneck analysis.
 
-**Что внутри:** Где узкое место + почему + как идентифицировать.
+**What's inside:** Where the bottleneck is + why + how to identify it.
 
-**Антипаттерн:** «Где-то медленно» без конкретики. Bottleneck — конкретный component с конкретным limit.
+**Anti-pattern:** «It's slow somewhere» with no specifics. A bottleneck is a concrete component with a concrete limit.
 
-**Композиция:** В технических explainer или validation perf claims. После `flow-diagram` если есть.
+**Composition:** In technical explainers or when validating perf claims. After `flow-diagram` if there is one.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Bottleneck analysis
 
 ### Current bottleneck: <component>
-**Limit:** <конкретный, e.g. CPU 95%, latency 200ms, throughput 1k req/s>
-**Why:** <root cause — например, single-threaded, network-bound, etc>
-**Signals:** <как видим в metrics>
-**Impact:** <что чувствует пользователь>
+**Limit:** <concrete, e.g. CPU 95%, latency 200ms, throughput 1k req/s>
+**Why:** <root cause — for example, single-threaded, network-bound, etc>
+**Signals:** <how we see it in the metrics>
+**Impact:** <what the user feels>
 
 ### Downstream impact
 - <Component A>: forced to wait
@@ -312,20 +313,20 @@
 
 ## A9 — `force-field`
 
-**Когда:** Change analysis. Lewin's force field — какие силы за и против изменения.
+**When:** Change analysis. Lewin's force field — which forces are for and against the change.
 
-**Что внутри:** Силы FOR change vs силы AGAINST. Magnitudes.
+**What's inside:** Forces FOR change vs forces AGAINST. Magnitudes.
 
-**Антипаттерн:** Не оценивать magnitude — все силы кажутся равными. Реально нет.
+**Anti-pattern:** Not assessing the magnitude — all forces then look equal. In reality they are not.
 
-**Композиция:** Custom для organizational/strategic анализа. Альтернатива SWOT.
+**Composition:** Custom for organizational/strategic analysis. An alternative to SWOT.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Force field analysis
 
-**Proposed change:** <что меняем>
+**Proposed change:** <what we are changing>
 
 ### Forces FOR change (driving)
 | Force | Magnitude | Description | Source |
@@ -356,25 +357,25 @@
 
 ## A10 — `5-whys`
 
-**Когда:** Root cause analysis. Любой «почему X происходит» вопрос.
+**When:** Root cause analysis. Any «why does X happen» question.
 
-**Что внутри:** Цепочка «почему» 5 уровней до root cause.
+**What's inside:** A chain of «why» 5 levels down to the root cause.
 
-**Антипаттерн:** Останавливаться на первом «потому что». Идти до root.
+**Anti-pattern:** Stopping at the first «because». Go down to the root.
 
-**Композиция:** Custom для debugging/diagnostic ресёрчей. Дополнение к `dependency-graph`.
+**Composition:** Custom for debugging/diagnostic research. A supplement to `dependency-graph`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## 5 Whys
 
 **Problem:** <observable issue>
 
-**Why 1:** <первая причина>
+**Why 1:** <the first cause>
 **Source for this answer:** [s03]
 
-**Why 2 (why does that happen):** <вторая причина>
+**Why 2 (why does that happen):** <the second cause>
 **Source:** [s07]
 
 **Why 3:** ...
@@ -385,7 +386,7 @@
 **Source:** [s11]
 
 ### Root cause
-<суммарно — что является fundamental cause>
+<in sum — what the fundamental cause is>
 
 ### Fix at which level?
 - Fixing at Level 1 — quick fix, problem returns
@@ -393,24 +394,24 @@
 - **Fixing at Level 5 (root) — permanent solution but expensive**
 
 ### Caveats
-- 5-whys works for sequential cause chains, не для complex systems
-- В сложных системах может быть несколько root causes
-- Возможно нужно дополнить причинной диаграммой Ishikawa
+- 5-whys works for sequential cause chains, not for complex systems
+- In complex systems there may be several root causes
+- It may need to be supplemented with an Ishikawa cause diagram
 ```
 
 ---
 
 ## A11 — `swot-extended`
 
-**Когда:** Strategic analysis. Когда хочешь не просто SWOT, а actionable.
+**When:** Strategic analysis. When you want not just a SWOT but something actionable.
 
-**Что внутри:** SWOT + actionable из каждого квадранта (TOWS matrix).
+**What's inside:** SWOT + something actionable from each quadrant (TOWS matrix).
 
-**Антипаттерн:** Использовать вместо basic SWOT когда хватает basic.
+**Anti-pattern:** Using it instead of the basic SWOT when the basic one is enough.
 
-**Композиция:** Усиленная версия `swot`. Не использовать вместе.
+**Composition:** An enhanced version of `swot`. Do not use both together.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Extended SWOT (with actions)
@@ -447,15 +448,15 @@
 
 ## A12 — `pestle`
 
-**Когда:** Macro analysis. Market environment analysis.
+**When:** Macro analysis. Market environment analysis.
 
-**Что внутри:** Political/Economic/Social/Technological/Legal/Environmental factors.
+**What's inside:** Political/Economic/Social/Technological/Legal/Environmental factors.
 
-**Антипаттерн:** Заполнять каждую категорию обязательно. Если в Environmental ничего relevant — пропусти.
+**Anti-pattern:** Filling in every category no matter what. If there is nothing relevant under Environmental — skip it.
 
-**Композиция:** Custom для broad market/industry analysis. Может предшествовать landscape.
+**Composition:** Custom for broad market/industry analysis. May precede landscape.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## PESTLE analysis
@@ -482,7 +483,7 @@
 
 ### Environmental
 - <if relevant — climate, sustainability>
-- Если нет relevance: write "n/a, не релевантно теме"
+- If there is no relevance: write "n/a, not relevant to the topic"
 
 ### Summary
 - **Net environment:** favorable / hostile / mixed
@@ -494,21 +495,21 @@
 
 ## A13 — `before-after`
 
-**Когда:** Impact analysis. До и после изменения.
+**When:** Impact analysis. Before and after a change.
 
-**Что внутри:** Метрики до и после с дельтой.
+**What's inside:** Metrics before and after, with the delta.
 
-**Антипаттерн:** Только after numbers без before. Нет контекста.
+**Anti-pattern:** Only after numbers without before. No context.
 
-**Композиция:** Custom для validation эффекта changes.
+**Composition:** Custom for validating the effect of changes.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Before / After
 
-**Change:** <что произошло>
-**Date:** <когда>
+**Change:** <what happened>
+**Date:** <when>
 **Population:** <who/what affected>
 
 ### Metrics
@@ -520,14 +521,14 @@
 | <metric 3> | $1000 | $800 | -$200 | -20% | high |
 
 ### Attribution
-- Уверенность что изменение вызвано change: high | medium | low
+- Confidence that the change was caused by the change: high | medium | low
 - Confounders:
-  - Other changes одновременно <тоже изменилось>
+  - Other changes at the same time <something else changed too>
   - Seasonality
   - Selection bias
 
 ### Counterfactual
-- Что бы случилось без change: <baseline projection> [s07]
+- What would have happened without the change: <baseline projection> [s07]
 - Difference vs counterfactual: <numbers>
 
 ### Lessons

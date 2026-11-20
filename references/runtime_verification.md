@@ -110,8 +110,8 @@ re-scan `sources/NN.md` deciding which quote belongs to which claim (that would 
    > Output: {verdict, unsupported_parts: [...], reason: "<one line>"}.
 
 2. Model: a different and stronger model than the writer of the report — writer
-   `sonnet` → judge `opus`; writer `opus` → judge `opus` with a fresh context and no
-   access to the draft's reasoning. Haiku is not a faithfulness judge: D1 (2026-10-28)
+   `mid` → judge `big`; writer `big` → judge `big` with a fresh context and no
+   access to the draft's reasoning. the small model is not a faithfulness judge: D1 (2026-10-28)
    got 15/16 SUPPORTED from it while the external judge found 3/8 theses unsupported.
    **Unit = a report sentence, not a ledger row:** every sentence of the dated report
    and `readout.md` carrying `[sNN]` is a claim, paired with that source's quotes; the
@@ -128,9 +128,9 @@ re-scan `sources/NN.md` deciding which quote belongs to which claim (that would 
    {
      "faithfulness_integrity": 0.87,
      "results": [
-       {"claim_id": "C1", "source_id": "07", "verdict": "SUPPORTED", "model": "haiku",
+       {"claim_id": "C1", "source_id": "07", "verdict": "SUPPORTED", "model": "`small`",
         "unsupported_parts": [], "reason": "quote states the figure directly"},
-       {"claim_id": "C4", "source_id": "12", "verdict": "PARTIAL", "model": "haiku",
+       {"claim_id": "C4", "source_id": "12", "verdict": "PARTIAL", "model": "`small`",
         "unsupported_parts": ["\"fastest-growing\""], "reason": "quote shows growth, not rank"}
      ]
    }
@@ -218,9 +218,9 @@ expensive one and duplicate red team.
    sentence makes the layer noise and it will be switched off. Judge the removal of a
    LIMIT, not the loss of words.
 
-4. Executor: `explore-haiku` (haiku/medium from its frontmatter; on low Haiku 5.5
+4. Executor: `explore-`small`` (`small`/medium from its frontmatter; on low the small model 5.5
    skips checks) — comparing two short texts. On deep, escalate `BROADENED` and
-   `SCOPE-DROPPED` to `general-purpose` with `model: "sonnet"`, `effort: "medium"`.
+   `SCOPE-DROPPED` to `general-purpose` with `model: "`mid`"`, `effort: "medium"`.
 
 5. **Act, don't just score** (same discipline as Layers 1-2):
    - `BROADENED` → restore the qualifier in the report. Do NOT weaken the ledger row to
@@ -234,12 +234,12 @@ expensive one and duplicate red team.
    {
      "qualifier_integrity": 0.91,
      "results": [
-       {"claim_id": "CL2", "location": "F1", "verdict": "PRESERVED", "model": "haiku",
+       {"claim_id": "CL2", "location": "F1", "verdict": "PRESERVED", "model": "`small`",
         "dropped_qualifiers": [], "reason": "statement narrower than claim"},
-       {"claim_id": "CL7", "location": "memo.md", "verdict": "BROADENED", "model": "haiku",
+       {"claim_id": "CL7", "location": "memo.md", "verdict": "BROADENED", "model": "`small`",
         "dropped_qualifiers": ["\"on fixtures with embedded structured state\""],
         "reason": "claim scoped to fixtures, statement says everywhere"},
-       {"claim_id": "CL9", "location": "F1", "verdict": "SCOPE-DROPPED", "model": "haiku",
+       {"claim_id": "CL9", "location": "F1", "verdict": "SCOPE-DROPPED", "model": "`small`",
         "dropped_qualifiers": ["\"of pages\""],
         "reason": "per-page prevalence restated as per-link rate"}
      ]
@@ -277,7 +277,7 @@ This is the single most frequent generation failure measured on research agents:
 total, the largest of the three groups). It is not a hallucinated citation — the
 citations may all resolve. It is a plausible construct presented as established.
 
-**Procedure** (`explore-haiku`, haiku/medium from its frontmatter; medium/deep required, shallow optional):
+**Procedure** (`explore-`small``, `small`/medium from its frontmatter; medium/deep required, shallow optional):
 
 1. **Collect candidates from the final report + `memo.md`.** A candidate is any
    *named* abstraction: capitalized multi-word names (`Research-Synthesis
@@ -411,7 +411,7 @@ in the same run is something no closed product offers.
 Add to the "Workflow — 11 фаз" list, after Phase 6:
 
 ```
-6.5. **Verify** [`sub: explore-haiku`, effort medium] — две оси: (1) **liveness** — `eval/check_citations.py` (URL жив?),
+6.5. **Verify** [`sub: explore-`small``, effort medium] — две оси: (1) **liveness** — `eval/check_citations.py` (URL жив?),
      (2) **faithfulness** — entailment claim ⊨ цитата (пары берутся из `evidence/CN.md` Фазы 5.5;
      источник реально подтверждает тезис?). Вердикты → `.verify/faithfulness.json` (I/O-контракт),
      verification-header F10 несёт ОБЕ оси. Флаги: re-search / demote claim / смягчить overclaim.

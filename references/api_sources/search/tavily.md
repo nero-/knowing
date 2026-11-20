@@ -1,3 +1,4 @@
+<!-- translated from upstream/references/api_sources/search/tavily.md @ e233797 — see docs/TRANSLATION.md -->
 # Tavily API
 
 ## Overview
@@ -5,13 +6,13 @@
 - **Endpoint base:** `https://api.tavily.com`
 - **Auth:** API key (header `api_key` or body field)
 - **Free tier:** 1000 requests / month
-- **Rate limit:** flexible на free plan
+- **Rate limit:** flexible on the free plan
 - **Docs:** https://docs.tavily.com
 - **Status page:** https://status.tavily.com
 
 ## What it returns
 
-JSON с готовыми **answers + sources**. Tavily — это search API, специально построенный для LLM агентов.
+JSON with ready-made **answers + sources**. Tavily is a search API built specifically for LLM agents.
 
 ```json
 {
@@ -31,26 +32,26 @@ JSON с готовыми **answers + sources**. Tavily — это search API, с
 
 ## When to use
 
-- Нужен **готовый answer** не только список ссылок
-- Search для LLM/agent контекста (Tavily filters out spam, ads)
-- Когда WebSearch + ручной WebFetch слишком много шагов
+- You need a **ready-made answer**, not just a list of links
+- Search for LLM/agent context (Tavily filters out spam and ads)
+- When WebSearch + manual WebFetch is too many steps
 
 ## When not to use
 
-- Нужен максимальный охват — Brave/SerpAPI лучше
-- Нужны только URLs без summaries — слишком тяжёлый response
+- You need maximum coverage — Brave/SerpAPI are better
+- You need URLs only, without summaries — the response is too heavy
 
 ## Auth setup
 
-1. Регистрация: https://tavily.com
-2. API key из dashboard
-3. В env: `export TAVILY_API_KEY="tvly-..."`
+1. Registration: https://tavily.com
+2. API key from the dashboard
+3. In env: `export TAVILY_API_KEY="tvly-..."`
 
 ## Query patterns
 
-Прямой вызов из скилла: `python3 scripts/search_query.py --engine tavily --query "..." [--n 10] [--json]`
-(читает `TAVILY_API_KEY` из env, exit 2 если ключа нет). Ниже — сырой HTTP-контракт,
-который скрипт реализует (basic search, без `include_answer`/`include_domains`).
+Direct call from the skill: `python3 scripts/search_query.py --engine tavily --query "..." [--n 10] [--json]`
+(reads `TAVILY_API_KEY` from env, exit 2 if there is no key). Below is the raw HTTP contract
+the script implements (basic search, without `include_answer`/`include_domains`).
 
 ### Basic search
 
@@ -92,7 +93,7 @@ POST https://api.tavily.com/extract
 }
 ```
 
-## Example queries для deepdive
+## Example queries for the deep run
 
 **Phase 4 — academic search:**
 
@@ -121,25 +122,25 @@ POST /search
 
 ## Limitations
 
-- Free tier 1000 req/month — для deep ресёрчей с 5 sub-agents может выйти за месяц если активно используешь
-- `include_raw_content` берёт больше токенов в response
-- Качество answer зависит от темы — на технических темах слабее чем на mainstream
+- Free tier 1000 req/month — for deep runs with 5 sub-agents you can exceed it in a month if you use it heavily
+- `include_raw_content` takes more tokens in the response
+- Answer quality depends on the topic — weaker on technical topics than on mainstream ones
 
 ## Combine with
 
-- **Brave Search** — если нужно больше охвата
-- **Exa.ai** — для семантического поиска по похожим документам
-- **SerpAPI** — если нужны конкретно Google results
+- **Brave Search** — if you need more coverage
+- **Exa.ai** — for semantic search over similar documents
+- **SerpAPI** — if you specifically need Google results
 
 ## Fallback if API down or rate-limited
 
 1. Brave Search API (paid alternative)
 2. Exa.ai (semantic alternative, free tier)
-3. Standard WebSearch through Claude Code WebSearch tool
-4. Manual WebFetch на конкретные доменные источники
+3. Standard WebSearch through the agent harness WebSearch tool
+4. Manual WebFetch to specific domain sources
 
 ## Notes
 
-- Tavily — favorite среди AI агентов из-за `include_answer` field, который возвращает synthesized answer наряду с sources
-- Хорошо работает с `include_domains` фильтрами для targeted search
-- В отличие от Google Search API, Tavily не требует Custom Search Engine setup
+- Tavily is a favorite among AI agents because of the `include_answer` field, which returns a synthesized answer alongside sources
+- Works well with `include_domains` filters for targeted search
+- Unlike the Google Search API, Tavily requires no Custom Search Engine setup

@@ -21,7 +21,7 @@ python3 scripts/search_query.py --engine {auto,brave,tavily,exa,firecrawl} [--qc
 
 `--engine auto` берёт первый движок с ключом из порядка для `--qclass` (таблица
 `ENGINE_ROUTES`, описание в `references/source_dispatch.md`) и печатает выбор в stderr.
-Когда в `~/.claude/deepdive-state/priors.json` появится ячейка `search-engine-2/<движок>|<qclass>`
+Когда в `~/.knowing/state/priors.json` появится ячейка `search-engine-2/<движок>|<qclass>`
 хотя бы для одного движка с ключом, выбор идёт Thompson sampling по приорам; движок без
 наблюдений тянет из Beta(1, 1) и продолжает исследоваться. Каждый результат в `--json`
 несёт поле `channel` (`search-engine-2/<движок>`) для `discovery_path`.

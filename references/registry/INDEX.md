@@ -1,32 +1,33 @@
+<!-- translated from upstream/references/registry/INDEX.md @ e233797 — see docs/TRANSLATION.md -->
 # Source registry — INDEX
 
-Конкретные проверенные адреса по типу сигнала: 1072 записей, разведка 2026-08-05, порог ценности 5/5.
+Concrete verified addresses by signal type: 1072 entries, reconnaissance 2026-08-05, value threshold 5/5.
 
-Читается точечно в Фазе 4, когда подвопрос требует свежего потока по теме (каналы `news-current`, `industry-specific`, `preprint-servers`, `forum-discussion`, `api-direct`). В базовый бюджет не входит — грузи нужный файл, не все.
+Read on demand in Phase 4, when a subquestion needs a fresh stream on the topic (channels `news-current`, `industry-specific`, `preprint-servers`, `forum-discussion`, `api-direct`). Not part of the base budget — load the file you need, not all of them.
 
-| Файл | Тема | Записей |
+| File | Topic | Entries |
 |---|---|---|
-| `open_source_releases.md` | Релизы open source | 526 |
-| `regulatory.md` | Регуляторика и право | 137 |
-| `markets.md` | Рынки и макро | 130 |
-| `science.md` | Наука | 98 |
-| `technology.md` | Технологии | 97 |
-| `society.md` | Общество | 28 |
-| `climate_health.md` | Климат, ESG и здравоохранение | 25 |
-| `security.md` | Безопасность и надёжность | 19 |
-| `registries.md` | Реестры | 12 |
+| `open_source_releases.md` | Open source releases | 526 |
+| `regulatory.md` | Regulation and law | 137 |
+| `markets.md` | Markets and macro | 130 |
+| `science.md` | Science | 98 |
+| `technology.md` | Technology | 97 |
+| `society.md` | Society | 28 |
+| `climate_health.md` | Climate, ESG and health | 25 |
+| `security.md` | Security and reliability | 19 |
+| `registries.md` | Registries | 12 |
 
-## Чего здесь нет
+## What is not here
 
-- Оценки источника под конкретное утверждение — это `source_scoring.md` и Фаза 5.5.
-- Способа доступа с лимитами и примерами запросов — это `api_sources/`.
-- Канонических источников домена — это `stat_sources/`.
-- Рыночной разведки импортирующего проекта, муниципальных GIS-датасетов и адресов, уже помеченных мёртвыми, — отфильтрованы при импорте (`scripts/import_source_registry.py`).
+- Scoring of a source for a specific claim — that is `source_scoring.md` and Phase 5.5.
+- How to access with limits and example queries — that is `api_sources/`.
+- Canonical sources for a domain — that is `stat_sources/`.
+- Market reconnaissance of the importing project, municipal GIS datasets and addresses already marked dead — filtered out at import (`scripts/import_source_registry.py`).
 
-## Обновление
+## Updating
 
 ```bash
-python scripts/import_source_registry.py --source <путь>/sources.csv --min-value 5
+python scripts/import_source_registry.py --source <path>/sources.csv --min-value 5
 ```
 
-Порог `--min-value 3` даёт примерно втрое больше записей — расширять осознанно, каталог платит за это контекстом.
+The `--min-value 3` threshold yields roughly three times as many entries — widen deliberately, the catalog pays for it in context.

@@ -127,5 +127,5 @@ Major ones: `google`, `google_scholar`, `google_news`, `google_images`, `google_
 
 1. Brave Search (paid alternative)
 2. Tavily (свой free tier)
-3. Standard WebSearch в Claude Code
+3. Standard WebSearch в the agent harness
 4. DuckDuckGo HTML scraping (не recommended но рабочий)

@@ -1,25 +1,26 @@
-# COMPARE blocks — сравнение и выбор
+<!-- translated from upstream/references/blocks/compare.md @ e233797 — see docs/TRANSLATION.md -->
+# COMPARE blocks — comparison and choice
 
-Блоки для decision-жанра и любых ресёрчей где нужно сравнить опции.
+Blocks for the decision genre and any research where options must be compared.
 
 ---
 
 ## C1 — `options-matrix`
 
-**Когда:** Decision. Сравнение опций по критериям без весов.
+**When:** Decision. Comparing options by criteria with no weights.
 
-**Что внутри:** Таблица опции × критерии. Числовая оценка 1-5 или качественная.
+**What's inside:** A table of options × criteria. A numeric score 1-5 or a qualitative one.
 
-**Антипаттерн:** Все критерии равнозначны — реально один-два решают. Если критерии неравнозначны — бери `weighted-score`.
+**Anti-pattern:** Treating all criteria as equal — in reality one or two decide. If the criteria are not equal in weight — take `weighted-score`.
 
-**Композиция:** После `decision-context`. До `weighted-score` если хочешь оба (matrix + scoring).
+**Composition:** After `decision-context`. Before `weighted-score` if you want both (matrix + scoring).
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Options matrix
 
-| Критерий | Option A | Option B | Option C |
+| Criterion | Option A | Option B | Option C |
 |---|---|---|---|
 | Latency | 5 | 3 | 4 |
 | Cost | 3 | 5 | 4 |
@@ -30,29 +31,29 @@
 
 **Score legend:** 5=Best-in-class, 4=Strong, 3=Average, 2=Below average, 1=Weak/Missing.
 
-**Что не вошло в матрицу (потому что одинаково):** ...
+**What did not go into the matrix (because it is the same everywhere):** ...
 ```
 
 ---
 
 ## C2 — `weighted-score`
 
-**Когда:** Decision когда критерии имеют разный вес.
+**When:** Decision when the criteria carry different weights.
 
-**Что внутри:** Опции × критерии × веса → weighted total.
+**What's inside:** Options × criteria × weights → weighted total.
 
-**Антипаттерн:** Прятать веса в footnotes. Веса должны быть прозрачны и обсуждаемы.
+**Anti-pattern:** Hiding the weights in footnotes. The weights must be transparent and debatable.
 
-**Композиция:** После `decision-context`. Альтернатива или дополнение к `options-matrix`.
+**Composition:** After `decision-context`. An alternative to or a supplement to `options-matrix`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Weighted score
 
-Веса по приоритетам из decision-context:
+Weights by the priorities from the decision-context:
 
-| Критерий | Вес | A score | A weighted | B score | B weighted | C score | C weighted |
+| Criterion | Weight | A score | A weighted | B score | B weighted | C score | C weighted |
 |---|---|---|---|---|---|---|---|
 | Latency | 3 | 5 | 15 | 3 | 9 | 4 | 12 |
 | Cost | 2 | 3 | 6 | 5 | 10 | 4 | 8 |
@@ -60,46 +61,46 @@
 | Reliability | 3 | 5 | 15 | 4 | 12 | 4 | 12 |
 | **Weighted total** | | | **44** | | **41** | | **38** |
 
-**Обоснование весов:**
-- Latency × 3 — критический путь продукта (см. [s05])
-- Cost × 2 — важно, но не блокирующий
+**Justification of the weights:**
+- Latency × 3 — the critical path of the product (see [s05])
+- Cost × 2 — important, but not blocking
 - ...
 
-**Sensitivity:** если поменять Latency на ×2, ranking не меняется (A=37, B=38, C=34) — выбор A robust.
+**Sensitivity:** if Latency is changed to ×2, the ranking does not change (A=37, B=38, C=34) — the choice of A is robust.
 ```
 
 ---
 
 ## C3 — `best-fit-when`
 
-**Когда:** Decision всегда. Для каждой опции — условия, при которых она правильная.
+**When:** Decision always. For each option — the conditions under which it is the right one.
 
-**Что внутри:** Для каждой опции набор условий «бери если...».
+**What's inside:** For each option, a set of conditions «take it if...».
 
-**Антипаттерн:** «X лучше всегда» — почти никогда не правда. Каждая опция оптимальна в каких-то условиях.
+**Anti-pattern:** «X is always better» — almost never true. Every option is optimal under some conditions.
 
-**Композиция:** После `options-matrix` или `weighted-score`. До `trade-offs`.
+**Composition:** After `options-matrix` or `weighted-score`. Before `trade-offs`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Best fit when
 
-### Option A — бери если:
+### Option A — take it if:
 - Critical path = latency
-- Команда уже знакома со стеком A
-- Готов принять <trade-off>
-- Бюджет ≥ X
+- The team already knows stack A
+- You are ready to accept <trade-off>
+- Budget ≥ X
 
-### Option B — бери если:
+### Option B — take it if:
 - Critical path = cost
-- Это MVP или ранняя стадия
-- Команда смешанная, нужна низкая порог входа
-- Можно жить с <trade-off>
+- This is an MVP or an early stage
+- The team is mixed, a low entry barrier is needed
+- You can live with <trade-off>
 
-### Option C — бери если:
-- Нужно избежать vendor lock-in
-- Регулятор требует <constraint>
+### Option C — take it if:
+- You need to avoid vendor lock-in
+- The regulator requires <constraint>
 - ...
 ```
 
@@ -107,173 +108,173 @@
 
 ## C4 — `reversibility-stakes`
 
-**Когда:** Decision. Особенно high-stakes и сложно-обратимые.
+**When:** Decision. Especially high-stakes and hard-to-reverse ones.
 
-**Что внутри:** Reversibility (one-way vs two-way door по Безосу) + stakes уровень + что нужно для отката.
+**What's inside:** Reversibility (one-way vs two-way door, Bezos-style) + the stakes level + what a rollback takes.
 
-**Антипаттерн:** Не оценить reversibility — главная причина регрета. Two-way door можно решать быстро, one-way — никогда.
+**Anti-pattern:** Not assessing reversibility — the main cause of regret. A two-way door can be decided fast, a one-way one never.
 
-**Композиция:** После `options-matrix`. До `recommendation-conditional`.
+**Composition:** After `options-matrix`. Before `recommendation-conditional`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Reversibility & stakes
 
 ### Option A
-- **Reversibility:** two-way door (можно откатиться за <время>)
+- **Reversibility:** two-way door (you can roll back in <time>)
 - **Stakes:** medium
-- **Что нужно для отката:** <конкретные действия + стоимость>
-- **Точка невозврата:** <когда становится one-way>
+- **What a rollback takes:** <concrete actions + cost>
+- **Point of no return:** <when it becomes one-way>
 
 ### Option B
 - **Reversibility:** one-way door
 - **Stakes:** high
-- **Что нужно для отката:** только rebuild с нуля, ~<время> ~$<стоимость>
-- **Mitigation:** делать pilot на 10% перед full commit
+- **What a rollback takes:** only a rebuild from scratch, ~<time> ~$<cost>
+- **Mitigation:** run a pilot on 10% before full commit
 
 ### Option C
 - **Reversibility:** two-way door
 - **Stakes:** low
-- **Что нужно для отката:** trivial
+- **What a rollback takes:** trivial
 ```
 
 ---
 
 ## C5 — `trade-offs`
 
-**Когда:** Decision всегда. Честный разговор о том, что теряешь выбирая каждый вариант.
+**When:** Decision always. An honest conversation about what you lose by choosing each option.
 
-**Что внутри:** Для каждой опции — что НЕ получаешь, чего лишаешься.
+**What's inside:** For each option — what you do NOT get, what you give up.
 
-**Антипаттерн:** Слабые trade-offs («есть некоторые сложности»). Каждый trade-off — конкретный с цифрой если возможно.
+**Anti-pattern:** Weak trade-offs («there are some difficulties»). Every trade-off must be concrete, with a number if possible.
 
-**Композиция:** После `best-fit-when`. До `recommendation-conditional`.
+**Composition:** After `best-fit-when`. Before `recommendation-conditional`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Trade-offs (honest)
 
-### Выбирая A — теряешь:
-- B-экосистему интеграций (~50 готовых connectors)
-- Опыт команды в Y (есть кривая обучения ~3 месяца)
-- <конкретное число / факт>
+### Choosing A — you lose:
+- The B ecosystem of integrations (~50 ready connectors)
+- The team's experience in Y (there is a learning curve of ~3 months)
+- <a concrete number / fact>
 
-### Выбирая B — теряешь:
-- Latency advantage (B на 80ms медленнее в P95) [s07]
-- Гибкость кастомизации
-- Long-term cost optimization (B vendor-locked, рост цен 15% YoY)
+### Choosing B — you lose:
+- The latency advantage (B is 80ms slower at P95) [s07]
+- Flexibility of customization
+- Long-term cost optimization (B is vendor-locked, prices grow 15% YoY)
 
-### Выбирая C — теряешь:
-- Community и docs (C маленький проект, документации мало)
-- Hiring pool (мало кто умеет)
+### Choosing C — you lose:
+- Community and docs (C is a small project, little documentation)
+- Hiring pool (few people know it)
 ```
 
 ---
 
 ## C6 — `recommendation-conditional`
 
-**Когда:** Decision финальный блок. Чёткая рекомендация с условиями.
+**When:** Decision, the final block. A clear recommendation with conditions.
 
-**Что внутри:** «Бери X если Y, иначе Z» — формат для разных условий.
+**What's inside:** «Take X if Y, otherwise Z» — a format for different conditions.
 
-**Антипаттерн:** «Зависит от обстоятельств» без перечисления обстоятельств. Если зависит — перечисли явно от чего.
+**Anti-pattern:** «It depends on the circumstances» without enumerating the circumstances. If it depends — enumerate explicitly on what.
 
-**Композиция:** После всех сравнительных блоков. До `actionable-next-steps`.
+**Composition:** After all the comparative blocks. Before `actionable-next-steps`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
-## Рекомендация
+## Recommendation
 
-**Бери A**, если выполнено хотя бы 2 из 3:
+**Take A**, if at least 2 of 3 hold:
 - Latency = critical path
-- Команда ≥ 5 человек с опытом в Y
-- Бюджет ≥ $X в месяц
+- A team of ≥ 5 people with experience in Y
+- Budget ≥ $X per month
 
-**Иначе бери B**, если:
-- MVP / ранняя стадия
-- Бюджет < $X
-- Готов принять <trade-off>
+**Otherwise take B**, if:
+- MVP / early stage
+- Budget < $X
+- You are ready to accept <trade-off>
 
-**Иначе бери C** (default fallback):
-- Не подходит A и B
-- Нужна максимальная independent control
+**Otherwise take C** (default fallback):
+- Neither A nor B fits
+- You need maximum independent control
 
-**Когда рекомендация меняется:**
-- Если латентность перестанет быть критичной → A снимается с лидерства
-- Если появится регулятор Z в нашей юрисдикции → C поднимается
-- Если будет $X+ funding → A становится default
+**When the recommendation changes:**
+- If latency stops being critical → A loses the lead
+- If a regulator Z appears in our jurisdiction → C moves up
+- If there is $X+ funding → A becomes the default
 ```
 
 ---
 
 ## C7 — `pre-mortem`
 
-**Когда:** Decision high-stakes. Перед commit к решению.
+**When:** Decision high-stakes. Before committing to the decision.
 
-**Что внутри:** «Представь что через год решение провалилось — почему?» Список причин провала.
+**What's inside:** «Imagine that a year from now the decision has failed — why?» A list of failure causes.
 
-**Антипаттерн:** Поверхностный список («баги случаются»). Каждая причина — конкретный механизм провала.
+**Anti-pattern:** A superficial list («bugs happen»). Every cause must be a concrete failure mechanism.
 
-**Композиция:** До `recommendation-conditional` — может изменить рекомендацию.
+**Composition:** Before `recommendation-conditional` — it may change the recommendation.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Pre-mortem
 
-**Сценарий:** через 12 месяцев решение признано провалившимся. Возможные причины:
+**Scenario:** 12 months from now the decision is judged to have failed. Possible causes:
 
-### Сценарий A: <технический провал>
-**Что произошло:** <конкретный механизм>
-**Вероятность:** low | medium | high
-**Mitigation:** <что можно сделать заранее>
-**Indicators (что предупредит заранее):** ...
+### Scenario A: <technical failure>
+**What happened:** <a concrete mechanism>
+**Probability:** low | medium | high
+**Mitigation:** <what can be done in advance>
+**Indicators (what will warn us in advance):** ...
 
-### Сценарий B: <провал команды>
-**Что произошло:** ...
-**Вероятность:** ...
+### Scenario B: <team failure>
+**What happened:** ...
+**Probability:** ...
 
-### Сценарий C: <market shift>
+### Scenario C: <market shift>
 ...
 
-### Сценарий D: <vendor / partner>
+### Scenario D: <vendor / partner>
 ...
 
-**Самый страшный сценарий:** <конкретный>. Mitigation: <что должны сделать ДО старта>.
+**The scariest scenario:** <the concrete one>. Mitigation: <what must be done BEFORE the start>.
 ```
 
 ---
 
 ## C8 — `cost-benefit`
 
-**Когда:** Custom для финансовых решений или time-investment. Любых где есть явные costs и benefits в сравнимых единицах.
+**When:** Custom for financial decisions or time investment. Any where there are explicit costs and benefits in comparable units.
 
-**Что внутри:** Структурированный cost vs benefit с allowed ranges.
+**What's inside:** A structured cost vs benefit with allowed ranges.
 
-**Антипаттерн:** Считать только tangible costs без opportunity cost. Время — тоже cost.
+**Anti-pattern:** Counting only tangible costs without opportunity cost. Time is a cost too.
 
-**Композиция:** Для финансовых решений вместо `options-matrix` или дополнением.
+**Composition:** For financial decisions, instead of `options-matrix` or as a supplement to it.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Cost-benefit
 
-### Costs (за <период>)
+### Costs (per <period>)
 
-| Категория | Low estimate | High estimate | Источник |
+| Category | Low estimate | High estimate | Source |
 |---|---|---|---|
-| Time | 80 hours | 160 hours | <обоснование> |
+| Time | 80 hours | 160 hours | <justification> |
 | Money direct | $5000 | $12000 | [s03] |
-| Opportunity cost | <что не сделаешь> | <что не сделаешь> | — |
+| Opportunity cost | <what you won't do> | <what you won't do> | — |
 | **Total** | **$X** | **$Y** | |
 
-### Benefits (за <период>)
+### Benefits (per <period>)
 
-| Категория | Low | High | Confidence | Источник |
+| Category | Low | High | Confidence | Source |
 |---|---|---|---|---|
 | Revenue uplift | $10k | $50k | medium | [s07] |
 | Time saved | 100h | 300h | high | [s11] |
@@ -285,23 +286,23 @@
 - **Optimistic (high benefits, low costs):** +$50k
 
 ### Break-even
-- Точка безубыточности: <условие>
-- Time to break-even: <месяцы>
+- Break-even point: <condition>
+- Time to break-even: <months>
 ```
 
 ---
 
 ## C9 — `pros-cons-each`
 
-**Когда:** Quick decision, light-weight отчёты. Когда матрица overkill.
+**When:** Quick decision, light-weight reports. When a matrix is overkill.
 
-**Что внутри:** Pro/Con списки для каждой опции.
+**What's inside:** Pro/Con lists for each option.
 
-**Антипаттерн:** Не использовать в high-stakes ресёрчах — слишком поверхностно. Для quick takes.
+**Anti-pattern:** Not to be used in high-stakes research — too superficial. For quick takes.
 
-**Композиция:** Альтернатива `options-matrix` для shallow decision-ресёрчей.
+**Composition:** An alternative to `options-matrix` for shallow decision research.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Pros & Cons
@@ -330,15 +331,15 @@
 
 ## C10 — `feature-matrix`
 
-**Когда:** Product comparison. Когда сравниваем продукты по наличию фич.
+**When:** Product comparison. When comparing products by the presence of features.
 
-**Что внутри:** Features × Products таблица (✅ есть / ❌ нет / 🟡 частично / 💰 платно).
+**What's inside:** A features × products table (✅ present / ❌ absent / 🟡 partial / 💰 paid).
 
-**Антипаттерн:** Длинный список фич без приоритизации. Фичи делятся на core (must-have) и nice-to-have.
+**Anti-pattern:** A long list of features without prioritisation. Features split into core (must-have) and nice-to-have.
 
-**Композиция:** Дополнение к `options-matrix` для product decision. После него.
+**Composition:** A supplement to `options-matrix` for a product decision. After it.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Feature matrix
@@ -369,33 +370,33 @@
 
 ## C11 — `migration-path`
 
-**Когда:** Decision где обратимость возможна но требует усилий. «Если A не зайдёт, как мигрировать на B?»
+**When:** Decision where reversibility is possible but takes effort. «If A does not land, how do we migrate to B?»
 
-**Что внутри:** Шаги миграции A→B с временем и риском.
+**What's inside:** The steps of the migration A→B with time and risk.
 
-**Антипаттерн:** Скрывать миграционные costs. Они часть decision.
+**Anti-pattern:** Hiding the migration costs. They are part of the decision.
 
-**Композиция:** После `reversibility-stakes`. Конкретизирует обратимость.
+**Composition:** After `reversibility-stakes`. Makes the reversibility concrete.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Migration paths
 
-### A → B (если решение A не зайдёт)
-1. **Подготовка** (~<время>): <что нужно сделать>
-2. **Pilot миграция** (~<время>): <часть данных/функционала>
-3. **Full cutover** (~<время>): <…>
-4. **Rollback option до конца**: да/нет
+### A → B (if decision A does not land)
+1. **Preparation** (~<time>): <what needs to be done>
+2. **Pilot migration** (~<time>): <a part of the data/functionality>
+3. **Full cutover** (~<time>): <…>
+4. **Rollback option until the end**: yes/no
 
-**Riski:**
+**Risks:**
 - ⚠️ Data loss risk: low | medium | high
-- ⚠️ Downtime: <время>
+- ⚠️ Downtime: <time>
 - ⚠️ Customer impact: ...
 
-**Total cost:** <время> + $<стоимость>
+**Total cost:** <time> + $<cost>
 
-### A → C (альтернативный path)
+### A → C (alternative path)
 ...
 ```
 
@@ -403,24 +404,24 @@
 
 ## C12 — `decision-tree`
 
-**Когда:** Сложные мультиусловные решения. Когда «если X — A, если Y — B» — больше 2 веток.
+**When:** Complex multi-condition decisions. When «if X — A, if Y — B» is more than 2 branches.
 
-**Что внутри:** ASCII-дерево решений или текстовая структура.
+**What's inside:** An ASCII decision tree or a text structure.
 
-**Антипаттерн:** Дерево с >7 листьями — становится нечитаемым. Если так — упрости вопрос или разбей на 2 дерева.
+**Anti-pattern:** A tree with >7 leaves — it becomes unreadable. If so — simplify the question or split it into 2 trees.
 
-**Композиция:** Может заменить `recommendation-conditional` для сложных случаев. Или дополнить.
+**Composition:** Can replace `recommendation-conditional` for complex cases. Or supplement it.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Decision tree
 
 ```
-Q1: Это high-stakes решение (revert >$50k)?
-├─ Yes: Q2: Регулируемый домен?
+Q1: Is this a high-stakes decision (revert >$50k)?
+├─ Yes: Q2: A regulated domain?
 │       ├─ Yes → Option C (compliance-first)
-│       └─ No:  Q3: Команда ≥ 5 senior?
+│       └─ No:  Q3: A team of ≥ 5 senior?
 │               ├─ Yes → Option A
 │               └─ No  → Option B (managed service)
 └─ No:  Q4: Latency critical?
@@ -428,40 +429,40 @@ Q1: Это high-stakes решение (revert >$50k)?
         └─ No  → Option B (cheaper, simpler)
 ```
 
-**Обоснование узлов:**
-- Q1 stakes threshold $50k обоснован: [s05]
-- Q3 «5 senior» — практическое наблюдение: [s11]
+**Justification of the nodes:**
+- Q1 stakes threshold $50k is justified: [s05]
+- Q3 «5 senior» — a practical observation: [s11]
 ```
 
 ---
 
 ## C13 — `kill-criteria`
 
-**Когда:** Decision для рискованных решений. «Когда отказаться от каждой опции».
+**When:** Decision for risky decisions. «When to abandon each option».
 
-**Что внутри:** Для каждой опции — индикаторы, при которых нужно убить её и переключиться.
+**What's inside:** For each option — the indicators at which it must be killed and switched away from.
 
-**Антипаттерн:** Sunk cost — продолжать с опцией после явных kill-signals. Kill criteria должны быть pre-stated.
+**Anti-pattern:** Sunk cost — continuing with an option after clear kill signals. Kill criteria must be pre-stated.
 
-**Композиция:** После `recommendation-conditional`. До `actionable-next-steps`.
+**Composition:** After `recommendation-conditional`. Before `actionable-next-steps`.
 
-**Шаблон:**
+**Template:**
 
 ```markdown
 ## Kill criteria
 
 ### Option A — kill if:
-- Latency не улучшилась после <effort> work
-- Cost overruns >50% от estimate
-- 2+ месяца до production без видимого прогресса
-- **Then:** мигрируй на B по migration-path выше
+- Latency did not improve after <effort> work
+- Cost overruns >50% of the estimate
+- 2+ months to production with no visible progress
+- **Then:** migrate to B per the migration-path above
 
 ### Option B — kill if:
-- Vendor поднял цены >30%
-- API стал unstable (>5 breaking changes в год)
-- **Then:** мигрируй на A с budget allocation
+- The vendor raised prices >30%
+- The API became unstable (>5 breaking changes per year)
+- **Then:** migrate to A with budget allocation
 
 ### Option C — kill if:
-- Compliance перестало быть constraint
-- **Then:** свобода выбора между A и B
+- Compliance stopped being a constraint
+- **Then:** freedom of choice between A and B
 ```

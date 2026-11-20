@@ -27,7 +27,7 @@ Brief description of what this PR adds or changes.
 - [ ] Follows the template in [CONTRIBUTING.md](../CONTRIBUTING.md)
 - [ ] All metadata fields filled (for sources/channels)
 - [ ] Paywall fallback documented (for channels with paywalled sources)
-- [ ] Local test: loaded the modified skill in Claude Code and verified it still works
+- [ ] Local test: loaded the modified skill in the agent harness and verified it still works
 - [ ] No breaking changes to existing channels/blocks
 - [ ] Anti-patterns documented (for new blocks)
 - [ ] If this PR adds a vendor's service and I work for or with that vendor, I said so in the summary

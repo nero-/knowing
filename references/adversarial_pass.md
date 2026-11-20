@@ -30,11 +30,11 @@ All roles are one model family, shared blind spots remain.
 1. Draft: the synthesis model writes `<date>_<genre>.md`.
 2. Claim ledger: write out the key falsifiable theses + their references to sources/NN.md.
 3. Launch IN PARALLEL (in one message), one sub-agent per role:
-   - subagent_type = deepdive-redteam (read-only, Opus, effort high; a judgement task,
+   - subagent_type = knowing-redteam (read-only, `big` model, effort high; a judgement task,
      not a search task — finder ≠ fixer: makes no edits to files).
    - input: path to the draft + sources/ folder + role prompt + output schema.
    - the roles do NOT see each other (independent context).
-   - model: `deepdive-redteam` (Opus, high) for medium and deep; shallow — R1 inline on `main`.
+   - model: `knowing-redteam` (`big`, high) for medium and deep; shallow — R1 inline on the main thread.
 4. Triage: merge defects, dedup, severity (section 3). Log `findings/redteam_<date>.md`, one line per finding: `HIGH-1 <role>: <defect>`, `MED-2 …`, `LOW-3 …`. Then a snapshot of the draft: `cp <date>_<genre>.md findings/draft_pre_remediation.md`.
 5. Remediation — ONE round (a cap against an endless loop):
    - HIGH → an edit of the body section where the wrong thesis stands, and of all places where it is repeated (TL;DR/`Answer`, verdict table, confidence), — via a targeted extra search (Phase 4 on these subquestions only) or an explicit caveat in the section itself.

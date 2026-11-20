@@ -1,7 +1,18 @@
 # Using knowing
 
-Two things to get right: where the skill lives, and what the run is allowed to claim. Everything else
-is upstream's pipeline.
+**It is a skill: your agent runs it, you do not.** You install it once, point it at your models, and
+then ask for research in normal language. Every command in this document is one *the agent* runs as it
+works through the phases — the only ones you type are in §1 and §2 (setup) and, if you want to audit a
+finished run, the gate commands in §5.
+
+What you actually do:
+
+1. install and configure, once (§1, §2);
+2. ask for the research (§3);
+3. read the finish output — green or red — instead of trusting the prose (§5).
+
+Two things to get right: where the skill lives, and what the run is allowed to claim. Everything else is
+upstream's pipeline.
 
 ## 1. Install
 
@@ -23,8 +34,8 @@ Two Python dependencies, because upstream's fetcher and citation checker use the
 python3 -m pip install --user pyyaml requests     # or use a venv, see below
 ```
 
-The Anthropic and OpenAI SDKs are only needed for the endpoints you actually configure
-(`pip install anthropic`, `pip install openai`).
+The `openai` SDK is only needed if you use the scripted `runner/` path rather than your agent; a
+local-only setup needs neither `anthropic` nor cloud credentials.
 
 Link it where your agent looks for skills:
 
@@ -53,17 +64,16 @@ base_url = "http://100.120.4.113:8015/v1"
 [providers.sparks-tp2]                  # 262k box: fan-out
 base_url = "http://100.97.112.71:8000/v1"
 
-[providers.openrouter]                  # anything OpenAI-compatible
-base_url = "https://openrouter.ai/api/v1"
-api_key_cmd = "pass show openrouter/key"
-
 [models.big]
-endpoints = ["sparks/DeepSeek-V4.1-Flash", "openrouter/anthropic/claude-opus-5"]
+endpoints = ["sparks/DeepSeek-V4.1-Flash", "sparks-tp2/Qwen3.8-Flash-Next"]
 rotate = "sticky"                       # one model per process: prompt cache survives
 fallback = ["small"]
 
+[models.mid]
+endpoints = ["sparks-tp2/Qwen3.8-Flash-Next"]
+
 [models.small]
-endpoints = ["sparks-tp2/Qwen3.8-Flash-Next", "sparks/DeepSeek-V4.1-Flash"]
+endpoints = ["sparks-tp2/Qwen3.8-Flash-Next"]
 
 [phases."6"]                            # optional: pin a phases.yaml phase
 model = "big"
@@ -82,9 +92,12 @@ otherwise costs you a full run.
 You do not have to configure anything to try it: the skill works on whatever model your agent is
 already running, and the config exists so the expensive phases can go somewhere with more context.
 
-## 3. Start a run
+## 3. Start a run (one message; the agent does the rest)
 
-Ask for it in the normal way — "research X, deep enough to decide Y" — and the skill drives the phases.
+Ask for it in the normal way — "research X, deep enough to decide Y". The skill's `SKILL.md` is what
+turns that into work: it walks the agent through the 13 phases, tells it to write `plan.md` before
+searching, enforces the breadth floors, and ends with the finish command. You do not orchestrate any of
+it, and you do not need to remember the phase order.
 Two things the run writes before it searches, and both are gates:
 
 **`plan.md`** declares depth *and* the three facts that justify it:
@@ -133,6 +146,8 @@ c7,s03; s11,triangulated,high,...,s03:118,9f2c1b3d4e5f6071
 
 ## 5. Finish, and what the gates will say
 
+The agent's last step is this, and you only repeat it to audit:
+
 ```bash
 python3 scripts/finish.py --research-dir research/<slug>
 ```
@@ -171,18 +186,29 @@ python3 -m pytest overlay/tests -q                      # 61 tests
 
 ## 7. What is not finished
 
-Be clear-eyed about this list; it is the difference between "usable" and "polished".
-
-- **It has never run on a real research question end-to-end.** Everything is tested at unit level and
-  the finish chain runs on synthetic fixtures, but the first real run is still ahead. Do it on a cheap
+- **It has never run on a real research question end-to-end.** Everything is tested at unit level and the
+  finish chain runs on synthetic fixtures, but the first real run is still ahead. Do it on a cheap
   question at `shallow`, then `medium`, and watch `finish.py`.
-- **The report-block templates are still Russian** (`references/blocks/*.md`, ~18.8k words). They are
-  read one at a time by the synthesis step, and the block ids are language-neutral, so synthesis works
-  — it will just be reading Russian section templates.
-- **The exporter's messages are Russian** (`build_report.py`), so its error output and `readout.md`
-  section names come out in Russian for now. It accepts English headings on the way in.
-- **`references/model_routing.md` still names Claude Code agent types** (`deepdive-fetcher`,
-  `deepdive-redteam`). On pi these map to Agent types; the mapping is written down in
-  `docs/DECISIONS.md` but not applied to the prose.
-- **`runner/`** (the model-agnostic scripted path, `--provider models`) is available and tested but is
-  not how the skill normally runs — the phases are driven by your agent, not by the runner.
+- **Python-side messages are still Russian** (`build_report.py`, `build_readout.py`). They accept English
+  headings on the way in, but their errors and the generated `readout.md` section names come out in
+  Russian. This is the last translation item; it also accounts for the two remaining failures in
+  upstream's test suite.
+- **`runner/`** (the scripted, model-agnostic path) is available and tested but is not how the skill
+  normally runs — the phases are driven by your agent, not by the runner.
+
+## 8. Sub-agents the skill expects
+
+Two agent definitions ship in `agents/`:
+
+```bash
+cp ~/Agent/knowing/agents/*.md ~/.pi/agents/       # or <project>/.pi/agents/
+```
+
+- `knowing-fetcher` — fetch + save sources inside an assigned id range, return a digest. Default model
+  `small`, `maxTurns 40`.
+- `knowing-redteam` — the adversarial pass: reads the assembled claims, returns `VERDICT:` and a
+  declined-to-judge list. Default model `big`.
+
+`Explore` (built in) covers read-only reconnaissance. If the agent types are not installed, the skill
+still runs — it will fall back to `general-purpose` sub-agents, which is slower and less disciplined but
+not broken.
